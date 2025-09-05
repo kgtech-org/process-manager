@@ -103,11 +103,14 @@ type Contributors struct {
 }
 
 type Contributor struct {
-    Name            string            `bson:"name"`
-    Title           string            `bson:"title"`
-    Department      string            `bson:"department"`
+    UserID          primitive.ObjectID `bson:"user_id"`         // Reference to invited User
+    Name            string            `bson:"name"`            // Cached from User for performance
+    Title           string            `bson:"title"`           // Cached from User for performance
+    Department      string            `bson:"department"`      // Cached from User for performance
+    Team            ContributorTeam   `bson:"team"`            // authors, verifiers, validators
     SignatureDate   *time.Time        `bson:"signature_date,omitempty"`
-    Status          SignatureStatus   `bson:"status"`           // pending, signed, rejected
+    Status          SignatureStatus   `bson:"status"`          // pending, signed, rejected
+    InvitedAt       time.Time         `bson:"invited_at"`
 }
 
 type DocumentMetadata struct {
@@ -263,6 +266,13 @@ const (
     PermissionRead  PermissionType = "read"   // View document
     PermissionWrite PermissionType = "write"  // Edit document
     PermissionSign  PermissionType = "sign"   // Digital signature
+)
+
+type ContributorTeam string
+const (
+    TeamAuthors     ContributorTeam = "authors"     // Document preparation team
+    TeamVerifiers   ContributorTeam = "verifiers"   // Technical review team
+    TeamValidators  ContributorTeam = "validators"  // Executive approval team
 )
 
 type InvitationRole string
@@ -944,12 +954,16 @@ Professional document export using YAS corporate branding:
 
 ### Collaboration Workflow
 1. **Document Creation** → Creator initiates new procedure document
-2. **Team Assembly** → Send email invitations to contributors with specific roles
-3. **Access Management** → Granular permissions (read/write/sign) per user
-4. **Collaborative Editing** → Multiple users contribute simultaneously with conflict resolution
-5. **Activity Monitoring** → Real-time activity feed and change notifications
-6. **Review Cycles** → Structured review process with role-based approvals
-7. **Final Approval** → Three-tier signature workflow completion
+2. **Team Invitations** → Send email invitations to Users for specific contributor teams:
+   - **Authors Team**: Document preparation and content creation
+   - **Verifiers Team**: Technical review and validation  
+   - **Validators Team**: Executive approval and final sign-off
+3. **User → Contributor Conversion** → Invited Users become Contributors upon accepting invitations
+4. **Access Management** → Granular permissions (read/write/sign) per User/Contributor
+5. **Collaborative Editing** → Multiple Contributors work simultaneously with conflict resolution
+6. **Activity Monitoring** → Real-time activity feed and change notifications
+7. **Review Cycles** → Structured review process with role-based approvals
+8. **Digital Signatures** → Three-tier signature workflow: Authors → Verifiers → Validators
 
 ## 📈 Performance & Scalability
 
