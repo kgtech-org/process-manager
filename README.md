@@ -85,7 +85,7 @@ type Document struct {
     Metadata        DocumentMetadata  `bson:"metadata"`
     
     // Process Definition Section
-    ProcessSteps    []ProcessStep     `bson:"process_steps"`
+    ProcessGroups   []ProcessGroup    `bson:"process_groups"`
     
     // Annexes Section
     Annexes         []Annex           `bson:"annexes"`
@@ -144,16 +144,29 @@ type VersionChange struct {
     Description     string            `bson:"description"`
 }
 
+type ProcessGroup struct {
+    ID              string            `bson:"id"`              // e.g., "I", "II", "III"
+    Title           string            `bson:"title"`           // e.g., "DETECTION", "GESTION"
+    Order           int               `bson:"order"`           // Sequential order
+    ProcessSteps    []ProcessStep     `bson:"process_steps"`
+}
+
 type ProcessStep struct {
-    ID              string            `bson:"id"`              // e.g., "I.1", "II.3.2"
-    Phase           string            `bson:"phase"`           // e.g., "DETECTION", "GESTION"
-    Title           string            `bson:"title"`
-    Description     string            `bson:"description"`
-    Responsible     string            `bson:"responsible"`     // Role/Title
-    Duration        string            `bson:"duration"`        // e.g., "T0+5mn", "T0+15mn"
-    Output          string            `bson:"output"`
-    SubSteps        []ProcessStep     `bson:"sub_steps,omitempty"`
-    Prerequisites   []string          `bson:"prerequisites,omitempty"`
+    ID              string                `bson:"id"`              // e.g., "1", "2", "3"
+    Title           string                `bson:"title"`           // Step title
+    Order           int                   `bson:"order"`           // Sequential order within group
+    Descriptions    []ProcessDescription  `bson:"descriptions"`    // Multiple descriptions per step
+    Outputs         []string              `bson:"outputs"`         // List of possible outputs
+    Durations       []string              `bson:"durations"`       // List of possible durations
+    Responsible     string                `bson:"responsible"`     // Role/Title
+}
+
+type ProcessDescription struct {
+    Title           string            `bson:"title"`           // Description title
+    Instructions    []string          `bson:"instructions"`    // Ordered list of instructions
+    Order           int               `bson:"order"`           // Order within the step
+    OutputIndex     int               `bson:"output_index"`    // Index to ProcessStep.Outputs
+    DurationIndex   int               `bson:"duration_index"`  // Index to ProcessStep.Durations
 }
 
 type Annex struct {
@@ -382,7 +395,7 @@ const (
 ### Multi-Step Document Creation
 - **Step 1 - Contributors**: Define Authors, Verifiers, and Validators with roles and departments
 - **Step 2 - Metadata**: Set objectives, implicated actors, management rules, and terminology
-- **Step 3 - Process Definition**: Create nested process steps with phases, responsibilities, and timing
+- **Step 3 - Process Definition**: Create process groups and steps with multiple descriptions per step
 - **Step 4 - Annexes**: Upload diagrams, create structured tables, add rich text content
 - **Step 5 - Review & Signature**: Three-tier digital approval workflow
 - **Auto-save**: Continuous form progress saving with draft status
@@ -779,24 +792,24 @@ Structured forms for procedure information:
 ```
 
 ### Step 3: Process Definition
-Nested step creation interface:
+Process organization interface:
 ```typescript
-- Phase Management
-  - Major process phases (Detection, Management, Resolution, etc.)
-  - Phase-level timing and objectives
+- Process Group Management
+  - Major process groups (Detection, Management, Resolution, etc.)
+  - Group titles and sequential ordering
+  - Group-level organization
 
-- Step Creation
-  - Hierarchical step numbering (I.1, I.2, II.1.1, etc.)
-  - Step descriptions and details
-  - Responsible roles assignment
-  - Duration/timing specifications
-  - Expected outputs
+- Process Step Creation
+  - Steps within each group (numbered sequentially)
+  - Step titles and responsible roles
+  - List of possible outputs and durations per step
+  - Drag-and-drop step reordering
 
-- Sub-Step Nesting
-  - Unlimited nesting levels
-  - Drag-and-drop reordering
-  - Conditional steps
-  - Prerequisites management
+- Multiple Descriptions per Step
+  - Each step can have multiple descriptions
+  - Each description has a title and ordered instructions
+  - Each description links to a specific output and duration
+  - Sequential ordering of descriptions within steps
 ```
 
 ### Step 4: Annexes Management
