@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: process-manager-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: process_manager
+    volumes:
+      - mongodb_data:/data/db
+      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - process-manager
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/process_manager --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: process-manager-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - process-manager
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: process-manager-minio
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - process-manager
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Go Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: process-manager-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/process_manager?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET_NAME=process-documents
+      - MINIO_USE_SSL=false
+      - JWT_SECRET=your-super-secure-jwt-secret-key-change-in-production
+      - CORS_ORIGINS=http://localhost:3000
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=noreply@togocom.tg
+      - SMTP_PASSWORD=your-smtp-password
+      - EMAIL_FROM=Process Manager <noreply@togocom.tg>
+      - FRONTEND_URL=http://localhost:3000
+      - LOG_LEVEL=info
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./backend/templates:/app/templates:ro
+    networks:
+      - process-manager
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+    container_name: process-manager-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+      - NEXT_PUBLIC_APP_NAME=Process Manager
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your-nextauth-secret-change-in-production
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - process-manager
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (Optional for production)
+  nginx:
+    image: nginx:alpine
+    container_name: process-manager-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - process-manager
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  process-manager:
+    driver: bridge
