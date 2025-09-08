@@ -33,8 +33,8 @@ WORKDIR /root/
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 
-# Copy configuration files if they exist
-COPY --from=builder /app/config/ ./config/ 2>/dev/null || true
+# Copy static files if they exist
+RUN mkdir -p ./static ./config
 
 # Expose port
 EXPOSE 8080

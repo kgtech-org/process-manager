@@ -9,7 +9,7 @@ export default function HomePage() {
     // Test API connection
     const testApiConnection = async () => {
       try {
-        const response = await fetch('/api/auth/status');
+        const response = await fetch('/health');
         if (response.ok) {
           setApiStatus('connected');
         } else {
