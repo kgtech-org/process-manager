@@ -1,0 +1,516 @@
+# Process Manager Backend - Authentication API Tests
+# Use with REST Client extension in VS Code or any REST client
+
+@baseUrl = http://localhost:8080
+@apiUrl = {{baseUrl}}/api
+
+# Variables (will be set from responses)
+@accessToken = 
+@refreshToken = 
+@resetToken = 
+@verificationToken = 
+
+### Health Check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+### Authentication Status (Legacy endpoint)
+GET {{apiUrl}}/auth/status
+Content-Type: application/json
+
+###
+# =================================
+# USER REGISTRATION & VERIFICATION
+# =================================
+
+### Register new user (Admin)
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AdminPassword123!",
+  "name": "System Administrator",
+  "role": "admin",
+  "phone": "+228 90 12 34 56",
+  "department": "IT",
+  "position": "System Admin"
+}
+
+### Register new user (Manager)
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "manager@process-manager.com",
+  "password": "ManagerPass123!",
+  "name": "Process Manager",
+  "role": "manager",
+  "phone": "+228 90 12 34 57",
+  "department": "Operations",
+  "position": "Process Manager"
+}
+
+### Register new user (User)
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@process-manager.com",
+  "password": "UserPassword123!",
+  "name": "Regular User",
+  "role": "user",
+  "phone": "+228 90 12 34 58",
+  "department": "Customer Service",
+  "position": "Agent"
+}
+
+### Register with validation error (missing required fields)
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "invalid@test.com",
+  "password": "123"
+}
+
+### Register with duplicate email
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AnotherPass123!",
+  "name": "Another Admin",
+  "role": "admin"
+}
+
+### Verify email (requires token from email or database)
+# Note: In real scenario, get token from email or database
+POST {{apiUrl}}/auth/verify-email
+Content-Type: application/json
+
+{
+  "token": "your-verification-token-here"
+}
+
+###
+# =========================
+# USER AUTHENTICATION
+# =========================
+
+### Login with admin credentials
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AdminPassword123!"
+}
+
+### Login with manager credentials
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager@process-manager.com",
+  "password": "ManagerPass123!"
+}
+
+### Login with user credentials
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@process-manager.com",
+  "password": "UserPassword123!"
+}
+
+### Login with invalid credentials
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com",
+  "password": "WrongPassword"
+}
+
+### Login with non-existent user
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "SomePassword123!"
+}
+
+###
+# =========================
+# PROTECTED ENDPOINTS
+# =========================
+
+### Get current user profile (requires authentication)
+# Note: Replace YOUR_ACCESS_TOKEN with actual token from login response
+GET {{apiUrl}}/auth/me
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+### Update user profile (requires authentication)
+PUT {{apiUrl}}/auth/profile
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "name": "Updated Admin Name",
+  "phone": "+228 90 12 34 99",
+  "department": "IT Management",
+  "position": "Senior Admin",
+  "avatar": "https://example.com/avatar.jpg"
+}
+
+### Change password (requires authentication)
+PUT {{apiUrl}}/auth/change-password
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "current_password": "AdminPassword123!",
+  "new_password": "NewAdminPass123!",
+  "confirm_password": "NewAdminPass123!"
+}
+
+### Change password with wrong current password
+PUT {{apiUrl}}/auth/change-password
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "current_password": "WrongCurrentPassword",
+  "new_password": "NewAdminPass123!",
+  "confirm_password": "NewAdminPass123!"
+}
+
+###
+# =========================
+# TOKEN MANAGEMENT
+# =========================
+
+### Refresh access token
+POST {{apiUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "YOUR_REFRESH_TOKEN"
+}
+
+### Revoke all user tokens (requires authentication)
+POST {{apiUrl}}/auth/revoke-all-tokens
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+### Logout (requires authentication)
+POST {{apiUrl}}/auth/logout
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "refresh_token": "YOUR_REFRESH_TOKEN"
+}
+
+###
+# =========================
+# PASSWORD RESET WORKFLOW
+# =========================
+
+### Request password reset
+POST {{apiUrl}}/auth/forgot
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com"
+}
+
+### Request password reset for non-existent email
+POST {{apiUrl}}/auth/forgot
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com"
+}
+
+### Reset password with token
+# Note: Get token from email or database
+POST {{apiUrl}}/auth/reset
+Content-Type: application/json
+
+{
+  "token": "your-reset-token-here",
+  "new_password": "ResetPassword123!",
+  "confirm_password": "ResetPassword123!"
+}
+
+### Reset password with invalid token
+POST {{apiUrl}}/auth/reset
+Content-Type: application/json
+
+{
+  "token": "invalid-token",
+  "new_password": "ResetPassword123!",
+  "confirm_password": "ResetPassword123!"
+}
+
+### Reset password with mismatched passwords
+POST {{apiUrl}}/auth/reset
+Content-Type: application/json
+
+{
+  "token": "your-reset-token-here",
+  "new_password": "ResetPassword123!",
+  "confirm_password": "DifferentPassword123!"
+}
+
+###
+# =========================
+# EMAIL VERIFICATION
+# =========================
+
+### Resend verification email (requires authentication)
+POST {{apiUrl}}/auth/resend-verification
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+###
+# =========================
+# PROTECTED RESOURCES TESTS
+# =========================
+
+### Access protected documents endpoint (requires authentication)
+GET {{apiUrl}}/documents
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+### Access protected processes endpoint (requires authentication)
+GET {{apiUrl}}/processes
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+### Access admin endpoint (requires admin role)
+GET {{apiUrl}}/admin/users
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+### Try to access admin endpoint without admin role (should fail)
+# First login as regular user, then try this endpoint
+GET {{apiUrl}}/admin/users
+Authorization: Bearer USER_ACCESS_TOKEN
+Content-Type: application/json
+
+###
+# =========================
+# ERROR SCENARIOS
+# =========================
+
+### Access protected endpoint without token
+GET {{apiUrl}}/auth/me
+Content-Type: application/json
+
+### Access protected endpoint with invalid token
+GET {{apiUrl}}/auth/me
+Authorization: Bearer invalid.jwt.token
+Content-Type: application/json
+
+### Access protected endpoint with expired token
+GET {{apiUrl}}/auth/me
+Authorization: Bearer EXPIRED_ACCESS_TOKEN
+Content-Type: application/json
+
+### Try to use refresh token as access token
+GET {{apiUrl}}/auth/me
+Authorization: Bearer YOUR_REFRESH_TOKEN
+Content-Type: application/json
+
+###
+# =========================
+# MALFORMED REQUESTS
+# =========================
+
+### Malformed JSON request
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AdminPassword123!",
+  "invalid_json": 
+}
+
+### Missing Content-Type header
+POST {{apiUrl}}/auth/login
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AdminPassword123!"
+}
+
+### Wrong Content-Type
+POST {{apiUrl}}/auth/login
+Content-Type: text/plain
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AdminPassword123!"
+}
+
+###
+# =========================
+# TESTING WORKFLOW EXAMPLE
+# =========================
+
+# 1. Register a new user
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "TestPassword123!",
+  "name": "Test User",
+  "role": "user",
+  "phone": "+228 90 12 34 00",
+  "department": "Test",
+  "position": "Tester"
+}
+
+# 2. Login with the new user
+# @name login
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "TestPassword123!"
+}
+
+# 3. Extract tokens from login response and test protected endpoints
+# Note: In VS Code REST Client, you can capture response values:
+# @accessToken = {{login.response.body.access_token}}
+# @refreshToken = {{login.response.body.refresh_token}}
+
+# 4. Test protected endpoint with captured token
+GET {{apiUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+# 5. Test token refresh
+POST {{apiUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+# 6. Logout
+POST {{apiUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+###
+# =========================
+# PERFORMANCE TESTS
+# =========================
+
+### Multiple rapid login attempts (rate limiting test)
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AdminPassword123!"
+}
+
+###
+
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AdminPassword123!"
+}
+
+###
+
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AdminPassword123!"
+}
+
+###
+# =========================
+# SECURITY TESTS
+# =========================
+
+### SQL Injection attempt in email field
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com'; DROP TABLE users; --",
+  "password": "AdminPassword123!"
+}
+
+### XSS attempt in name field during registration
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "xss@test.com",
+  "password": "TestPassword123!",
+  "name": "<script>alert('XSS')</script>",
+  "role": "user"
+}
+
+### Very long password (buffer overflow test)
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "longpass@test.com",
+  "password": "A".repeat(10000),
+  "name": "Long Password Test",
+  "role": "user"
+}
+
+###
+# =========================
+# DOCUMENTATION
+# =========================
+
+# Testing Instructions:
+# 1. Start the backend server: `go run cmd/main.go`
+# 2. Ensure MongoDB is running (via Docker: `docker-compose up -d mongodb`)
+# 3. Use VS Code with REST Client extension or any HTTP client
+# 4. Replace placeholder tokens with actual values from responses
+# 5. Test both success and error scenarios
+# 6. Verify role-based access control works correctly
+# 7. Test email verification workflow (check email service logs)
+# 8. Test password reset workflow
+# 9. Verify token expiration and refresh mechanisms
+# 10. Test rate limiting and security features
+
+# Expected Responses:
+# - 200: Successful operations
+# - 201: Successful user creation
+# - 400: Bad request (validation errors, malformed JSON)
+# - 401: Unauthorized (missing/invalid token, wrong credentials)
+# - 403: Forbidden (insufficient permissions)
+# - 404: Not found (invalid endpoints)
+# - 409: Conflict (email already exists)
+# - 429: Too many requests (if rate limiting is implemented)
+# - 500: Internal server error (database issues, etc.)

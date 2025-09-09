@@ -1,0 +1,250 @@
+# Protected Endpoints Tests
+# These endpoints require authentication
+
+@baseUrl = http://localhost:8080
+@apiUrl = {{baseUrl}}/api
+
+# Set these tokens after login
+@accessToken = 
+@adminToken = 
+@managerToken = 
+@userToken = 
+
+###
+# =========================
+# DOCUMENTS ENDPOINTS
+# =========================
+
+### Access Documents (Requires Auth)
+GET {{apiUrl}}/documents
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Access Documents without token (should fail)
+GET {{apiUrl}}/documents
+Content-Type: application/json
+
+### Access Documents with invalid token (should fail)
+GET {{apiUrl}}/documents
+Authorization: Bearer invalid.jwt.token
+Content-Type: application/json
+
+###
+# =========================
+# PROCESSES ENDPOINTS  
+# =========================
+
+### Access Processes (Requires Auth)
+GET {{apiUrl}}/processes
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Access Processes without token (should fail)
+GET {{apiUrl}}/processes
+Content-Type: application/json
+
+### Access Processes with expired token (should fail)
+GET {{apiUrl}}/processes
+Authorization: Bearer expired.jwt.token
+Content-Type: application/json
+
+###
+# =========================
+# ADMIN ENDPOINTS
+# =========================
+
+### Access Admin Users (Requires Admin Role)
+GET {{apiUrl}}/admin/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### Try Admin endpoint with User token (should fail with 403)
+GET {{apiUrl}}/admin/users
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+### Try Admin endpoint with Manager token (should fail with 403)
+GET {{apiUrl}}/admin/users
+Authorization: Bearer {{managerToken}}
+Content-Type: application/json
+
+### Try Admin endpoint without token (should fail with 401)
+GET {{apiUrl}}/admin/users
+Content-Type: application/json
+
+###
+# =========================
+# TOKEN VALIDATION TESTS
+# =========================
+
+### Test with malformed Authorization header
+GET {{apiUrl}}/documents
+Authorization: InvalidFormat
+Content-Type: application/json
+
+### Test with Bearer but no token
+GET {{apiUrl}}/documents
+Authorization: Bearer
+Content-Type: application/json
+
+### Test with empty Authorization header
+GET {{apiUrl}}/documents
+Authorization: 
+Content-Type: application/json
+
+### Test with multiple Authorization headers (browser edge case)
+GET {{apiUrl}}/documents
+Authorization: Bearer {{accessToken}}
+Authorization: Bearer duplicate-token
+Content-Type: application/json
+
+###
+# =========================
+# DIFFERENT HTTP METHODS
+# =========================
+
+### POST to protected endpoint
+POST {{apiUrl}}/documents
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "test": "data"
+}
+
+### PUT to protected endpoint
+PUT {{apiUrl}}/documents/123
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "update": "data"
+}
+
+### DELETE to protected endpoint
+DELETE {{apiUrl}}/documents/123
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# ROLE-BASED ACCESS TESTS
+# =========================
+
+# First, you need to login with different roles to get tokens:
+
+### Login as Admin (copy token to @adminToken)
+# @name adminLogin
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.com",
+  "password": "AdminPassword123!"
+}
+
+### Login as Manager (copy token to @managerToken)  
+# @name managerLogin
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager@process-manager.com", 
+  "password": "ManagerPass123!"
+}
+
+### Login as User (copy token to @userToken)
+# @name userLogin
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@process-manager.com",
+  "password": "UserPassword123!"
+}
+
+# Now test role-based access:
+
+### Admin accessing documents (should work)
+GET {{apiUrl}}/documents
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### Manager accessing documents (should work)
+GET {{apiUrl}}/documents
+Authorization: Bearer {{managerToken}}
+Content-Type: application/json
+
+### User accessing documents (should work)
+GET {{apiUrl}}/documents
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+### Admin accessing admin endpoint (should work)
+GET {{apiUrl}}/admin/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### Manager accessing admin endpoint (should fail - 403)
+GET {{apiUrl}}/admin/users
+Authorization: Bearer {{managerToken}}
+Content-Type: application/json
+
+### User accessing admin endpoint (should fail - 403)
+GET {{apiUrl}}/admin/users
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+###
+# =========================
+# TOKEN EXPIRY SIMULATION
+# =========================
+
+### Test with very old token format (should fail)
+GET {{apiUrl}}/documents
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiMTIzIiwiZXhwIjoxNjM5NDQwMDAwfQ.invalid
+Content-Type: application/json
+
+### Test with completely invalid JWT format
+GET {{apiUrl}}/documents
+Authorization: Bearer not-a-jwt-token
+Content-Type: application/json
+
+### Test with valid JWT structure but wrong signature
+GET {{apiUrl}}/documents
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzIiwiZXhwIjo5OTk5OTk5OTk5fQ.wrong_signature
+Content-Type: application/json
+
+###
+# =========================
+# PERFORMANCE TESTS
+# =========================
+
+### Rapid requests with same token
+GET {{apiUrl}}/documents
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+
+GET {{apiUrl}}/documents
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+
+GET {{apiUrl}}/documents
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+
+GET {{apiUrl}}/documents
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+
+GET {{apiUrl}}/documents
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json

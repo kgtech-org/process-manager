@@ -1,0 +1,39 @@
+# Health Check and System Status Tests
+
+@baseUrl = http://localhost:8080
+
+### Basic Health Check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+### Health Check with Database Status
+# This should show database connectivity status
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+### Test CORS Headers
+OPTIONS {{baseUrl}}/health
+Origin: http://localhost:3000
+Access-Control-Request-Method: GET
+Access-Control-Request-Headers: Content-Type
+
+### Health Check from Different Origin (CORS test)
+GET {{baseUrl}}/health
+Origin: http://localhost:3000
+Content-Type: application/json
+
+### Invalid Endpoint (404 test)
+GET {{baseUrl}}/invalid-endpoint
+Content-Type: application/json
+
+### Method Not Allowed Test
+POST {{baseUrl}}/health
+Content-Type: application/json
+
+### Test Server Response Time
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+### Health Check with Query Parameters (should be ignored)
+GET {{baseUrl}}/health?test=123&foo=bar
+Content-Type: application/json
