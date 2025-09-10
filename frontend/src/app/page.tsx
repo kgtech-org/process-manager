@@ -1,15 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function HomePage() {
+  const { isAuthenticated, user, logout } = useAuth();
+  const router = useRouter();
   const [apiStatus, setApiStatus] = useState<'loading' | 'connected' | 'error'>('loading');
 
   useEffect(() => {
     // Test API connection
     const testApiConnection = async () => {
       try {
-        const response = await fetch('/health');
+        const response = await fetch('http://localhost:8080/health');
         if (response.ok) {
           setApiStatus('connected');
         } else {
@@ -23,6 +28,11 @@ export default function HomePage() {
     testApiConnection();
   }, []);
 
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-4xl mx-auto text-center">
@@ -34,6 +44,37 @@ export default function HomePage() {
           <p className="text-xl text-gray-600 mb-8">
             Digital process management platform for telecommunications companies
           </p>
+          
+          {/* Authentication Status */}
+          {isAuthenticated && user ? (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <p className="text-green-800 mb-2">
+                Welcome back, <strong>{user.name}</strong>!
+              </p>
+              <div className="flex justify-center space-x-3">
+                <Button onClick={() => router.push('/profile')} variant="outline">
+                  Profile Settings
+                </Button>
+                <Button onClick={handleLogout} variant="destructive">
+                  Sign Out
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-blue-800 mb-2">
+                Get started with Process Manager
+              </p>
+              <div className="flex justify-center space-x-3">
+                <Button onClick={() => router.push('/login')} variant="default">
+                  Sign In
+                </Button>
+                <Button onClick={() => router.push('/register')} variant="outline">
+                  Create Account
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="flex justify-center">
             <div className="bg-blue-50 border border-blue-200 rounded-lg px-6 py-4">
               <div className="flex items-center space-x-2">
