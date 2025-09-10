@@ -15,6 +15,28 @@ type LoginRequest struct {
 	Email string `json:"email" validate:"required,email"`
 }
 
+// ============================================
+// Registration Request Models (3-Step Process)
+// ============================================
+
+// Step1RegistrationRequest represents step 1 of registration (email verification)
+type Step1RegistrationRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+// Step2RegistrationRequest represents step 2 of registration (OTP verification)
+type Step2RegistrationRequest struct {
+	OTP string `json:"otp" validate:"required,len=6"`
+}
+
+// Step3RegistrationRequest represents step 3 of registration (complete profile)
+type Step3RegistrationRequest struct {
+	Name          string `json:"name" validate:"required,min=2,max=100"`
+	Phone         string `json:"phone,omitempty"`
+	DepartmentID  string `json:"department_id" validate:"required"`
+	JobPositionID string `json:"job_position_id" validate:"required"`
+}
+
 // VerifyOTPRequest represents the request payload for OTP verification
 type VerifyOTPRequest struct {
 	OTP string `json:"otp" validate:"required,len=6"`
@@ -53,6 +75,30 @@ type OTPResponse struct {
 	TemporaryToken   string `json:"temporary_token"`
 	ExpiresInMinutes int    `json:"expires_in_minutes"`
 	OTP              string `json:"otp,omitempty"` // Only in development mode
+}
+
+// RegistrationStep1Response represents the response for step 1 of registration
+type RegistrationStep1Response struct {
+	TemporaryToken   string `json:"temporary_token"`
+	ExpiresInMinutes int    `json:"expires_in_minutes"`
+	OTP              string `json:"otp,omitempty"` // Only in development mode
+	NextStep         int    `json:"next_step"`
+}
+
+// RegistrationStep2Response represents the response for step 2 of registration
+type RegistrationStep2Response struct {
+	RegistrationToken string `json:"registration_token"`
+	ExpiresInMinutes  int    `json:"expires_in_minutes"`
+	NextStep          int    `json:"next_step"`
+}
+
+// RegistrationStep3Response represents the response for step 3 of registration (completion)
+type RegistrationStep3Response struct {
+	UserID   string `json:"user_id"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Status   string `json:"status"`
+	Message  string `json:"message"`
 }
 
 // ============================================

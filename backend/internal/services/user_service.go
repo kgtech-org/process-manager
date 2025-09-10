@@ -740,6 +740,53 @@ func (s *UserService) EnsureDefaultAdmin(ctx context.Context) error {
 	return nil
 }
 
+// CreateUserFromRegistration creates a user from the 3-step registration process
+func (s *UserService) CreateUserFromRegistration(ctx context.Context, email string, req *models.Step3RegistrationRequest) (*models.User, error) {
+	// Convert string IDs to ObjectIDs
+	departmentID, err := primitive.ObjectIDFromHex(req.DepartmentID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid department ID: %w", err)
+	}
+	
+	jobPositionID, err := primitive.ObjectIDFromHex(req.JobPositionID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid job position ID: %w", err)
+	}
+
+	// Create new user
+	now := time.Now()
+	user := &models.User{
+		Email:         email,
+		Name:          req.Name,
+		Phone:         req.Phone,
+		DepartmentID:  &departmentID,
+		JobPositionID: &jobPositionID,
+		Role:          models.RoleUser, // Default role for new registrations
+		Status:        models.StatusPending,
+		Active:        false,
+		Verified:      true, // Email was verified in step 2
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	// Validate user
+	if !user.ValidateEmail() {
+		return nil, models.ErrInvalidEmail
+	}
+
+	// Insert user into database
+	result, err := s.userCollection.InsertOne(ctx, user)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, models.ErrEmailExists
+		}
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	user.ID = result.InsertedID.(primitive.ObjectID)
+	return user, nil
+}
+
 // getEnvOrDefault returns environment variable value or default if not set
 func getEnvOrDefault(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {

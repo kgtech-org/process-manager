@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/kodesonik/process-manager/internal/handlers"
 	"github.com/kodesonik/process-manager/internal/middleware"
@@ -13,28 +11,20 @@ func SetupAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandler,
 	auth := router.Group("/auth")
 	{
 		// Public routes
-		auth.POST("/register", authHandler.Register)
+		// 3-Step Registration Process
+		auth.POST("/register/step1", authHandler.RegisterStep1)        // Send email, get OTP
+		auth.POST("/register/step2", authHandler.RegisterStep2)        // Verify OTP, get registration token
+		auth.POST("/register/step3", authHandler.RegisterStep3)        // Complete registration with profile info
+		auth.POST("/register", authHandler.Register)                   // Deprecated - use 3-step process
+		
+		// Authentication
 		auth.POST("/request-otp", authHandler.RequestOTP)
 		auth.POST("/verify-otp", authHandler.VerifyOTP)
 		auth.POST("/refresh", authHandler.RefreshToken)
 		auth.POST("/verify-email", authHandler.VerifyEmail)
 
 		// Protected routes
-		auth.GET("/me", authMiddleware.RequireAuth(), func(c *gin.Context) {
-			user, exists := middleware.GetCurrentUser(c)
-			if !exists {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"success": false,
-					"error":   "User not found in context",
-				})
-				return
-			}
-
-			c.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"user":    user.ToResponse(),
-			})
-		})
+		auth.GET("/me", authMiddleware.RequireAuth(), authHandler.GetMe)
 		auth.POST("/logout", authMiddleware.RequireAuth(), authHandler.Logout)
 		auth.PUT("/profile", authMiddleware.RequireAuth(), authHandler.UpdateProfile)
 		auth.POST("/revoke-all-tokens", authMiddleware.RequireAuth(), authHandler.RevokeAllTokens)

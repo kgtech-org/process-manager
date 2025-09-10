@@ -135,6 +135,22 @@ func (e *EmailService) SendOTPEmail(userEmail, userName, otp string) error {
 	return e.sendEmail(userEmail, userName, template, data)
 }
 
+// SendRegistrationOTPEmail sends OTP email specifically for registration
+func (e *EmailService) SendRegistrationOTPEmail(userEmail, otp string) error {
+	data := EmailData{
+		UserEmail:    userEmail,
+		AppName:      "Process Manager",
+		AppURL:       e.appURL,
+		OTP:          otp,
+		OTPExpiry:    "5 minutes",
+		SupportEmail: "support@process-manager.com",
+		CompanyName:  "Process Manager Team",
+	}
+
+	template := e.getRegistrationOTPTemplate()
+	return e.sendEmail(userEmail, "", template, data)
+}
+
 // SendRegistrationPendingEmail sends confirmation that registration is pending admin approval
 func (e *EmailService) SendRegistrationPendingEmail(userEmail, userName string) error {
 	data := EmailData{
@@ -729,6 +745,101 @@ Security Guidelines:
 If you're having trouble signing in, you can request a new code or contact our support team.
 
 Go to {{.AppName}}: {{.AppURL}}
+
+Best regards,
+{{.CompanyName}}
+
+---
+This email was sent to {{.UserEmail}}. For support, contact us at {{.SupportEmail}}.`,
+	}
+}
+
+// getRegistrationOTPTemplate returns the registration OTP email template
+func (e *EmailService) getRegistrationOTPTemplate() EmailTemplate {
+	return EmailTemplate{
+		Subject: "Complete Your Registration - Verification Code",
+		HTMLBody: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Verification Code</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2c3e50; margin: 0;">{{.AppName}}</h1>
+            <h2 style="color: #27ae60; margin: 10px 0;">Complete Your Registration</h2>
+        </div>
+        
+        <p>Hello,</p>
+        
+        <p>Thank you for starting your registration with {{.AppName}}! To complete the process, please use the following verification code:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <div style="background-color: #27ae60; color: white; padding: 20px; border-radius: 10px; font-size: 32px; font-weight: bold; letter-spacing: 5px; display: inline-block;">
+                {{.OTP}}
+            </div>
+        </div>
+        
+        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 12px; border-radius: 4px; margin: 20px 0;">
+            <strong>⚠️ Important:</strong> This verification code will expire in {{.OTPExpiry}} for security reasons.
+        </div>
+        
+        <p><strong>Next Steps:</strong></p>
+        <ol>
+            <li>Enter this verification code on the registration page</li>
+            <li>Complete your profile information</li>
+            <li>Wait for admin approval of your account</li>
+        </ol>
+        
+        <p><strong>Security Guidelines:</strong></p>
+        <ul>
+            <li>Never share this code with anyone</li>
+            <li>{{.AppName}} will never ask for your code via phone or email</li>
+            <li>This code can only be used once</li>
+            <li>If you didn't request this registration, please ignore this email</li>
+        </ul>
+        
+        <p>If you're having trouble with the registration process, please contact our support team.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{.AppURL}}" style="background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Continue Registration</a>
+        </div>
+        
+        <p>Best regards,<br>{{.CompanyName}}</p>
+        
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        <p style="font-size: 12px; color: #666; text-align: center;">
+            This email was sent to {{.UserEmail}}. For support, contact us at <a href="mailto:{{.SupportEmail}}">{{.SupportEmail}}</a>.
+        </p>
+    </div>
+</body>
+</html>`,
+		TextBody: `Complete Your Registration - Verification Code
+
+Hello,
+
+Thank you for starting your registration with {{.AppName}}! To complete the process, please use the following verification code:
+
+VERIFICATION CODE: {{.OTP}}
+
+IMPORTANT: This verification code will expire in {{.OTPExpiry}} for security reasons.
+
+Next Steps:
+1. Enter this verification code on the registration page
+2. Complete your profile information
+3. Wait for admin approval of your account
+
+Security Guidelines:
+- Never share this code with anyone
+- {{.AppName}} will never ask for your code via phone or email
+- This code can only be used once
+- If you didn't request this registration, please ignore this email
+
+If you're having trouble with the registration process, please contact our support team.
+
+Continue Registration: {{.AppURL}}
 
 Best regards,
 {{.CompanyName}}

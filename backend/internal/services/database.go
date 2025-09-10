@@ -178,6 +178,62 @@ func (ds *DatabaseService) createIndexes(ctx context.Context) error {
 		return err
 	}
 
+	// Department collection indexes
+	departmentCollection := ds.Database.Collection("departments")
+
+	// Unique index on code
+	deptCodeIndex := mongo.IndexModel{
+		Keys:    bson.D{{Key: "code", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	}
+
+	// Index on active status
+	deptActiveIndex := mongo.IndexModel{
+		Keys: bson.D{{Key: "active", Value: 1}},
+	}
+
+	// Index on parent_id for hierarchical queries
+	deptParentIndex := mongo.IndexModel{
+		Keys: bson.D{{Key: "parent_id", Value: 1}},
+	}
+
+	departmentIndexes := []mongo.IndexModel{deptCodeIndex, deptActiveIndex, deptParentIndex}
+
+	_, err = departmentCollection.Indexes().CreateMany(ctx, departmentIndexes)
+	if err != nil {
+		log.Printf("Failed to create department indexes: %v", err)
+		return err
+	}
+
+	// Job Position collection indexes
+	jobPositionCollection := ds.Database.Collection("job_positions")
+
+	// Index on department_id for filtering by department
+	jobDeptIndex := mongo.IndexModel{
+		Keys: bson.D{{Key: "department_id", Value: 1}},
+	}
+
+	// Index on active status
+	jobActiveIndex := mongo.IndexModel{
+		Keys: bson.D{{Key: "active", Value: 1}},
+	}
+
+	// Compound index on department and active status
+	jobDeptActiveIndex := mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "department_id", Value: 1},
+			{Key: "active", Value: 1},
+		},
+	}
+
+	jobPositionIndexes := []mongo.IndexModel{jobDeptIndex, jobActiveIndex, jobDeptActiveIndex}
+
+	_, err = jobPositionCollection.Indexes().CreateMany(ctx, jobPositionIndexes)
+	if err != nil {
+		log.Printf("Failed to create job position indexes: %v", err)
+		return err
+	}
+
 	log.Printf("✅ Database indexes created successfully")
 	return nil
 }

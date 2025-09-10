@@ -1,91 +1,60 @@
 # Process Manager Backend - Authentication API Tests
 # Use with REST Client extension in VS Code or any REST client
-# Updated for OTP-based authentication and user validation workflow
 
 @baseUrl = http://localhost:8080
 @apiUrl = {{baseUrl}}/api
 
 # Variables (will be set from responses)
-@accessToken = 
-@refreshToken = 
-@verificationToken = 
-@userId = 
+@accessToken =  {{verifyOTP.response.body.data.access_token}}
+@refreshToken =  {{verifyOTP.response.body.data.refresh_token}}
 
 ### Health Check
 GET {{baseUrl}}/health
 Content-Type: application/json
 
-### Authentication Status (Legacy endpoint)
-GET {{apiUrl}}/auth/status
-Content-Type: application/json
-
 ###
 # =================================
-# USER REGISTRATION WORKFLOW
+# 3-STEP REGISTRATION WORKFLOW
 # =================================
 
-### Register new user (User Registration - Pending Validation)
-# Note: Users register and get pending status, requiring admin validation
-POST {{apiUrl}}/auth/register
+### Registration Step 1: Send email, get OTP
+# @name regStep1
+POST {{apiUrl}}/auth/register/step1
 Content-Type: application/json
 
 {
-  "email": "john.doe@togocom.tg",
+  "email": "john.doe@togocom.tg"
+}
+
+# Extract temporary token from response:
+# @regTempToken = {{regStep1.response.body.data.temporary_token}}
+# @regOtp = {{regStep1.response.body.data.otp}}
+
+### Registration Step 2: Verify OTP, get registration token
+# Use the temporary token from Step 1 in the header
+# @name regStep2
+POST {{apiUrl}}/auth/register/step2
+Content-Type: application/json
+X-Temp-Token: {{regStep1.response.body.data.temporary_token}}
+
+{
+  "otp": "{{regStep1.response.body.data.otp}}"
+}
+
+# Extract registration token from response:
+# @regToken = {{regStep2.response.body.data.registration_token}}
+
+### Registration Step 3: Complete registration with profile info
+# Get department and job position IDs first, then use them below
+POST {{apiUrl}}/auth/register/step3
+Content-Type: application/json
+X-Registration-Token: {{regStep2.response.body.data.registration_token}}
+
+{
   "name": "John Doe",
   "phone": "+228 90 12 34 56",
-  "department": "Network Operations",
-  "position": "Network Engineer"
-}
-
-### Register another user for testing
-POST {{apiUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "jane.smith@togocom.tg",
-  "name": "Jane Smith",
-  "phone": "+228 90 12 34 57",
-  "department": "Customer Service", 
-  "position": "Support Agent"
-}
-
-### Register user for rejection testing
-POST {{apiUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "test.reject@togocom.tg",
-  "name": "Test Reject User",
-  "phone": "+228 90 12 34 58",
-  "department": "Test",
-  "position": "Test Position"
-}
-
-### Register with validation error (missing required fields)
-POST {{apiUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "jane.smith@togocom.tg"
-}
-
-### Register with invalid email format
-POST {{apiUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "invalid-email",
-  "name": "Invalid Email User"
-}
-
-### Register with duplicate email
-POST {{apiUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg",
-  "name": "Another John",
-  "phone": "+228 90 12 34 99"
+  "department_id": "68c11b595a8696a2015f217c",
+  "job_position_id": "68c11b595a8696a2015f2182"
 }
 
 ###
@@ -93,9 +62,7 @@ Content-Type: application/json
 # OTP AUTHENTICATION FLOW
 # =========================
 
-### Request OTP for active user
-# Note: User must be approved by admin first
-# Response will include temporary_token to use in verify-otp
+### Request OTP for login
 # @name requestOTP
 POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
@@ -104,75 +71,18 @@ Content-Type: application/json
   "email": "admin@process-manager.local"
 }
 
-# Extract temporary token from response (for VS Code REST Client):
+# Extract temporary token from response:
 # @tempToken = {{requestOTP.response.body.data.temporary_token}}
 # @otpCode = {{requestOTP.response.body.data.otp}}
 
-### Request OTP for pending user (should fail)
-POST {{apiUrl}}/auth/request-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg"
-}
-
-### Request OTP for non-existent user (secure response)
-POST {{apiUrl}}/auth/request-otp
-Content-Type: application/json
-
-{
-  "email": "jane.smith@togocom.tg"
-}
-
 ### Verify OTP and login
-# Note: Replace OTP and temporary token with actual values from request-otp response
-# IMPORTANT: No email needed in body, only OTP. Email is retrieved from temporary token.
+# @name verifyOTP
 POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
-X-Temp-Token: C3jSb0ve0pBfufc-m1xjN6PysNcbQFanhXRQF08LlRI=
+X-Temp-Token: {{requestOTP.response.body.data.temporary_token}}
 
 {
-  "otp": "624557"
-}
-
-### Verify OTP with wrong code
-POST {{apiUrl}}/auth/verify-otp
-Content-Type: application/json
-X-Temp-Token: REPLACE_WITH_TEMPORARY_TOKEN
-
-{
-  "otp": "000000"
-}
-
-### Verify OTP without temporary token (should fail)
-POST {{apiUrl}}/auth/verify-otp
-Content-Type: application/json
-
-{
-  "otp": "123456"
-}
-
-### Verify OTP with invalid temporary token
-POST {{apiUrl}}/auth/verify-otp
-Content-Type: application/json
-X-Temp-Token: invalid_token_12345
-
-{
-  "otp": "123456"
-}
-
-###
-# =========================
-# DEVELOPMENT MODE TESTING
-# =========================
-
-### Request OTP in development mode (returns OTP in response)
-# Note: Only works when GIN_MODE=debug or ENVIRONMENT=development
-POST {{apiUrl}}/auth/request-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg"
+  "otp": "{{requestOTP.response.body.data.otp}}"
 }
 
 ###
@@ -180,23 +90,19 @@ Content-Type: application/json
 # PROTECTED ENDPOINTS
 # =========================
 
-### Get current user profile (requires authentication)
-# Note: Replace YOUR_ACCESS_TOKEN with actual token from login response
+### Get current user profile
 GET {{apiUrl}}/auth/me
-Authorization: Bearer YOUR_ACCESS_TOKEN
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
-### Update user profile (requires authentication)
+### Update user profile
 PUT {{apiUrl}}/auth/profile
-Authorization: Bearer YOUR_ACCESS_TOKEN
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
   "name": "John Doe Updated",
-  "phone": "+228 90 12 34 99",
-  "department": "Senior Network Operations",
-  "position": "Senior Network Engineer",
-  "avatar": "https://example.com/avatar.jpg"
+  "phone": "+228 90 12 34 99"
 }
 
 ###
@@ -209,21 +115,21 @@ POST {{apiUrl}}/auth/refresh
 Content-Type: application/json
 
 {
-  "refresh_token": "YOUR_REFRESH_TOKEN"
+  "refresh_token": "{{refreshToken}}"
 }
 
-### Revoke all user tokens (requires authentication)
+### Revoke all user tokens
 POST {{apiUrl}}/auth/revoke-all-tokens
-Authorization: Bearer YOUR_ACCESS_TOKEN
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
-### Logout (requires authentication)
+### Logout
 POST {{apiUrl}}/auth/logout
-Authorization: Bearer YOUR_ACCESS_TOKEN
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "refresh_token": "YOUR_REFRESH_TOKEN"
+  "refresh_token": "{{refreshToken}}"
 }
 
 ###
@@ -231,7 +137,7 @@ Content-Type: application/json
 # EMAIL VERIFICATION
 # =========================
 
-### Verify email (requires token from email)
+### Verify email
 POST {{apiUrl}}/auth/verify-email
 Content-Type: application/json
 
@@ -239,176 +145,66 @@ Content-Type: application/json
   "token": "your-verification-token-here"
 }
 
-### Resend verification email (requires authentication)
+### Resend verification email
 POST {{apiUrl}}/auth/resend-verification
-Authorization: Bearer YOUR_ACCESS_TOKEN
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 ###
 # =========================
-# ERROR SCENARIOS
+# HELPER ENDPOINTS
 # =========================
 
-### Request OTP for rejected user
-POST {{apiUrl}}/auth/request-otp
+### Get departments (for registration step 3)
+GET {{baseUrl}}/api/departments
 Content-Type: application/json
 
-{
-  "email": "test.reject@togocom.tg"
-}
-
-### Request OTP for inactive user
-POST {{apiUrl}}/auth/request-otp
+### Get job positions (for registration step 3)
+GET {{baseUrl}}/api/job-positions
 Content-Type: application/json
-
-{
-  "email": "inactive.user@togocom.tg"
-}
-
-### Access protected endpoint without token
-GET {{apiUrl}}/auth/me
-Content-Type: application/json
-
-### Access protected endpoint with invalid token
-GET {{apiUrl}}/auth/me
-Authorization: Bearer invalid.jwt.token
-Content-Type: application/json
-
-### Access protected endpoint with expired token
-GET {{apiUrl}}/auth/me
-Authorization: Bearer EXPIRED_ACCESS_TOKEN
-Content-Type: application/json
-
-### OTP validation errors
-POST {{apiUrl}}/auth/verify-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg",
-  "otp": "12345"
-}
-
-### Too many OTP attempts
-POST {{apiUrl}}/auth/verify-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg",
-  "otp": "wrong1"
-}
-
-###
-POST {{apiUrl}}/auth/verify-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg",
-  "otp": "wrong2"
-}
-
-###
-POST {{apiUrl}}/auth/verify-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg",
-  "otp": "wrong3"
-}
-
-###
-POST {{apiUrl}}/auth/verify-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg",
-  "otp": "wrong4"
-}
 
 ###
 # =========================
-# MALFORMED REQUESTS
+# COMPLETE WORKFLOW EXAMPLE
 # =========================
 
-### Malformed JSON request
-POST {{apiUrl}}/auth/request-otp
+# Complete 3-Step Registration and Login Flow:
+
+# 1. Registration Step 1: Send email
+# @name step1
+POST {{apiUrl}}/auth/register/step1
 Content-Type: application/json
 
 {
-  "email": "john.doe@togocom.tg",
-  "invalid_json": 
+  "email": "workflow.test@togocom.tg"
 }
 
-### Missing required fields
-POST {{apiUrl}}/auth/verify-otp
+# 2. Registration Step 2: Verify OTP
+# @name step2
+POST {{apiUrl}}/auth/register/step2
 Content-Type: application/json
+X-Temp-Token: {{step1.response.body.data.temporary_token}}
 
 {
-  "email": "john.doe@togocom.tg"
+  "otp": "{{step1.response.body.data.otp}}"
 }
 
-### Invalid email format
-POST {{apiUrl}}/auth/request-otp
+# 3. Registration Step 3: Complete profile
+POST {{apiUrl}}/auth/register/step3
 Content-Type: application/json
+X-Registration-Token: {{step2.response.body.data.registration_token}}
 
 {
-  "email": "not-an-email"
-}
-
-###
-# =========================
-# SECURITY TESTS
-# =========================
-
-### SQL Injection attempt in email field
-POST {{apiUrl}}/auth/request-otp
-Content-Type: application/json
-
-{
-  "email": "admin@togocom.tg'; DROP TABLE users; --"
-}
-
-### XSS attempt in name field during registration
-POST {{apiUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "xss@test.com",
-  "name": "<script>alert('XSS')</script>",
-  "phone": "+228 90 12 34 00"
-}
-
-### Very long OTP (buffer overflow test)
-POST {{apiUrl}}/auth/verify-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg",
-  "otp": "1".repeat(1000)
-}
-
-###
-# =========================
-# TESTING WORKFLOW EXAMPLE
-# =========================
-
-# Complete User Registration and Login Flow:
-
-# 1. Register a new user
-POST {{apiUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "workflow.test@togocom.tg",
   "name": "Workflow Test User",
   "phone": "+228 90 12 34 00",
-  "department": "Testing",
-  "position": "QA Engineer"
+  "department_id": "68c11b595a8696a2015f217c",
+  "job_position_id": "68c11b595a8696a2015f2182"
 }
 
-# 2. Admin validates the user (see users.rest for admin operations)
+# 4. Admin validates the user (status: pending → active)
 
-# 3. Request OTP for login
-# @name workflowRequestOtp
+# 5. Request OTP for login
+# @name loginOtp
 POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
@@ -416,46 +212,32 @@ Content-Type: application/json
   "email": "workflow.test@togocom.tg"
 }
 
-# Extract temporary token and OTP (for VS Code REST Client):
-# @workflowTempToken = {{workflowRequestOtp.response.body.data.temporary_token}}
-# @workflowOtp = {{workflowRequestOtp.response.body.data.otp}}
-
-# 4. Verify OTP and login using temporary token
-# @name workflowLogin
+# 6. Verify OTP and login
+# @name login
 POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
-X-Temp-Token: {{workflowTempToken}}
+X-Temp-Token: {{loginOtp.response.body.data.temporary_token}}
 
 {
-  "otp": "{{workflowOtp}}"
+  "otp": "{{loginOtp.response.body.data.otp}}"
 }
 
-# 5. Extract tokens from login response and test protected endpoints
-# Note: In VS Code REST Client, you can capture response values:
+# Extract tokens from login response:
 # @accessToken = {{login.response.body.data.access_token}}
 # @refreshToken = {{login.response.body.data.refresh_token}}
 
-# 6. Test protected endpoint with captured token
+# 7. Test protected endpoint
 GET {{apiUrl}}/auth/me
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
-# 7. Update profile
+# 8. Update profile
 PUT {{apiUrl}}/auth/profile
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "name": "Updated Workflow Test User",
-  "department": "Advanced Testing"
-}
-
-# 8. Test token refresh
-POST {{apiUrl}}/auth/refresh
-Content-Type: application/json
-
-{
-  "refresh_token": "{{refreshToken}}"
+  "name": "Updated Workflow Test User"
 }
 
 # 9. Logout
@@ -466,73 +248,3 @@ Content-Type: application/json
 {
   "refresh_token": "{{refreshToken}}"
 }
-
-###
-# =========================
-# PERFORMANCE TESTS
-# =========================
-
-### Multiple rapid OTP requests (rate limiting test)
-POST {{apiUrl}}/auth/request-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg"
-}
-
-###
-POST {{apiUrl}}/auth/request-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg"
-}
-
-###
-POST {{apiUrl}}/auth/request-otp
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg"
-}
-
-###
-# =========================
-# DOCUMENTATION
-# =========================
-
-# Testing Instructions:
-# 1. Start the backend server: `go run cmd/main.go`
-# 2. Ensure MongoDB and Redis are running: `docker-compose up -d`
-# 3. Use VS Code with REST Client extension or any HTTP client
-# 4. First create an admin user manually in the database or via seeding
-# 5. Test user registration flow (users get pending status)
-# 6. Test admin validation workflow (see users.rest)
-# 7. Test OTP authentication for approved users
-# 8. Test various error scenarios and edge cases
-# 9. Verify email notifications are sent (check email service logs)
-# 10. Test development mode OTP responses
-
-# Expected Status Codes:
-# - 200: Successful operations (OTP sent, profile updated, etc.)
-# - 201: Successful user registration
-# - 400: Bad request (validation errors, malformed JSON)
-# - 401: Unauthorized (invalid OTP, expired token)
-# - 403: Forbidden (pending/rejected/inactive user, insufficient permissions)
-# - 404: Not found (invalid endpoints)
-# - 409: Conflict (email already exists)
-# - 429: Too many requests (if rate limiting is implemented)
-# - 500: Internal server error (database/Redis issues, etc.)
-
-# User Status Flow:
-# 1. User registers → Status: PENDING
-# 2. Admin approves → Status: ACTIVE (can login)
-# 3. Admin rejects → Status: REJECTED (cannot login)
-# 4. Admin deactivates → Status: INACTIVE (cannot login)
-
-# OTP Workflow:
-# 1. User requests OTP → Returns temporary token + Email sent with 6-digit code (5min expiry)
-# 2. User sends OTP with temporary token in header → Receives JWT tokens for authentication
-# 3. Temporary token identifies the user (no email needed in verify-otp body)
-# 4. Failed attempts are tracked (max 3 attempts)
-# 5. Development mode returns OTP in API response for testing

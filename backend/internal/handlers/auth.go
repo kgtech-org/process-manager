@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"os"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/kodesonik/process-manager/internal/middleware"
 	"github.com/kodesonik/process-manager/internal/models"
 	"github.com/kodesonik/process-manager/internal/services"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // AuthHandler handles authentication-related HTTP requests
@@ -125,17 +127,25 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	// Generate tokens
-	tokenPair, err := h.jwtService.GenerateTokenPair(user)
+	// Generate access token
+	accessToken, err := h.jwtService.GenerateAccessToken(user)
 	if err != nil {
 		helpers.SendInternalError(c, err)
 		return
 	}
 
-	// Store refresh token in database
-	_, err = h.userService.CreateRefreshToken(ctx, user.ID)
+	// Create refresh token in Redis
+	refreshToken, err := h.otpService.CreateRefreshToken(ctx, user.ID.Hex())
 	if err != nil {
-		// Log error but continue
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Create token pair using Redis refresh token
+	tokenPair := &models.TokenPair{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresAt:    time.Now().Add(15 * time.Minute), // Access token expiry
 	}
 
 	// Update last login
@@ -152,11 +162,11 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 func (h *AuthHandler) Logout(c *gin.Context) {
 	var req models.LogoutRequest
 	if err := c.ShouldBindJSON(&req); err == nil && req.RefreshToken != "" {
-		// Revoke the specific refresh token
+		// Revoke the specific refresh token in Redis
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := h.userService.RevokeRefreshToken(ctx, req.RefreshToken); err != nil {
+		if err := h.otpService.RevokeRefreshToken(ctx, req.RefreshToken); err != nil {
 			// Log error but continue with logout
 		}
 	}
@@ -176,35 +186,52 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	// Validate refresh token in database
-	storedToken, err := h.userService.ValidateRefreshToken(ctx, req.RefreshToken)
+	// Validate refresh token in Redis
+	userIDStr, err := h.otpService.ValidateRefreshToken(ctx, req.RefreshToken)
 	if err != nil {
 		helpers.SendError(c, err)
+		return
+	}
+
+	// Convert userID string to ObjectID
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		helpers.SendError(c, models.ErrInvalidToken)
 		return
 	}
 
 	// Get user
-	user, err := h.userService.GetUserByID(ctx, storedToken.UserID)
+	user, err := h.userService.GetUserByID(ctx, userID)
 	if err != nil {
 		helpers.SendError(c, err)
 		return
 	}
 
-	// Generate new token pair
-	tokenPair, err := h.jwtService.GenerateTokenPair(user)
+	// Generate new access token
+	accessToken, err := h.jwtService.GenerateAccessToken(user)
 	if err != nil {
 		helpers.SendInternalError(c, err)
 		return
 	}
 
-	// Revoke old refresh token and create new one
-	if err := h.userService.RevokeRefreshToken(ctx, req.RefreshToken); err != nil {
-		// Log error but continue
+	// Revoke old refresh token in Redis
+	if err := h.otpService.RevokeRefreshToken(ctx, req.RefreshToken); err != nil {
+		helpers.SendInternalError(c, err)
+		return
 	}
 
-	_, err = h.userService.CreateRefreshToken(ctx, user.ID)
+	// Create new refresh token in Redis
+	refreshToken, err := h.otpService.CreateRefreshToken(ctx, user.ID.Hex())
 	if err != nil {
-		// Log error but continue
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Create token pair using Redis refresh token
+	tokenPair := &models.TokenPair{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresAt:    time.Now().Add(15 * time.Minute), // Access token expiry
 	}
 
 	helpers.SendLoginResponse(c, user, tokenPair)
@@ -315,7 +342,7 @@ func (h *AuthHandler) RevokeAllTokens(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	err := h.userService.RevokeAllUserRefreshTokens(ctx, userID)
+	err := h.otpService.RevokeAllUserRefreshTokens(ctx, userID.Hex())
 	if err != nil {
 		helpers.SendInternalError(c, err)
 		return
@@ -324,10 +351,14 @@ func (h *AuthHandler) RevokeAllTokens(c *gin.Context) {
 	helpers.SendSuccess(c, "All tokens revoked successfully. Please log in again on all devices.", nil)
 }
 
-// Register handles user registration
-// POST /api/auth/register
-func (h *AuthHandler) Register(c *gin.Context) {
-	var req models.RegisterUserRequest
+// ============================================
+// 3-Step Registration Process
+// ============================================
+
+// RegisterStep1 handles step 1 of registration (email verification)
+// POST /api/auth/register/step1
+func (h *AuthHandler) RegisterStep1(c *gin.Context) {
+	var req models.Step1RegistrationRequest
 	if err := helpers.BindAndValidate(c, &req); err != nil {
 		helpers.SendValidationErrors(c, err)
 		return
@@ -343,23 +374,155 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	// Create user in database using RegisterUser method
-	createdUser, err := h.userService.RegisterUser(ctx, &req)
+	// Generate and store OTP
+	otp, err := h.otpService.GenerateOTP(ctx, req.Email)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Generate temporary token for OTP verification
+	tempToken, err := h.otpService.GenerateTemporaryToken(ctx, req.Email)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Send OTP via email
+	if err := h.emailService.SendRegistrationOTPEmail(req.Email, otp); err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Check if development mode
+	isDevelopment := os.Getenv("GIN_MODE") == "debug" || os.Getenv("DEVELOPMENT_MODE") == "true"
+
+	response := models.RegistrationStep1Response{
+		TemporaryToken:   tempToken,
+		ExpiresInMinutes: 5,
+		NextStep:         2,
+	}
+
+	// Include OTP in response for development mode
+	if isDevelopment {
+		response.OTP = otp
+	}
+
+	helpers.SendSuccess(c, "OTP sent to your email address. Please verify to continue registration.", response)
+}
+
+// RegisterStep2 handles step 2 of registration (OTP verification)
+// POST /api/auth/register/step2
+func (h *AuthHandler) RegisterStep2(c *gin.Context) {
+	// Get temporary token from header
+	tempToken := c.GetHeader("X-Temp-Token")
+	if tempToken == "" {
+		helpers.SendError(c, models.ErrInvalidToken)
+		return
+	}
+
+	var req models.Step2RegistrationRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Get email from temporary token
+	email, err := h.otpService.GetEmailFromTemporaryToken(ctx, tempToken)
 	if err != nil {
 		helpers.SendError(c, err)
 		return
 	}
 
-	// Send registration pending email
+	// Verify OTP
+	if err := h.otpService.VerifyOTP(ctx, email, req.OTP); err != nil {
+		helpers.SendError(c, err)
+		return
+	}
+
+	// Delete temporary token after successful verification
+	h.otpService.DeleteTemporaryToken(ctx, tempToken)
+
+	// Generate registration token for step 3
+	registrationToken, err := h.otpService.GenerateRegistrationToken(ctx, email)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	response := models.RegistrationStep2Response{
+		RegistrationToken: registrationToken,
+		ExpiresInMinutes:  30,
+		NextStep:          3,
+	}
+
+	helpers.SendSuccess(c, "Email verified successfully. Please complete your registration.", response)
+}
+
+// RegisterStep3 handles step 3 of registration (complete profile)
+// POST /api/auth/register/step3
+func (h *AuthHandler) RegisterStep3(c *gin.Context) {
+	// Get registration token from header
+	regToken := c.GetHeader("X-Registration-Token")
+	if regToken == "" {
+		helpers.SendError(c, models.ErrInvalidToken)
+		return
+	}
+
+	var req models.Step3RegistrationRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Get email from registration token
+	email, err := h.otpService.GetEmailFromRegistrationToken(ctx, regToken)
+	if err != nil {
+		helpers.SendError(c, err)
+		return
+	}
+
+	// Check if user already exists (double-check)
+	existingUser, err := h.userService.GetUserByEmail(ctx, email)
+	if err == nil && existingUser != nil {
+		helpers.SendError(c, models.ErrEmailExists)
+		return
+	}
+
+	// Create user in database
+	createdUser, err := h.userService.CreateUserFromRegistration(ctx, email, &req)
+	if err != nil {
+		helpers.SendError(c, err)
+		return
+	}
+
+	// Delete registration token after successful registration
+	h.otpService.DeleteRegistrationToken(ctx, regToken)
+
+	// Send registration pending email to admins
 	if err := h.emailService.SendRegistrationPendingEmail(createdUser.Email, createdUser.Name); err != nil {
 		// Log error but don't fail the registration
 	}
 
-	responseData := map[string]interface{}{
-		"user_id": createdUser.ID,
-		"email":   createdUser.Email,
-		"status":  createdUser.Status,
+	response := models.RegistrationStep3Response{
+		UserID:  createdUser.ID.Hex(),
+		Email:   createdUser.Email,
+		Name:    createdUser.Name,
+		Status:  string(createdUser.Status),
+		Message: "Registration completed successfully. Your account is pending admin validation.",
 	}
 
-	helpers.SendCreated(c, "Registration successful. Your account is pending admin validation.", responseData)
+	helpers.SendCreated(c, "Registration successful. Your account is pending admin validation.", response)
+}
+
+// Register handles legacy user registration (deprecated - use 3-step process)
+// POST /api/auth/register
+func (h *AuthHandler) Register(c *gin.Context) {
+	helpers.SendError(c, errors.New("this registration endpoint is deprecated. Please use the new 3-step registration process starting with /api/auth/register/step1"))
 }

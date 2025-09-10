@@ -43,6 +43,9 @@ type User struct {
 	Verified        bool                `bson:"verified" json:"verified"`
 	Avatar          string              `bson:"avatar,omitempty" json:"avatar,omitempty"`
 	Phone           string              `bson:"phone,omitempty" json:"phone,omitempty"`
+	DepartmentID    *primitive.ObjectID `bson:"department_id,omitempty" json:"department_id,omitempty"`
+	JobPositionID   *primitive.ObjectID `bson:"job_position_id,omitempty" json:"job_position_id,omitempty"`
+	// Legacy fields for backward compatibility (deprecated)
 	Department      string              `bson:"department,omitempty" json:"department,omitempty"`
 	Position        string              `bson:"position,omitempty" json:"position,omitempty"`
 	LastLogin       *time.Time          `bson:"last_login,omitempty" json:"last_login,omitempty"`

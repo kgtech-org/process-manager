@@ -203,6 +203,52 @@ func (s *OTPService) DeleteTemporaryToken(ctx context.Context, token string) err
 	return s.redisClient.Del(ctx, key).Err()
 }
 
+// ============================================
+// Registration Token Management
+// ============================================
+
+// GenerateRegistrationToken generates a secure registration token for step 3
+func (s *OTPService) GenerateRegistrationToken(ctx context.Context, email string) (string, error) {
+	// Generate 32 random bytes
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return "", fmt.Errorf("failed to generate registration token: %w", err)
+	}
+	
+	// Encode to base64 URL-safe string
+	token := base64.URLEncoding.EncodeToString(tokenBytes)
+	
+	// Store token-email mapping in Redis with 30 minute expiry for registration
+	key := fmt.Sprintf("reg_token:%s", token)
+	err := s.redisClient.Set(ctx, key, email, 30*time.Minute).Err()
+	if err != nil {
+		return "", fmt.Errorf("failed to store registration token: %w", err)
+	}
+	
+	return token, nil
+}
+
+// GetEmailFromRegistrationToken retrieves the email associated with a registration token
+func (s *OTPService) GetEmailFromRegistrationToken(ctx context.Context, token string) (string, error) {
+	key := fmt.Sprintf("reg_token:%s", token)
+	
+	email, err := s.redisClient.Get(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", models.ErrInvalidToken
+		}
+		return "", fmt.Errorf("failed to get email from registration token: %w", err)
+	}
+	
+	return email, nil
+}
+
+// DeleteRegistrationToken removes a registration token from Redis
+func (s *OTPService) DeleteRegistrationToken(ctx context.Context, token string) error {
+	key := fmt.Sprintf("reg_token:%s", token)
+	return s.redisClient.Del(ctx, key).Err()
+}
+
 // SetOTPExpiry sets the OTP expiry duration
 func (s *OTPService) SetOTPExpiry(duration time.Duration) {
 	s.otpExpiry = duration
@@ -219,4 +265,74 @@ func (s *OTPService) GetStats() map[string]interface{} {
 		"otp_expiry_minutes": s.otpExpiry.Minutes(),
 		"max_attempts":       s.maxAttempts,
 	}
+}
+
+// ============================================
+// Refresh Token Management in Redis
+// ============================================
+
+// CreateRefreshToken creates a refresh token in Redis
+func (s *OTPService) CreateRefreshToken(ctx context.Context, userID string) (string, error) {
+	// Generate 32 random bytes
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return "", fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+	
+	// Encode to hex string
+	token := fmt.Sprintf("%x", tokenBytes)
+	
+	// Store token-userID mapping in Redis with 30 days expiry
+	key := fmt.Sprintf("refresh_token:%s", token)
+	err := s.redisClient.Set(ctx, key, userID, 30*24*time.Hour).Err()
+	if err != nil {
+		return "", fmt.Errorf("failed to store refresh token: %w", err)
+	}
+	
+	return token, nil
+}
+
+// ValidateRefreshToken validates a refresh token and returns the user ID
+func (s *OTPService) ValidateRefreshToken(ctx context.Context, token string) (string, error) {
+	key := fmt.Sprintf("refresh_token:%s", token)
+	
+	userID, err := s.redisClient.Get(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", models.ErrInvalidToken
+		}
+		return "", fmt.Errorf("failed to validate refresh token: %w", err)
+	}
+	
+	return userID, nil
+}
+
+// RevokeRefreshToken removes a refresh token from Redis
+func (s *OTPService) RevokeRefreshToken(ctx context.Context, token string) error {
+	key := fmt.Sprintf("refresh_token:%s", token)
+	return s.redisClient.Del(ctx, key).Err()
+}
+
+// RevokeAllUserRefreshTokens removes all refresh tokens for a user
+func (s *OTPService) RevokeAllUserRefreshTokens(ctx context.Context, userID string) error {
+	// Get all refresh token keys
+	pattern := "refresh_token:*"
+	keys, err := s.redisClient.Keys(ctx, pattern).Result()
+	if err != nil {
+		return fmt.Errorf("failed to get refresh token keys: %w", err)
+	}
+	
+	// Check each key and delete if it belongs to the user
+	for _, key := range keys {
+		storedUserID, err := s.redisClient.Get(ctx, key).Result()
+		if err != nil {
+			continue // Skip if error reading
+		}
+		
+		if storedUserID == userID {
+			s.redisClient.Del(ctx, key)
+		}
+	}
+	
+	return nil
 }
