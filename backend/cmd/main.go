@@ -80,6 +80,8 @@ func main() {
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService, minioService)
 	userHandler := handlers.NewUserHandler(userService, emailService)
+	departmentHandler := handlers.NewDepartmentHandler(db)
+	jobPositionHandler := handlers.NewJobPositionHandler(db)
 
 	// Initialize Gin router
 	r := gin.Default()
@@ -135,6 +137,8 @@ func main() {
 		// Setup organized routes
 		routes.SetupAuthRoutes(api, authHandler, authMiddleware)
 		routes.SetupUserRoutes(api, userHandler, authMiddleware)
+		routes.SetupDepartmentRoutes(api, departmentHandler, authMiddleware)
+		routes.SetupJobPositionRoutes(api, jobPositionHandler, authMiddleware)
 		routes.SetupDocumentRoutes(api, authMiddleware)
 		routes.SetupProcessRoutes(api, authMiddleware)
 	}

@@ -1,0 +1,239 @@
+# Process Manager Backend - Job Position Management API Tests
+# Use with REST Client extension in VS Code or any REST client
+
+@baseUrl = http://localhost:8080
+@apiUrl = {{baseUrl}}/api
+
+# Variables (will be set from responses)
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhjMTFiNTk1YTg2OTZhMjAxNWYyMThmIiwiZW1haWwiOiJhZG1pbkBwcm9jZXNzLW1hbmFnZXIubG9jYWwiLCJyb2xlIjoiYWRtaW4iLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaXNzIjoicHJvY2Vzcy1tYW5hZ2VyLWFwaSIsInN1YiI6IjY4YzExYjU5NWE4Njk2YTIwMTVmMjE4ZiIsImV4cCI6MTc1NzQ5NDAzMywibmJmIjoxNzU3NDkzMTMzLCJpYXQiOjE3NTc0OTMxMzN9.xnywNcjdXjXT4Vtw0kJ2tHO96HTr6Y_XhnxY5AbXf5Y
+
+### Health Check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+###
+# =========================
+# JOB POSITION MANAGEMENT
+# =========================
+
+### Get all job positions (Public endpoint)
+GET {{apiUrl}}/job-positions
+Content-Type: application/json
+
+### Get all active job positions only
+GET {{apiUrl}}/job-positions?active=true
+Content-Type: application/json
+
+### Get job positions by department
+# Replace with actual department ID
+GET {{apiUrl}}/job-positions?department_id=68c11b595a8696a2015f218a
+Content-Type: application/json
+
+### Get job positions by level
+GET {{apiUrl}}/job-positions?level=Senior
+Content-Type: application/json
+
+### Get specific job position by ID
+# Replace with actual job position ID from the list above
+GET {{apiUrl}}/job-positions/68c11b595a8696a2015f218c
+Content-Type: application/json
+
+### Create new job position (Requires Authentication)
+POST {{apiUrl}}/job-positions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Senior Backend Developer",
+  "code": "SR_BE_DEV",
+  "description": "Senior backend developer responsible for API development and system architecture",
+  "department_id": "68c11b595a8696a2015f218a",
+  "level": "Senior",
+  "required_skills": ["Go", "MongoDB", "Docker", "Kubernetes", "Microservices"]
+}
+
+### Create another job position
+POST {{apiUrl}}/job-positions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "DevOps Engineer",
+  "code": "DEVOPS_ENG",
+  "description": "DevOps engineer responsible for CI/CD pipelines and infrastructure",
+  "department_id": "68c11b595a8696a2015f218a",
+  "level": "Mid",
+  "required_skills": ["Docker", "Kubernetes", "AWS", "Jenkins", "Terraform"]
+}
+
+### Create junior position
+POST {{apiUrl}}/job-positions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Junior Frontend Developer",
+  "code": "JR_FE_DEV",
+  "description": "Junior frontend developer for web applications",
+  "department_id": "68c11b595a8696a2015f218a",
+  "level": "Junior",
+  "required_skills": ["JavaScript", "React", "HTML", "CSS"]
+}
+
+### Update job position (Requires Authentication)
+# Replace with actual job position ID
+PUT {{apiUrl}}/job-positions/68c11b595a8696a2015f218c
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Lead Software Developer",
+  "level": "Lead",
+  "required_skills": ["Go", "Python", "MongoDB", "PostgreSQL", "Docker", "Leadership"]
+}
+
+### Move job position to different department
+# Replace with actual job position ID and department ID
+PUT {{apiUrl}}/job-positions/68c11b595a8696a2015f218c
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "department_id": "68c11b595a8696a2015f218b"
+}
+
+### Deactivate job position
+# Replace with actual job position ID
+PUT {{apiUrl}}/job-positions/68c11b595a8696a2015f218c
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "active": false
+}
+
+### Delete job position (Requires Authentication)
+# Replace with actual job position ID
+# Note: Cannot delete job position with users
+DELETE {{apiUrl}}/job-positions/68c11b595a8696a2015f218c
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# COMPLEX QUERIES
+# =========================
+
+### Get senior-level positions in IT department
+GET {{apiUrl}}/job-positions?department_id=68c11b595a8696a2015f218a&level=Senior
+Content-Type: application/json
+
+### Get all inactive job positions
+GET {{apiUrl}}/job-positions?active=false
+Content-Type: application/json
+
+### Get all job positions in HR department
+GET {{apiUrl}}/job-positions?department_id=68c11b595a8696a2015f218b
+Content-Type: application/json
+
+###
+# =========================
+# ERROR SCENARIOS
+# =========================
+
+### Try to create job position with existing code (should fail)
+POST {{apiUrl}}/job-positions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Another Senior Backend Developer",
+  "code": "SR_BE_DEV",
+  "department_id": "68c11b595a8696a2015f218a"
+}
+
+### Try to create job position with invalid department_id
+POST {{apiUrl}}/job-positions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Test Position",
+  "code": "TEST_POS",
+  "department_id": "invalid-department-id"
+}
+
+### Try to create job position with non-existent department
+POST {{apiUrl}}/job-positions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Orphan Position",
+  "code": "ORPHAN_POS",
+  "department_id": "000000000000000000000000"
+}
+
+### Try to access protected endpoint without authentication
+POST {{apiUrl}}/job-positions
+Content-Type: application/json
+
+{
+  "title": "Unauthorized Position",
+  "code": "UNAUTH_POS",
+  "department_id": "68c11b595a8696a2015f218a"
+}
+
+### Try to get non-existent job position
+GET {{apiUrl}}/job-positions/000000000000000000000000
+Content-Type: application/json
+
+###
+# =========================
+# WORKFLOW EXAMPLES
+# =========================
+
+### Complete workflow: Department + Job Positions
+# Step 1: Create a new department
+# @name newDept
+POST {{apiUrl}}/departments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Data Science",
+  "code": "DS",
+  "description": "Data science and analytics team"
+}
+
+### Step 2: Create job positions for the new department
+POST {{apiUrl}}/job-positions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Data Scientist",
+  "code": "DATA_SCI",
+  "description": "Analyze data and build predictive models",
+  "department_id": "{{newDept.response.body.data.id}}",
+  "level": "Mid",
+  "required_skills": ["Python", "R", "SQL", "Machine Learning", "Statistics"]
+}
+
+### Step 3: Create senior position for the same department
+POST {{apiUrl}}/job-positions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Senior Data Engineer",
+  "code": "SR_DATA_ENG",
+  "description": "Design and maintain data pipelines and infrastructure",
+  "department_id": "{{newDept.response.body.data.id}}",
+  "level": "Senior",
+  "required_skills": ["Python", "Apache Spark", "Kafka", "SQL", "Docker", "AWS"]
+}
+
+### Step 4: Get all positions for the new department
+GET {{apiUrl}}/job-positions?department_id={{newDept.response.body.data.id}}
+Content-Type: application/json

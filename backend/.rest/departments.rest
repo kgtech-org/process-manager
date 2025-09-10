@@ -1,0 +1,177 @@
+# Process Manager Backend - Department Management API Tests
+# Use with REST Client extension in VS Code or any REST client
+
+@baseUrl = http://localhost:8080
+@apiUrl = {{baseUrl}}/api
+
+# Variables (will be set from responses) 
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhjMTFiNTk1YTg2OTZhMjAxNWYyMThmIiwiZW1haWwiOiJhZG1pbkBwcm9jZXNzLW1hbmFnZXIubG9jYWwiLCJyb2xlIjoiYWRtaW4iLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaXNzIjoicHJvY2Vzcy1tYW5hZ2VyLWFwaSIsInN1YiI6IjY4YzExYjU5NWE4Njk2YTIwMTVmMjE4ZiIsImV4cCI6MTc1NzQ5NDAzMywibmJmIjoxNzU3NDkzMTMzLCJpYXQiOjE3NTc0OTMxMzN9.xnywNcjdXjXT4Vtw0kJ2tHO96HTr6Y_XhnxY5AbXf5Y
+
+### Health Check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+###
+# =========================
+# DEPARTMENT MANAGEMENT
+# =========================
+
+### Get all departments (Public endpoint)
+GET {{apiUrl}}/departments
+Content-Type: application/json
+
+### Get all active departments only
+GET {{apiUrl}}/departments?active=true
+Content-Type: application/json
+
+### Get departments by parent (root departments)
+GET {{apiUrl}}/departments?parent_id=null
+Content-Type: application/json
+
+### Get specific department by ID
+# Replace with actual department ID from the list above
+GET {{apiUrl}}/departments/68c11b595a8696a2015f218b
+Content-Type: application/json
+
+### Create new department (Requires Authentication)
+POST {{apiUrl}}/departments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Information Security",
+  "code": "INFOSEC",
+  "description": "Manages information security and cybersecurity operations",
+  "parent_id": "68c11b595a8696a2015f218a"
+}
+
+### Create root department (no parent)
+POST {{apiUrl}}/departments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Quality Assurance",
+  "code": "QA",
+  "description": "Ensures quality standards across all operations"
+}
+
+### Update department (Requires Authentication)
+# Replace with actual department ID
+PUT {{apiUrl}}/departments/68c11b595a8696a2015f218b
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Information Technology",
+  "description": "Updated description for IT department",
+  "active": true
+}
+
+### Update department manager
+# Replace with actual department ID and manager user ID
+PUT {{apiUrl}}/departments/68c11b595a8696a2015f218a
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "manager_id": "68c11b595a8696a2015f218f"
+}
+
+### Deactivate department
+# Replace with actual department ID
+PUT {{apiUrl}}/departments/68c11b595a8696a2015f218b
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "active": false
+}
+
+### Delete department (Requires Authentication)
+# Replace with actual department ID
+# Note: Cannot delete department with sub-departments, job positions, or users
+DELETE {{apiUrl}}/departments/68c11b595a8696a2015f218b
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# ERROR SCENARIOS
+# =========================
+
+### Try to create department with existing code (should fail)
+POST {{apiUrl}}/departments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Another IT Department",
+  "code": "IT",
+  "description": "This should fail because IT code already exists"
+}
+
+### Try to create department with invalid parent_id
+POST {{apiUrl}}/departments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Test Department",
+  "code": "TEST",
+  "parent_id": "invalid-id-format"
+}
+
+### Try to access protected endpoint without authentication
+POST {{apiUrl}}/departments
+Content-Type: application/json
+
+{
+  "name": "Unauthorized Department",
+  "code": "UNAUTH"
+}
+
+### Try to get non-existent department
+GET {{apiUrl}}/departments/000000000000000000000000
+Content-Type: application/json
+
+###
+# =========================
+# HIERARCHICAL DEPARTMENTS
+# =========================
+
+### Create parent department
+# @name parentDept
+POST {{apiUrl}}/departments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Engineering Division",
+  "code": "ENG_DIV",
+  "description": "Main engineering division"
+}
+
+### Create sub-department under engineering
+POST {{apiUrl}}/departments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Software Engineering",
+  "code": "SW_ENG",
+  "description": "Software development and engineering",
+  "parent_id": "{{parentDept.response.body.data.id}}"
+}
+
+### Create another sub-department
+POST {{apiUrl}}/departments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Quality Engineering",
+  "code": "QE",
+  "description": "Quality assurance and testing",
+  "parent_id": "{{parentDept.response.body.data.id}}"
+}
