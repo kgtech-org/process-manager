@@ -1,5 +1,6 @@
 # Process Manager Backend - Authentication API Tests
 # Use with REST Client extension in VS Code or any REST client
+# Updated for OTP-based authentication and user validation workflow
 
 @baseUrl = http://localhost:8080
 @apiUrl = {{baseUrl}}/api
@@ -7,8 +8,8 @@
 # Variables (will be set from responses)
 @accessToken = 
 @refreshToken = 
-@resetToken = 
 @verificationToken = 
+@userId = 
 
 ### Health Check
 GET {{baseUrl}}/health
@@ -20,49 +21,44 @@ Content-Type: application/json
 
 ###
 # =================================
-# USER REGISTRATION & VERIFICATION
+# USER REGISTRATION WORKFLOW
 # =================================
 
-### Register new user (Admin)
+### Register new user (User Registration - Pending Validation)
+# Note: Users register and get pending status, requiring admin validation
 POST {{apiUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "AdminPassword123!",
-  "name": "System Administrator",
-  "role": "admin",
+  "email": "john.doe@togocom.tg",
+  "name": "John Doe",
   "phone": "+228 90 12 34 56",
-  "department": "IT",
-  "position": "System Admin"
+  "department": "Network Operations",
+  "position": "Network Engineer"
 }
 
-### Register new user (Manager)
+### Register another user for testing
 POST {{apiUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "manager@process-manager.com",
-  "password": "ManagerPass123!",
-  "name": "Process Manager",
-  "role": "manager",
+  "email": "jane.smith@togocom.tg",
+  "name": "Jane Smith",
   "phone": "+228 90 12 34 57",
-  "department": "Operations",
-  "position": "Process Manager"
+  "department": "Customer Service", 
+  "position": "Support Agent"
 }
 
-### Register new user (User)
+### Register user for rejection testing
 POST {{apiUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "user@process-manager.com",
-  "password": "UserPassword123!",
-  "name": "Regular User",
-  "role": "user",
+  "email": "test.reject@togocom.tg",
+  "name": "Test Reject User",
   "phone": "+228 90 12 34 58",
-  "department": "Customer Service",
-  "position": "Agent"
+  "department": "Test",
+  "position": "Test Position"
 }
 
 ### Register with validation error (missing required fields)
@@ -70,8 +66,16 @@ POST {{apiUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "invalid@test.com",
-  "password": "123"
+  "email": "invalid@test.com"
+}
+
+### Register with invalid email format
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "invalid-email",
+  "name": "Invalid Email User"
 }
 
 ### Register with duplicate email
@@ -79,69 +83,81 @@ POST {{apiUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "AnotherPass123!",
-  "name": "Another Admin",
-  "role": "admin"
-}
-
-### Verify email (requires token from email or database)
-# Note: In real scenario, get token from email or database
-POST {{apiUrl}}/auth/verify-email
-Content-Type: application/json
-
-{
-  "token": "your-verification-token-here"
+  "email": "john.doe@togocom.tg",
+  "name": "Another John",
+  "phone": "+228 90 12 34 99"
 }
 
 ###
 # =========================
-# USER AUTHENTICATION
+# OTP AUTHENTICATION FLOW
 # =========================
 
-### Login with admin credentials
-POST {{apiUrl}}/auth/login
+### Request OTP for active user
+# Note: User must be approved by admin first
+POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "AdminPassword123!"
+  "email": "admin@process-manager.local"
 }
 
-### Login with manager credentials
-POST {{apiUrl}}/auth/login
+### Request OTP for pending user (should fail)
+POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "manager@process-manager.com",
-  "password": "ManagerPass123!"
+  "email": "jane.smith@togocom.tg"
 }
 
-### Login with user credentials
-POST {{apiUrl}}/auth/login
+### Request OTP for non-existent user (secure response)
+POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "user@process-manager.com",
-  "password": "UserPassword123!"
+  "email": "nonexistent@example.com"
 }
 
-### Login with invalid credentials
-POST {{apiUrl}}/auth/login
+### Verify OTP and login
+# Note: Replace OTP with actual code from email or development response
+POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "WrongPassword"
+  "email": "admin@process-manager.local",
+  "otp": "233092"
 }
 
-### Login with non-existent user
-POST {{apiUrl}}/auth/login
+### Verify OTP with wrong code
+POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
 
 {
-  "email": "nonexistent@example.com",
-  "password": "SomePassword123!"
+  "email": "john.doe@togocom.tg",
+  "otp": "000000"
+}
+
+### Verify OTP with expired code
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "john.doe@togocom.tg",
+  "otp": "expired_otp"
+}
+
+###
+# =========================
+# DEVELOPMENT MODE TESTING
+# =========================
+
+### Request OTP in development mode (returns OTP in response)
+# Note: Only works when GIN_MODE=debug or ENVIRONMENT=development
+POST {{apiUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "john.doe@togocom.tg"
 }
 
 ###
@@ -161,33 +177,11 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 Content-Type: application/json
 
 {
-  "name": "Updated Admin Name",
+  "name": "John Doe Updated",
   "phone": "+228 90 12 34 99",
-  "department": "IT Management",
-  "position": "Senior Admin",
+  "department": "Senior Network Operations",
+  "position": "Senior Network Engineer",
   "avatar": "https://example.com/avatar.jpg"
-}
-
-### Change password (requires authentication)
-PUT {{apiUrl}}/auth/change-password
-Authorization: Bearer YOUR_ACCESS_TOKEN
-Content-Type: application/json
-
-{
-  "current_password": "AdminPassword123!",
-  "new_password": "NewAdminPass123!",
-  "confirm_password": "NewAdminPass123!"
-}
-
-### Change password with wrong current password
-PUT {{apiUrl}}/auth/change-password
-Authorization: Bearer YOUR_ACCESS_TOKEN
-Content-Type: application/json
-
-{
-  "current_password": "WrongCurrentPassword",
-  "new_password": "NewAdminPass123!",
-  "confirm_password": "NewAdminPass123!"
 }
 
 ###
@@ -219,60 +213,16 @@ Content-Type: application/json
 
 ###
 # =========================
-# PASSWORD RESET WORKFLOW
-# =========================
-
-### Request password reset
-POST {{apiUrl}}/auth/forgot
-Content-Type: application/json
-
-{
-  "email": "admin@process-manager.com"
-}
-
-### Request password reset for non-existent email
-POST {{apiUrl}}/auth/forgot
-Content-Type: application/json
-
-{
-  "email": "nonexistent@example.com"
-}
-
-### Reset password with token
-# Note: Get token from email or database
-POST {{apiUrl}}/auth/reset
-Content-Type: application/json
-
-{
-  "token": "your-reset-token-here",
-  "new_password": "ResetPassword123!",
-  "confirm_password": "ResetPassword123!"
-}
-
-### Reset password with invalid token
-POST {{apiUrl}}/auth/reset
-Content-Type: application/json
-
-{
-  "token": "invalid-token",
-  "new_password": "ResetPassword123!",
-  "confirm_password": "ResetPassword123!"
-}
-
-### Reset password with mismatched passwords
-POST {{apiUrl}}/auth/reset
-Content-Type: application/json
-
-{
-  "token": "your-reset-token-here",
-  "new_password": "ResetPassword123!",
-  "confirm_password": "DifferentPassword123!"
-}
-
-###
-# =========================
 # EMAIL VERIFICATION
 # =========================
+
+### Verify email (requires token from email)
+POST {{apiUrl}}/auth/verify-email
+Content-Type: application/json
+
+{
+  "token": "your-verification-token-here"
+}
 
 ### Resend verification email (requires authentication)
 POST {{apiUrl}}/auth/resend-verification
@@ -281,34 +231,24 @@ Content-Type: application/json
 
 ###
 # =========================
-# PROTECTED RESOURCES TESTS
-# =========================
-
-### Access protected documents endpoint (requires authentication)
-GET {{apiUrl}}/documents
-Authorization: Bearer YOUR_ACCESS_TOKEN
-Content-Type: application/json
-
-### Access protected processes endpoint (requires authentication)
-GET {{apiUrl}}/processes
-Authorization: Bearer YOUR_ACCESS_TOKEN
-Content-Type: application/json
-
-### Access admin endpoint (requires admin role)
-GET {{apiUrl}}/admin/users
-Authorization: Bearer YOUR_ACCESS_TOKEN
-Content-Type: application/json
-
-### Try to access admin endpoint without admin role (should fail)
-# First login as regular user, then try this endpoint
-GET {{apiUrl}}/admin/users
-Authorization: Bearer USER_ACCESS_TOKEN
-Content-Type: application/json
-
-###
-# =========================
 # ERROR SCENARIOS
 # =========================
+
+### Request OTP for rejected user
+POST {{apiUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "test.reject@togocom.tg"
+}
+
+### Request OTP for inactive user
+POST {{apiUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "inactive.user@togocom.tg"
+}
 
 ### Access protected endpoint without token
 GET {{apiUrl}}/auth/me
@@ -324,10 +264,50 @@ GET {{apiUrl}}/auth/me
 Authorization: Bearer EXPIRED_ACCESS_TOKEN
 Content-Type: application/json
 
-### Try to use refresh token as access token
-GET {{apiUrl}}/auth/me
-Authorization: Bearer YOUR_REFRESH_TOKEN
+### OTP validation errors
+POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
+
+{
+  "email": "john.doe@togocom.tg",
+  "otp": "12345"
+}
+
+### Too many OTP attempts
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "john.doe@togocom.tg",
+  "otp": "wrong1"
+}
+
+###
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "john.doe@togocom.tg",
+  "otp": "wrong2"
+}
+
+###
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "john.doe@togocom.tg",
+  "otp": "wrong3"
+}
+
+###
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "john.doe@togocom.tg",
+  "otp": "wrong4"
+}
 
 ###
 # =========================
@@ -335,30 +315,60 @@ Content-Type: application/json
 # =========================
 
 ### Malformed JSON request
-POST {{apiUrl}}/auth/login
+POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "AdminPassword123!",
+  "email": "john.doe@togocom.tg",
   "invalid_json": 
 }
 
-### Missing Content-Type header
-POST {{apiUrl}}/auth/login
+### Missing required fields
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "AdminPassword123!"
+  "email": "john.doe@togocom.tg"
 }
 
-### Wrong Content-Type
-POST {{apiUrl}}/auth/login
-Content-Type: text/plain
+### Invalid email format
+POST {{apiUrl}}/auth/request-otp
+Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "AdminPassword123!"
+  "email": "not-an-email"
+}
+
+###
+# =========================
+# SECURITY TESTS
+# =========================
+
+### SQL Injection attempt in email field
+POST {{apiUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "admin@togocom.tg'; DROP TABLE users; --"
+}
+
+### XSS attempt in name field during registration
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "xss@test.com",
+  "name": "<script>alert('XSS')</script>",
+  "phone": "+228 90 12 34 00"
+}
+
+### Very long OTP (buffer overflow test)
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "john.doe@togocom.tg",
+  "otp": "1".repeat(1000)
 }
 
 ###
@@ -366,41 +376,62 @@ Content-Type: text/plain
 # TESTING WORKFLOW EXAMPLE
 # =========================
 
+# Complete User Registration and Login Flow:
+
 # 1. Register a new user
 POST {{apiUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
-  "password": "TestPassword123!",
-  "name": "Test User",
-  "role": "user",
+  "email": "workflow.test@togocom.tg",
+  "name": "Workflow Test User",
   "phone": "+228 90 12 34 00",
-  "department": "Test",
-  "position": "Tester"
+  "department": "Testing",
+  "position": "QA Engineer"
 }
 
-# 2. Login with the new user
-# @name login
-POST {{apiUrl}}/auth/login
+# 2. Admin validates the user (see users.rest for admin operations)
+
+# 3. Request OTP for login
+# @name requestOtp
+POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
-  "password": "TestPassword123!"
+  "email": "workflow.test@togocom.tg"
 }
 
-# 3. Extract tokens from login response and test protected endpoints
-# Note: In VS Code REST Client, you can capture response values:
-# @accessToken = {{login.response.body.access_token}}
-# @refreshToken = {{login.response.body.refresh_token}}
+# 4. Verify OTP and login
+# @name login
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
 
-# 4. Test protected endpoint with captured token
+{
+  "email": "workflow.test@togocom.tg",
+  "otp": "REPLACE_WITH_ACTUAL_OTP"
+}
+
+# 5. Extract tokens from login response and test protected endpoints
+# Note: In VS Code REST Client, you can capture response values:
+# @accessToken = {{login.response.body.data.access_token}}
+# @refreshToken = {{login.response.body.data.refresh_token}}
+
+# 6. Test protected endpoint with captured token
 GET {{apiUrl}}/auth/me
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
-# 5. Test token refresh
+# 7. Update profile
+PUT {{apiUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Workflow Test User",
+  "department": "Advanced Testing"
+}
+
+# 8. Test token refresh
 POST {{apiUrl}}/auth/refresh
 Content-Type: application/json
 
@@ -408,7 +439,7 @@ Content-Type: application/json
   "refresh_token": "{{refreshToken}}"
 }
 
-# 6. Logout
+# 9. Logout
 POST {{apiUrl}}/auth/logout
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -422,69 +453,28 @@ Content-Type: application/json
 # PERFORMANCE TESTS
 # =========================
 
-### Multiple rapid login attempts (rate limiting test)
-POST {{apiUrl}}/auth/login
+### Multiple rapid OTP requests (rate limiting test)
+POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "AdminPassword123!"
+  "email": "john.doe@togocom.tg"
 }
 
 ###
-
-POST {{apiUrl}}/auth/login
+POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "AdminPassword123!"
+  "email": "john.doe@togocom.tg"
 }
 
 ###
-
-POST {{apiUrl}}/auth/login
+POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "admin@process-manager.com",
-  "password": "AdminPassword123!"
-}
-
-###
-# =========================
-# SECURITY TESTS
-# =========================
-
-### SQL Injection attempt in email field
-POST {{apiUrl}}/auth/login
-Content-Type: application/json
-
-{
-  "email": "admin@process-manager.com'; DROP TABLE users; --",
-  "password": "AdminPassword123!"
-}
-
-### XSS attempt in name field during registration
-POST {{apiUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "xss@test.com",
-  "password": "TestPassword123!",
-  "name": "<script>alert('XSS')</script>",
-  "role": "user"
-}
-
-### Very long password (buffer overflow test)
-POST {{apiUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "longpass@test.com",
-  "password": "A".repeat(10000),
-  "name": "Long Password Test",
-  "role": "user"
+  "email": "john.doe@togocom.tg"
 }
 
 ###
@@ -494,23 +484,35 @@ Content-Type: application/json
 
 # Testing Instructions:
 # 1. Start the backend server: `go run cmd/main.go`
-# 2. Ensure MongoDB is running (via Docker: `docker-compose up -d mongodb`)
+# 2. Ensure MongoDB and Redis are running: `docker-compose up -d`
 # 3. Use VS Code with REST Client extension or any HTTP client
-# 4. Replace placeholder tokens with actual values from responses
-# 5. Test both success and error scenarios
-# 6. Verify role-based access control works correctly
-# 7. Test email verification workflow (check email service logs)
-# 8. Test password reset workflow
-# 9. Verify token expiration and refresh mechanisms
-# 10. Test rate limiting and security features
+# 4. First create an admin user manually in the database or via seeding
+# 5. Test user registration flow (users get pending status)
+# 6. Test admin validation workflow (see users.rest)
+# 7. Test OTP authentication for approved users
+# 8. Test various error scenarios and edge cases
+# 9. Verify email notifications are sent (check email service logs)
+# 10. Test development mode OTP responses
 
-# Expected Responses:
-# - 200: Successful operations
-# - 201: Successful user creation
+# Expected Status Codes:
+# - 200: Successful operations (OTP sent, profile updated, etc.)
+# - 201: Successful user registration
 # - 400: Bad request (validation errors, malformed JSON)
-# - 401: Unauthorized (missing/invalid token, wrong credentials)
-# - 403: Forbidden (insufficient permissions)
+# - 401: Unauthorized (invalid OTP, expired token)
+# - 403: Forbidden (pending/rejected/inactive user, insufficient permissions)
 # - 404: Not found (invalid endpoints)
 # - 409: Conflict (email already exists)
 # - 429: Too many requests (if rate limiting is implemented)
-# - 500: Internal server error (database issues, etc.)
+# - 500: Internal server error (database/Redis issues, etc.)
+
+# User Status Flow:
+# 1. User registers → Status: PENDING
+# 2. Admin approves → Status: ACTIVE (can login)
+# 3. Admin rejects → Status: REJECTED (cannot login)
+# 4. Admin deactivates → Status: INACTIVE (cannot login)
+
+# OTP Workflow:
+# 1. User requests OTP → Email sent with 6-digit code (5min expiry)
+# 2. User verifies OTP → Receives JWT tokens for authentication
+# 3. Failed attempts are tracked (max 3 attempts)
+# 4. Development mode returns OTP in API response for testing

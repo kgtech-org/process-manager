@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -19,28 +18,14 @@ type JWTService struct {
 	refreshExpiry time.Duration
 }
 
-// JWTClaims represents the JWT claims
-type JWTClaims struct {
-	UserID   primitive.ObjectID `json:"user_id"`
-	Email    string             `json:"email"`
-	Role     models.UserRole    `json:"role"`
-	TokenType string            `json:"token_type"` // "access" or "refresh"
+// JWTCustomClaims represents the JWT claims
+type JWTCustomClaims struct {
+	UserID    primitive.ObjectID `json:"user_id"`
+	Email     string             `json:"email"`
+	Role      models.UserRole    `json:"role"`
+	TokenType string             `json:"token_type"` // "access" or "refresh"
 	jwt.RegisteredClaims
 }
-
-// TokenPair represents access and refresh tokens
-type TokenPair struct {
-	AccessToken  string    `json:"access_token"`
-	RefreshToken string    `json:"refresh_token"`
-	ExpiresAt    time.Time `json:"expires_at"`
-	TokenType    string    `json:"token_type"`
-}
-
-var (
-	ErrInvalidToken = errors.New("invalid token")
-	ErrExpiredToken = errors.New("token has expired")
-	ErrInvalidClaims = errors.New("invalid token claims")
-)
 
 // NewJWTService creates a new JWT service instance
 func NewJWTService() *JWTService {
@@ -52,22 +37,21 @@ func NewJWTService() *JWTService {
 
 	issuer := os.Getenv("JWT_ISSUER")
 	if issuer == "" {
-		issuer = "process-manager"
+		issuer = "process-manager-api"
 	}
 
-	// Token expiry durations
-	accessExpiry := 15 * time.Minute  // Short-lived access tokens
-	refreshExpiry := 30 * 24 * time.Hour // Long-lived refresh tokens
-
-	// Allow customization via environment variables
-	if accessDuration := os.Getenv("JWT_ACCESS_EXPIRY"); accessDuration != "" {
-		if duration, err := time.ParseDuration(accessDuration); err == nil {
+	// Access token expires in 15 minutes
+	accessExpiry := 15 * time.Minute
+	if exp := os.Getenv("JWT_ACCESS_EXPIRY"); exp != "" {
+		if duration, err := time.ParseDuration(exp); err == nil {
 			accessExpiry = duration
 		}
 	}
 
-	if refreshDuration := os.Getenv("JWT_REFRESH_EXPIRY"); refreshDuration != "" {
-		if duration, err := time.ParseDuration(refreshDuration); err == nil {
+	// Refresh token expires in 30 days
+	refreshExpiry := 30 * 24 * time.Hour
+	if exp := os.Getenv("JWT_REFRESH_EXPIRY"); exp != "" {
+		if duration, err := time.ParseDuration(exp); err == nil {
 			refreshExpiry = duration
 		}
 	}
@@ -80,223 +64,155 @@ func NewJWTService() *JWTService {
 	}
 }
 
-// GenerateTokenPair generates both access and refresh tokens for a user
-func (j *JWTService) GenerateTokenPair(user *models.User) (*TokenPair, error) {
-	now := time.Now()
-	accessExpiry := now.Add(j.accessExpiry)
-	
+// GenerateTokenPair generates both access and refresh tokens
+func (s *JWTService) GenerateTokenPair(user *models.User) (*models.TokenPair, error) {
 	// Generate access token
-	accessClaims := &JWTClaims{
-		UserID:    user.ID,
-		Email:     user.Email,
-		Role:      user.Role,
-		TokenType: "access",
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(accessExpiry),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    j.issuer,
-			Subject:   user.ID.Hex(),
-		},
-	}
-
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessTokenString, err := accessToken.SignedString(j.secretKey)
+	accessToken, err := s.generateToken(user, "access", s.accessExpiry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
 
 	// Generate refresh token
-	refreshExpiry := now.Add(j.refreshExpiry)
-	refreshClaims := &JWTClaims{
-		UserID:    user.ID,
-		Email:     user.Email,
-		Role:      user.Role,
-		TokenType: "refresh",
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(refreshExpiry),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    j.issuer,
-			Subject:   user.ID.Hex(),
-		},
-	}
-
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshTokenString, err := refreshToken.SignedString(j.secretKey)
+	refreshToken, err := s.generateToken(user, "refresh", s.refreshExpiry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
-	return &TokenPair{
-		AccessToken:  accessTokenString,
-		RefreshToken: refreshTokenString,
-		ExpiresAt:    accessExpiry,
-		TokenType:    "Bearer",
+	return &models.TokenPair{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresAt:    time.Now().Add(s.accessExpiry),
 	}, nil
 }
 
-// GenerateAccessToken generates a new access token
-func (j *JWTService) GenerateAccessToken(user *models.User) (string, time.Time, error) {
-	now := time.Now()
-	expiry := now.Add(j.accessExpiry)
+// GenerateAccessToken generates an access token for a user
+func (s *JWTService) GenerateAccessToken(user *models.User) (string, error) {
+	return s.generateToken(user, "access", s.accessExpiry)
+}
 
-	claims := &JWTClaims{
+// GenerateRefreshToken generates a refresh token for a user
+func (s *JWTService) GenerateRefreshToken(user *models.User) (string, error) {
+	return s.generateToken(user, "refresh", s.refreshExpiry)
+}
+
+// generateToken creates a JWT token with the specified type and expiry
+func (s *JWTService) generateToken(user *models.User, tokenType string, expiry time.Duration) (string, error) {
+	claims := JWTCustomClaims{
 		UserID:    user.ID,
 		Email:     user.Email,
 		Role:      user.Role,
-		TokenType: "access",
+		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expiry),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    j.issuer,
+			Issuer:    s.issuer,
 			Subject:   user.ID.Hex(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiry)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}
 
+	// Create token with claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(j.secretKey)
+
+	// Sign token with secret key
+	tokenString, err := token.SignedString(s.secretKey)
 	if err != nil {
-		return "", time.Time{}, fmt.Errorf("failed to generate access token: %w", err)
+		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
 
-	return tokenString, expiry, nil
+	return tokenString, nil
 }
 
 // ValidateToken validates a JWT token and returns the claims
-func (j *JWTService) ValidateToken(tokenString string) (*JWTClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (s *JWTService) ValidateToken(tokenString string) (*JWTCustomClaims, error) {
+	// Parse token
+	token, err := jwt.ParseWithClaims(tokenString, &JWTCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return j.secretKey, nil
+		return s.secretKey, nil
 	})
 
 	if err != nil {
-		if errors.Is(err, jwt.ErrTokenExpired) {
-			return nil, ErrExpiredToken
-		}
-		return nil, fmt.Errorf("failed to parse token: %w", err)
+		return nil, models.ErrInvalidToken
 	}
 
-	claims, ok := token.Claims.(*JWTClaims)
-	if !ok || !token.Valid {
-		return nil, ErrInvalidClaims
+	// Check if token is valid
+	if !token.Valid {
+		return nil, models.ErrInvalidToken
+	}
+
+	// Extract claims
+	claims, ok := token.Claims.(*JWTCustomClaims)
+	if !ok {
+		return nil, models.ErrInvalidToken
+	}
+
+	// Check expiration
+	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
+		return nil, models.ErrTokenExpired
 	}
 
 	return claims, nil
 }
 
-// ValidateAccessToken validates an access token specifically
-func (j *JWTService) ValidateAccessToken(tokenString string) (*JWTClaims, error) {
-	claims, err := j.ValidateToken(tokenString)
+// ValidateAccessToken validates an access token
+func (s *JWTService) ValidateAccessToken(tokenString string) (*JWTCustomClaims, error) {
+	claims, err := s.ValidateToken(tokenString)
 	if err != nil {
 		return nil, err
 	}
 
+	// Ensure it's an access token
 	if claims.TokenType != "access" {
-		return nil, ErrInvalidToken
+		return nil, models.ErrInvalidToken
 	}
 
 	return claims, nil
 }
 
-// ValidateRefreshToken validates a refresh token specifically
-func (j *JWTService) ValidateRefreshToken(tokenString string) (*JWTClaims, error) {
-	claims, err := j.ValidateToken(tokenString)
+// ValidateRefreshToken validates a refresh token
+func (s *JWTService) ValidateRefreshToken(tokenString string) (*JWTCustomClaims, error) {
+	claims, err := s.ValidateToken(tokenString)
 	if err != nil {
 		return nil, err
 	}
 
+	// Ensure it's a refresh token
 	if claims.TokenType != "refresh" {
-		return nil, ErrInvalidToken
+		return nil, models.ErrInvalidToken
 	}
 
 	return claims, nil
 }
 
-// ExtractTokenFromHeader extracts token from Authorization header
-func (j *JWTService) ExtractTokenFromHeader(authHeader string) (string, error) {
-	if authHeader == "" {
-		return "", errors.New("authorization header is empty")
+// ExtractTokenFromHeader extracts the token from Authorization header
+func (s *JWTService) ExtractTokenFromHeader(authHeader string) string {
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		return authHeader[7:]
 	}
-
-	// Expected format: "Bearer <token>"
-	const bearerPrefix = "Bearer "
-	if len(authHeader) < len(bearerPrefix) {
-		return "", errors.New("invalid authorization header format")
-	}
-
-	if authHeader[:len(bearerPrefix)] != bearerPrefix {
-		return "", errors.New("authorization header must start with 'Bearer '")
-	}
-
-	token := authHeader[len(bearerPrefix):]
-	if token == "" {
-		return "", errors.New("token is empty")
-	}
-
-	return token, nil
+	return ""
 }
 
-// GetUserIDFromToken extracts user ID from a token
-func (j *JWTService) GetUserIDFromToken(tokenString string) (primitive.ObjectID, error) {
-	claims, err := j.ValidateAccessToken(tokenString)
+// RefreshAccessToken generates a new access token from a refresh token
+func (s *JWTService) RefreshAccessToken(refreshToken string, user *models.User) (string, error) {
+	// Validate refresh token first
+	_, err := s.ValidateRefreshToken(refreshToken)
 	if err != nil {
-		return primitive.NilObjectID, err
+		return "", err
 	}
 
-	return claims.UserID, nil
+	// Generate new access token
+	return s.GenerateAccessToken(user)
 }
 
-// GetUserIDFromAuthHeader extracts user ID from Authorization header
-func (j *JWTService) GetUserIDFromAuthHeader(authHeader string) (primitive.ObjectID, error) {
-	token, err := j.ExtractTokenFromHeader(authHeader)
-	if err != nil {
-		return primitive.NilObjectID, err
-	}
-
-	return j.GetUserIDFromToken(token)
+// GetAccessTokenExpiry returns the access token expiry duration
+func (s *JWTService) GetAccessTokenExpiry() time.Duration {
+	return s.accessExpiry
 }
 
-// IsTokenExpired checks if a token is expired without validating signature
-func (j *JWTService) IsTokenExpired(tokenString string) bool {
-	token, _ := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return j.secretKey, nil
-	})
-
-	if claims, ok := token.Claims.(*JWTClaims); ok {
-		return claims.ExpiresAt.Time.Before(time.Now())
-	}
-
-	return true
-}
-
-// GetTokenExpiresAt gets the expiration time of a token
-func (j *JWTService) GetTokenExpiresAt(tokenString string) (time.Time, error) {
-	claims, err := j.ValidateToken(tokenString)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return claims.ExpiresAt.Time, nil
-}
-
-// RefreshTokenPair generates new tokens using a refresh token
-func (j *JWTService) RefreshTokenPair(refreshTokenString string, user *models.User) (*TokenPair, error) {
-	// Validate refresh token
-	claims, err := j.ValidateRefreshToken(refreshTokenString)
-	if err != nil {
-		return nil, err
-	}
-
-	// Verify token belongs to the user
-	if claims.UserID != user.ID {
-		return nil, ErrInvalidToken
-	}
-
-	// Generate new token pair
-	return j.GenerateTokenPair(user)
+// GetRefreshTokenExpiry returns the refresh token expiry duration
+func (s *JWTService) GetRefreshTokenExpiry() time.Duration {
+	return s.refreshExpiry
 }

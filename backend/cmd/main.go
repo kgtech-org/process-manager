@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kodesonik/process-manager/internal/handlers"
 	"github.com/kodesonik/process-manager/internal/middleware"
+	"github.com/kodesonik/process-manager/internal/routes"
 	"github.com/kodesonik/process-manager/internal/services"
 )
 
@@ -39,16 +39,36 @@ func main() {
 		}
 	}()
 
+	// Initialize Redis
+	redisService, err := services.NewRedisService()
+	if err != nil {
+		log.Fatalf("Failed to initialize Redis: %v", err)
+	}
+	defer func() {
+		if err := redisService.Close(); err != nil {
+			log.Printf("Error closing Redis: %v", err)
+		}
+	}()
+
 	// Initialize services
 	jwtService := services.NewJWTService()
 	userService := services.NewUserService(db)
 	emailService := services.NewEmailService()
+	otpService := services.NewOTPService(redisService.Client)
+
+	// Ensure default admin exists
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	if err := userService.EnsureDefaultAdmin(ctx); err != nil {
+		log.Printf("⚠️  Warning: Failed to ensure default admin exists: %v", err)
+	}
+	cancel()
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtService, userService)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService)
+	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService)
+	userHandler := handlers.NewUserHandler(userService, emailService)
 
 	// Initialize Gin router
 	r := gin.Default()
@@ -63,125 +83,43 @@ func main() {
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
-		// Check database health
+		// Check database and Redis health
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 		defer cancel()
-		
+
 		dbHealthy := true
 		if err := db.Health(ctx); err != nil {
 			dbHealthy = false
 		}
 
+		redisHealthy := true
+		if err := redisService.Health(ctx); err != nil {
+			redisHealthy = false
+		}
+
 		status := "healthy"
-		if !dbHealthy {
+		if !dbHealthy || !redisHealthy {
 			status = "degraded"
 		}
 
 		c.JSON(200, gin.H{
-			"status":     status,
-			"service":    "process-manager-backend",
-			"version":    "1.0.0",
-			"database":   dbHealthy,
-			"timestamp":  time.Now().Unix(),
+			"status":    status,
+			"service":   "process-manager-backend",
+			"version":   "1.0.0",
+			"database":  dbHealthy,
+			"redis":     redisHealthy,
+			"timestamp": time.Now().Unix(),
 		})
 	})
 
 	// API routes group
 	api := r.Group("/api")
 	{
-		// Auth routes
-		auth := api.Group("/auth")
-		{
-			auth.POST("/register", authHandler.Register)
-			auth.POST("/login", authHandler.Login)
-			auth.POST("/logout", authMiddleware.RequireAuth(), authHandler.Logout)
-			auth.POST("/refresh", authHandler.RefreshToken)
-			auth.POST("/forgot", authHandler.ForgotPassword)
-			auth.POST("/reset", authHandler.ResetPassword)
-			auth.POST("/verify-email", authHandler.VerifyEmail)
-			auth.POST("/resend-verification", authMiddleware.RequireAuth(), authHandler.ResendVerification)
-			
-			// Protected routes
-			auth.GET("/me", authMiddleware.RequireAuth(), func(c *gin.Context) {
-				user, exists := middleware.GetCurrentUser(c)
-				if !exists {
-					c.JSON(http.StatusInternalServerError, gin.H{
-						"success": false,
-						"error":   "User not found in context",
-					})
-					return
-				}
-
-				c.JSON(http.StatusOK, gin.H{
-					"success": true,
-					"user":    user.ToResponse(),
-				})
-			})
-			auth.PUT("/profile", authMiddleware.RequireAuth(), authHandler.UpdateProfile)
-			auth.PUT("/change-password", authMiddleware.RequireAuth(), authHandler.ChangePassword)
-			auth.POST("/revoke-all-tokens", authMiddleware.RequireAuth(), authHandler.RevokeAllTokens)
-
-			// Legacy status endpoint for backward compatibility
-			auth.GET("/status", authMiddleware.OptionalAuth(), func(c *gin.Context) {
-				user, exists := middleware.GetCurrentUser(c)
-				if exists {
-					c.JSON(200, gin.H{
-						"message":       "Authentication service ready",
-						"authenticated": true,
-						"user":          gin.H{
-							"id":    user.ID,
-							"email": user.Email,
-							"name":  user.Name,
-							"role":  user.Role,
-						},
-					})
-				} else {
-					c.JSON(200, gin.H{
-						"message":       "Authentication service ready",
-						"authenticated": false,
-					})
-				}
-			})
-		}
-
-		// Admin routes
-		admin := api.Group("/admin")
-		admin.Use(authMiddleware.RequireAdmin())
-		{
-			admin.GET("/users", func(c *gin.Context) {
-				c.JSON(200, gin.H{
-					"message": "Admin users endpoint - not implemented yet",
-				})
-			})
-		}
-
-		// Documents routes (placeholder - protected)
-		documents := api.Group("/documents")
-		documents.Use(authMiddleware.RequireAuth())
-		{
-			documents.GET("/", func(c *gin.Context) {
-				user, _ := middleware.GetCurrentUser(c)
-				c.JSON(200, gin.H{
-					"message": "Documents service ready",
-					"user":    user.Email,
-					"data":    []interface{}{},
-				})
-			})
-		}
-
-		// Processes routes (placeholder - protected)
-		processes := api.Group("/processes")
-		processes.Use(authMiddleware.RequireAuth())
-		{
-			processes.GET("/", func(c *gin.Context) {
-				user, _ := middleware.GetCurrentUser(c)
-				c.JSON(200, gin.H{
-					"message": "Processes service ready",
-					"user":    user.Email,
-					"data":    []interface{}{},
-				})
-			})
-		}
+		// Setup organized routes
+		routes.SetupAuthRoutes(api, authHandler, authMiddleware)
+		routes.SetupUserRoutes(api, userHandler, authMiddleware)
+		routes.SetupDocumentRoutes(api, authMiddleware)
+		routes.SetupProcessRoutes(api, authMiddleware)
 	}
 
 	// Get port from environment or default to 8080

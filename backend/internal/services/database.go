@@ -92,13 +92,13 @@ func (ds *DatabaseService) Close(ctx context.Context) error {
 func (ds *DatabaseService) createIndexes(ctx context.Context) error {
 	// User collection indexes
 	userCollection := ds.Database.Collection("users")
-	
+
 	// Unique index on email
 	emailIndex := mongo.IndexModel{
 		Keys:    bson.D{{Key: "email", Value: 1}},
 		Options: options.Index().SetUnique(true),
 	}
-	
+
 	// Compound index on active and role
 	activeRoleIndex := mongo.IndexModel{
 		Keys: bson.D{
@@ -106,14 +106,14 @@ func (ds *DatabaseService) createIndexes(ctx context.Context) error {
 			{Key: "role", Value: 1},
 		},
 	}
-	
+
 	// Index on created_at for sorting
 	createdAtIndex := mongo.IndexModel{
 		Keys: bson.D{{Key: "created_at", Value: -1}},
 	}
-	
+
 	userIndexes := []mongo.IndexModel{emailIndex, activeRoleIndex, createdAtIndex}
-	
+
 	_, err := userCollection.Indexes().CreateMany(ctx, userIndexes)
 	if err != nil {
 		log.Printf("Failed to create user indexes: %v", err)
@@ -122,20 +122,20 @@ func (ds *DatabaseService) createIndexes(ctx context.Context) error {
 
 	// Password reset token collection indexes
 	resetTokenCollection := ds.Database.Collection("password_reset_tokens")
-	
+
 	// Index on token for fast lookups
 	tokenIndex := mongo.IndexModel{
 		Keys: bson.D{{Key: "token", Value: 1}},
 	}
-	
+
 	// TTL index to automatically delete expired tokens
 	ttlIndex := mongo.IndexModel{
-		Keys: bson.D{{Key: "expires_at", Value: 1}},
+		Keys:    bson.D{{Key: "expires_at", Value: 1}},
 		Options: options.Index().SetExpireAfterSeconds(0), // Delete when expires_at is reached
 	}
-	
+
 	resetTokenIndexes := []mongo.IndexModel{tokenIndex, ttlIndex}
-	
+
 	_, err = resetTokenCollection.Indexes().CreateMany(ctx, resetTokenIndexes)
 	if err != nil {
 		log.Printf("Failed to create password reset token indexes: %v", err)
@@ -144,7 +144,7 @@ func (ds *DatabaseService) createIndexes(ctx context.Context) error {
 
 	// Email verification token collection indexes
 	verificationTokenCollection := ds.Database.Collection("email_verification_tokens")
-	
+
 	_, err = verificationTokenCollection.Indexes().CreateMany(ctx, resetTokenIndexes) // Same indexes as reset tokens
 	if err != nil {
 		log.Printf("Failed to create email verification token indexes: %v", err)
@@ -153,25 +153,25 @@ func (ds *DatabaseService) createIndexes(ctx context.Context) error {
 
 	// Refresh token collection indexes
 	refreshTokenCollection := ds.Database.Collection("refresh_tokens")
-	
+
 	// Index on token for fast lookups
 	refreshTokenIndex := mongo.IndexModel{
 		Keys: bson.D{{Key: "token", Value: 1}},
 	}
-	
+
 	// Index on user_id for cleanup
 	userIdIndex := mongo.IndexModel{
 		Keys: bson.D{{Key: "user_id", Value: 1}},
 	}
-	
+
 	// TTL index to automatically delete expired tokens
 	refreshTtlIndex := mongo.IndexModel{
-		Keys: bson.D{{Key: "expires_at", Value: 1}},
+		Keys:    bson.D{{Key: "expires_at", Value: 1}},
 		Options: options.Index().SetExpireAfterSeconds(0),
 	}
-	
+
 	refreshTokenIndexes := []mongo.IndexModel{refreshTokenIndex, userIdIndex, refreshTtlIndex}
-	
+
 	_, err = refreshTokenCollection.Indexes().CreateMany(ctx, refreshTokenIndexes)
 	if err != nil {
 		log.Printf("Failed to create refresh token indexes: %v", err)

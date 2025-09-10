@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/kodesonik/process-manager/internal/models"
@@ -18,7 +19,6 @@ import (
 type UserService struct {
 	db                 *DatabaseService
 	userCollection     *mongo.Collection
-	resetTokens        *mongo.Collection
 	verificationTokens *mongo.Collection
 	refreshTokens      *mongo.Collection
 }
@@ -28,13 +28,16 @@ func NewUserService(db *DatabaseService) *UserService {
 	return &UserService{
 		db:                 db,
 		userCollection:     db.Collection("users"),
-		resetTokens:        db.Collection("password_reset_tokens"),
 		verificationTokens: db.Collection("email_verification_tokens"),
 		refreshTokens:      db.Collection("refresh_tokens"),
 	}
 }
 
-// CreateUser creates a new user in the database
+// ============================================
+// User CRUD Operations
+// ============================================
+
+// CreateUser creates a new user in the database (admin creation)
 func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequest) (*models.User, error) {
 	// Check if user with email already exists
 	existingUser, err := s.GetUserByEmail(ctx, req.Email)
@@ -46,22 +49,73 @@ func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequ
 	user := &models.User{
 		Email:      req.Email,
 		Name:       req.Name,
-		Password:   req.Password,
 		Role:       req.Role,
 		Phone:      req.Phone,
 		Department: req.Department,
 		Position:   req.Position,
+		Status:     models.StatusActive, // Admin-created users are active by default
+		Active:     true,
+		Verified:   true,
 	}
 
-	// Validate and hash password
-	if err := user.BeforeCreate(); err != nil {
-		return nil, fmt.Errorf("user validation failed: %w", err)
+	// Set timestamps
+	now := time.Now()
+	user.CreatedAt = now
+	user.UpdatedAt = now
+	user.ValidatedAt = &now
+
+	// Validate user
+	if !user.ValidateEmail() {
+		return nil, models.ErrInvalidEmail
+	}
+
+	if !models.IsValidRole(user.Role) {
+		return nil, models.ErrInvalidRole
 	}
 
 	// Insert user into database
 	result, err := s.userCollection.InsertOne(ctx, user)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, models.ErrEmailExists
+		}
 		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	user.ID = result.InsertedID.(primitive.ObjectID)
+	return user, nil
+}
+
+// RegisterUser registers a new user with pending status
+func (s *UserService) RegisterUser(ctx context.Context, req *models.RegisterUserRequest) (*models.User, error) {
+	// Check if user with email already exists
+	existingUser, err := s.GetUserByEmail(ctx, req.Email)
+	if err == nil && existingUser != nil {
+		return nil, models.ErrEmailExists
+	}
+
+	// Create new user with pending status
+	user := &models.User{
+		Email:      req.Email,
+		Name:       req.Name,
+		Role:       models.RoleUser, // Default role for registration
+		Phone:      req.Phone,
+		Department: req.Department,
+		Position:   req.Position,
+	}
+
+	// BeforeCreate sets status to pending and validates
+	if err := user.BeforeCreate(); err != nil {
+		return nil, err
+	}
+
+	// Insert user into database
+	result, err := s.userCollection.InsertOne(ctx, user)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, models.ErrEmailExists
+		}
+		return nil, fmt.Errorf("failed to register user: %w", err)
 	}
 
 	user.ID = result.InsertedID.(primitive.ObjectID)
@@ -71,7 +125,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequ
 // GetUserByEmail finds a user by email address
 func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
-	filter := bson.M{"email": email, "active": true}
+	filter := bson.M{"email": email}
 
 	err := s.userCollection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
@@ -87,7 +141,7 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*models
 // GetUserByID finds a user by ID
 func (s *UserService) GetUserByID(ctx context.Context, id primitive.ObjectID) (*models.User, error) {
 	var user models.User
-	filter := bson.M{"_id": id, "active": true}
+	filter := bson.M{"_id": id}
 
 	err := s.userCollection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
@@ -100,98 +154,326 @@ func (s *UserService) GetUserByID(ctx context.Context, id primitive.ObjectID) (*
 	return &user, nil
 }
 
-// UpdateUser updates user information
-func (s *UserService) UpdateUser(ctx context.Context, userID primitive.ObjectID, req *models.UpdateProfileRequest) (*models.User, error) {
-	// Prepare update document
-	updateDoc := bson.M{
-		"updated_at": time.Now(),
+// GetActiveUserByEmail finds an active user by email address
+func (s *UserService) GetActiveUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	var user models.User
+	filter := bson.M{
+		"email":  email,
+		"status": models.StatusActive,
+		"active": true,
 	}
 
-	if req.Name != "" {
-		updateDoc["name"] = req.Name
-	}
-	if req.Phone != "" {
-		updateDoc["phone"] = req.Phone
-	}
-	if req.Department != "" {
-		updateDoc["department"] = req.Department
-	}
-	if req.Position != "" {
-		updateDoc["position"] = req.Position
-	}
-	if req.Avatar != "" {
-		updateDoc["avatar"] = req.Avatar
-	}
-
-	// Update user
-	filter := bson.M{"_id": userID, "active": true}
-	update := bson.M{"$set": updateDoc}
-
-	result, err := s.userCollection.UpdateOne(ctx, filter, update)
+	err := s.userCollection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update user: %w", err)
+		if err == mongo.ErrNoDocuments {
+			return nil, models.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to find active user: %w", err)
 	}
 
-	if result.MatchedCount == 0 {
-		return nil, models.ErrUserNotFound
-	}
-
-	// Return updated user
-	return s.GetUserByID(ctx, userID)
+	return &user, nil
 }
 
-// ChangePassword updates user password
-func (s *UserService) ChangePassword(ctx context.Context, userID primitive.ObjectID, req *models.ChangePasswordRequest) error {
-	// Get user
-	user, err := s.GetUserByID(ctx, userID)
-	if err != nil {
-		return err
-	}
-
-	// Verify current password
-	if err := user.CheckPassword(req.CurrentPassword); err != nil {
-		return models.ErrInvalidPassword
-	}
-
-	// Hash new password
-	user.Password = req.NewPassword
-	if err := user.HashPassword(); err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	// Update password in database
-	filter := bson.M{"_id": userID}
+// UpdateUser updates user profile information
+func (s *UserService) UpdateUser(ctx context.Context, userID primitive.ObjectID, req *models.UpdateProfileRequest) (*models.User, error) {
 	update := bson.M{
 		"$set": bson.M{
-			"password":   user.Password,
 			"updated_at": time.Now(),
 		},
 	}
 
-	_, err = s.userCollection.UpdateOne(ctx, filter, update)
+	// Add fields to update if provided
+	if req.Name != "" {
+		update["$set"].(bson.M)["name"] = req.Name
+	}
+	if req.Phone != "" {
+		update["$set"].(bson.M)["phone"] = req.Phone
+	}
+	if req.Department != "" {
+		update["$set"].(bson.M)["department"] = req.Department
+	}
+	if req.Position != "" {
+		update["$set"].(bson.M)["position"] = req.Position
+	}
+	if req.Avatar != "" {
+		update["$set"].(bson.M)["avatar"] = req.Avatar
+	}
+
+	// Update and return the updated user
+	var user models.User
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	err := s.userCollection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": userID},
+		update,
+		opts,
+	).Decode(&user)
+
 	if err != nil {
-		return fmt.Errorf("failed to update password: %w", err)
+		if err == mongo.ErrNoDocuments {
+			return nil, models.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
+
+	return &user, nil
+}
+
+// SoftDeleteUser marks a user as deleted
+func (s *UserService) SoftDeleteUser(ctx context.Context, userID primitive.ObjectID) error {
+	update := bson.M{
+		"$set": bson.M{
+			"status":     models.StatusInactive,
+			"active":     false,
+			"updated_at": time.Now(),
+		},
+	}
+
+	result, err := s.userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		update,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	if result.MatchedCount == 0 {
+		return models.ErrUserNotFound
 	}
 
 	return nil
 }
 
-// UpdateLastLogin updates the user's last login timestamp
-func (s *UserService) UpdateLastLogin(ctx context.Context, userID primitive.ObjectID) error {
-	filter := bson.M{"_id": userID}
+// ============================================
+// User Status Management
+// ============================================
+
+// SetUserActiveStatus activates or deactivates a user account
+func (s *UserService) SetUserActiveStatus(ctx context.Context, userID primitive.ObjectID, active bool) error {
+	status := models.StatusActive
+	if !active {
+		status = models.StatusInactive
+	}
+
 	update := bson.M{
 		"$set": bson.M{
-			"last_login": time.Now(),
+			"active":     active,
+			"status":     status,
+			"updated_at": time.Now(),
 		},
 	}
 
-	_, err := s.userCollection.UpdateOne(ctx, filter, update)
+	result, err := s.userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		update,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to update user status: %w", err)
+	}
+
+	if result.MatchedCount == 0 {
+		return models.ErrUserNotFound
+	}
+
+	return nil
+}
+
+// UpdateUserRole updates a user's role
+func (s *UserService) UpdateUserRole(ctx context.Context, userID primitive.ObjectID, role models.UserRole) error {
+	if !models.IsValidRole(role) {
+		return models.ErrInvalidRole
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"role":       role,
+			"updated_at": time.Now(),
+		},
+	}
+
+	result, err := s.userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		update,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to update user role: %w", err)
+	}
+
+	if result.MatchedCount == 0 {
+		return models.ErrUserNotFound
+	}
+
+	return nil
+}
+
+// ValidateUser handles admin validation of pending users
+func (s *UserService) ValidateUser(ctx context.Context, userID primitive.ObjectID, req *models.ValidateUserRequest, adminID primitive.ObjectID) (*models.User, error) {
+	// Get the user to validate
+	user, err := s.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if user is in pending status
+	if user.Status != models.StatusPending {
+		return nil, fmt.Errorf("user is not in pending status")
+	}
+
+	now := time.Now()
+	update := bson.M{
+		"$set": bson.M{
+			"updated_at": now,
+		},
+	}
+
+	if req.Action == "approve" {
+		// Set role if provided
+		role := models.RoleUser
+		if req.Role != "" && models.IsValidRole(req.Role) {
+			role = req.Role
+		}
+
+		update["$set"].(bson.M)["status"] = models.StatusActive
+		update["$set"].(bson.M)["active"] = true
+		update["$set"].(bson.M)["verified"] = true
+		update["$set"].(bson.M)["role"] = role
+		update["$set"].(bson.M)["validated_by"] = adminID
+		update["$set"].(bson.M)["validated_at"] = now
+	} else if req.Action == "reject" {
+		update["$set"].(bson.M)["status"] = models.StatusRejected
+		update["$set"].(bson.M)["active"] = false
+		update["$set"].(bson.M)["rejected_by"] = adminID
+		update["$set"].(bson.M)["rejected_at"] = now
+		update["$set"].(bson.M)["rejection_reason"] = req.Reason
+	} else {
+		return nil, fmt.Errorf("invalid action: %s", req.Action)
+	}
+
+	// Update and return the updated user
+	var updatedUser models.User
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	err = s.userCollection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": userID},
+		update,
+		opts,
+	).Decode(&updatedUser)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate user: %w", err)
+	}
+
+	return &updatedUser, nil
+}
+
+// ============================================
+// User Listing and Filtering
+// ============================================
+
+// ListUsers returns a list of users with pagination and filters
+func (s *UserService) ListUsers(ctx context.Context, skip, limit int64, filter bson.M) ([]*models.User, int64, error) {
+	// Count total documents
+	total, err := s.userCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count users: %w", err)
+	}
+
+	// Find users with pagination
+	opts := options.Find().
+		SetSkip(skip).
+		SetLimit(limit).
+		SetSort(bson.D{{Key: "created_at", Value: -1}})
+
+	cursor, err := s.userCollection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to find users: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var users []*models.User
+	if err = cursor.All(ctx, &users); err != nil {
+		return nil, 0, fmt.Errorf("failed to decode users: %w", err)
+	}
+
+	return users, total, nil
+}
+
+// GetPendingUsers returns all pending users with pagination
+func (s *UserService) GetPendingUsers(ctx context.Context, skip, limit int64) ([]*models.User, int64, error) {
+	filter := bson.M{"status": models.StatusPending}
+	return s.ListUsers(ctx, skip, limit, filter)
+}
+
+// GetUsersWithFilters returns users with advanced filtering options
+func (s *UserService) GetUsersWithFilters(ctx context.Context, opts *models.UserFilterOptions) ([]*models.User, int64, error) {
+	// Build filter
+	filter := bson.M{}
+
+	if opts.Status != "" && models.IsValidStatus(opts.Status) {
+		filter["status"] = opts.Status
+	}
+
+	if opts.Role != "" && models.IsValidRole(opts.Role) {
+		filter["role"] = opts.Role
+	}
+
+	if opts.Department != "" {
+		filter["department"] = opts.Department
+	}
+
+	if opts.Active != nil {
+		filter["active"] = *opts.Active
+	}
+
+	if opts.Verified != nil {
+		filter["verified"] = *opts.Verified
+	}
+
+	if opts.Search != "" {
+		filter["$or"] = []bson.M{
+			{"name": bson.M{"$regex": opts.Search, "$options": "i"}},
+			{"email": bson.M{"$regex": opts.Search, "$options": "i"}},
+		}
+	}
+
+	// Calculate pagination
+	skip := int64((opts.Page - 1) * opts.Limit)
+	limit := int64(opts.Limit)
+
+	return s.ListUsers(ctx, skip, limit, filter)
+}
+
+// ============================================
+// Authentication Support Operations
+// ============================================
+
+// UpdateLastLogin updates the last login timestamp
+func (s *UserService) UpdateLastLogin(ctx context.Context, userID primitive.ObjectID) error {
+	now := time.Now()
+	update := bson.M{
+		"$set": bson.M{
+			"last_login": now,
+			"updated_at": now,
+		},
+	}
+
+	_, err := s.userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		update,
+	)
+
 	return err
 }
 
 // VerifyUser marks a user as verified
 func (s *UserService) VerifyUser(ctx context.Context, userID primitive.ObjectID) error {
-	filter := bson.M{"_id": userID}
 	update := bson.M{
 		"$set": bson.M{
 			"verified":   true,
@@ -199,7 +481,12 @@ func (s *UserService) VerifyUser(ctx context.Context, userID primitive.ObjectID)
 		},
 	}
 
-	result, err := s.userCollection.UpdateOne(ctx, filter, update)
+	result, err := s.userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		update,
+	)
+
 	if err != nil {
 		return fmt.Errorf("failed to verify user: %w", err)
 	}
@@ -211,170 +498,45 @@ func (s *UserService) VerifyUser(ctx context.Context, userID primitive.ObjectID)
 	return nil
 }
 
-// DeactivateUser deactivates a user account
-func (s *UserService) DeactivateUser(ctx context.Context, userID primitive.ObjectID) error {
-	filter := bson.M{"_id": userID}
-	update := bson.M{
-		"$set": bson.M{
-			"active":     false,
-			"updated_at": time.Now(),
-		},
-	}
+// ============================================
+// Email Verification Token Operations
+// ============================================
 
-	result, err := s.userCollection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		return fmt.Errorf("failed to deactivate user: %w", err)
-	}
-
-	if result.MatchedCount == 0 {
-		return models.ErrUserNotFound
-	}
-
-	return nil
-}
-
-// CreatePasswordResetToken creates a password reset token
-func (s *UserService) CreatePasswordResetToken(ctx context.Context, userID primitive.ObjectID) (*models.PasswordResetToken, error) {
-	// Generate secure random token
-	tokenBytes := make([]byte, 32)
-	if _, err := rand.Read(tokenBytes); err != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", err)
-	}
-	token := hex.EncodeToString(tokenBytes)
-
-	// Create reset token document
-	resetToken := &models.PasswordResetToken{
-		UserID:    userID,
-		Token:     token,
-		ExpiresAt: time.Now().Add(1 * time.Hour), // Token expires in 1 hour
-		Used:      false,
-		CreatedAt: time.Now(),
-	}
-
-	// Insert token
-	result, err := s.resetTokens.InsertOne(ctx, resetToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create reset token: %w", err)
-	}
-
-	resetToken.ID = result.InsertedID.(primitive.ObjectID)
-	return resetToken, nil
-}
-
-// ValidatePasswordResetToken validates and returns a password reset token
-func (s *UserService) ValidatePasswordResetToken(ctx context.Context, token string) (*models.PasswordResetToken, error) {
-	var resetToken models.PasswordResetToken
-	filter := bson.M{
-		"token": token,
-		"used":  false,
-		"expires_at": bson.M{
-			"$gt": time.Now(),
-		},
-	}
-
-	err := s.resetTokens.FindOne(ctx, filter).Decode(&resetToken)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, models.ErrInvalidToken
-		}
-		return nil, fmt.Errorf("failed to find reset token: %w", err)
-	}
-
-	return &resetToken, nil
-}
-
-// UsePasswordResetToken marks a password reset token as used and resets the password
-func (s *UserService) UsePasswordResetToken(ctx context.Context, token string, newPassword string) error {
-	// Validate token
-	resetToken, err := s.ValidatePasswordResetToken(ctx, token)
-	if err != nil {
-		return err
-	}
-
-	// Get user
-	user, err := s.GetUserByID(ctx, resetToken.UserID)
-	if err != nil {
-		return err
-	}
-
-	// Hash new password
-	user.Password = newPassword
-	if err := user.HashPassword(); err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	// Start transaction to update password and mark token as used
-	session, err := s.db.Client.StartSession()
-	if err != nil {
-		return fmt.Errorf("failed to start session: %w", err)
-	}
-	defer session.EndSession(ctx)
-
-	_, err = session.WithTransaction(ctx, func(sc mongo.SessionContext) (interface{}, error) {
-		// Update password
-		userFilter := bson.M{"_id": resetToken.UserID}
-		userUpdate := bson.M{
-			"$set": bson.M{
-				"password":   user.Password,
-				"updated_at": time.Now(),
-			},
-		}
-		_, err := s.userCollection.UpdateOne(sc, userFilter, userUpdate)
-		if err != nil {
-			return nil, err
-		}
-
-		// Mark token as used
-		tokenFilter := bson.M{"_id": resetToken.ID}
-		tokenUpdate := bson.M{
-			"$set": bson.M{
-				"used": true,
-			},
-		}
-		_, err = s.resetTokens.UpdateOne(sc, tokenFilter, tokenUpdate)
-		return nil, err
-	})
-
-	return err
-}
-
-// CreateEmailVerificationToken creates an email verification token
+// CreateEmailVerificationToken creates a new email verification token
 func (s *UserService) CreateEmailVerificationToken(ctx context.Context, userID primitive.ObjectID) (*models.EmailVerificationToken, error) {
-	// Generate secure random token
+	// Generate token
 	tokenBytes := make([]byte, 32)
 	if _, err := rand.Read(tokenBytes); err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
-	token := hex.EncodeToString(tokenBytes)
+	tokenString := hex.EncodeToString(tokenBytes)
 
-	// Create verification token document
-	verificationToken := &models.EmailVerificationToken{
+	// Create token document
+	token := &models.EmailVerificationToken{
 		UserID:    userID,
-		Token:     token,
-		ExpiresAt: time.Now().Add(24 * time.Hour), // Token expires in 24 hours
+		Token:     tokenString,
+		ExpiresAt: time.Now().Add(24 * time.Hour),
 		Used:      false,
 		CreatedAt: time.Now(),
 	}
 
 	// Insert token
-	result, err := s.verificationTokens.InsertOne(ctx, verificationToken)
+	result, err := s.verificationTokens.InsertOne(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create verification token: %w", err)
 	}
 
-	verificationToken.ID = result.InsertedID.(primitive.ObjectID)
-	return verificationToken, nil
+	token.ID = result.InsertedID.(primitive.ObjectID)
+	return token, nil
 }
 
-// VerifyEmailToken validates and uses an email verification token
+// VerifyEmailToken verifies and uses an email verification token
 func (s *UserService) VerifyEmailToken(ctx context.Context, token string) error {
+	// Find token
 	var verificationToken models.EmailVerificationToken
 	filter := bson.M{
 		"token": token,
 		"used":  false,
-		"expires_at": bson.M{
-			"$gt": time.Now(),
-		},
 	}
 
 	err := s.verificationTokens.FindOne(ctx, filter).Decode(&verificationToken)
@@ -382,71 +544,64 @@ func (s *UserService) VerifyEmailToken(ctx context.Context, token string) error 
 		if err == mongo.ErrNoDocuments {
 			return models.ErrInvalidToken
 		}
-		return fmt.Errorf("failed to find verification token: %w", err)
+		return fmt.Errorf("failed to find token: %w", err)
 	}
 
-	// Start transaction to verify user and mark token as used
-	session, err := s.db.Client.StartSession()
+	// Check if token is expired
+	if time.Now().After(verificationToken.ExpiresAt) {
+		return models.ErrTokenExpired
+	}
+
+	// Mark token as used
+	update := bson.M{
+		"$set": bson.M{
+			"used": true,
+		},
+	}
+	_, err = s.verificationTokens.UpdateOne(
+		ctx,
+		bson.M{"_id": verificationToken.ID},
+		update,
+	)
 	if err != nil {
-		return fmt.Errorf("failed to start session: %w", err)
+		return fmt.Errorf("failed to mark token as used: %w", err)
 	}
-	defer session.EndSession(ctx)
 
-	_, err = session.WithTransaction(ctx, func(sc mongo.SessionContext) (interface{}, error) {
-		// Verify user
-		userFilter := bson.M{"_id": verificationToken.UserID}
-		userUpdate := bson.M{
-			"$set": bson.M{
-				"verified":   true,
-				"updated_at": time.Now(),
-			},
-		}
-		_, err := s.userCollection.UpdateOne(sc, userFilter, userUpdate)
-		if err != nil {
-			return nil, err
-		}
-
-		// Mark token as used
-		tokenFilter := bson.M{"_id": verificationToken.ID}
-		tokenUpdate := bson.M{
-			"$set": bson.M{
-				"used": true,
-			},
-		}
-		_, err = s.verificationTokens.UpdateOne(sc, tokenFilter, tokenUpdate)
-		return nil, err
-	})
-
-	return err
+	// Verify the user
+	return s.VerifyUser(ctx, verificationToken.UserID)
 }
 
-// CreateRefreshToken creates a refresh token for a user
+// ============================================
+// Refresh Token Operations
+// ============================================
+
+// CreateRefreshToken creates a new refresh token for a user
 func (s *UserService) CreateRefreshToken(ctx context.Context, userID primitive.ObjectID) (*models.RefreshToken, error) {
-	// Generate secure random token
+	// Generate token
 	tokenBytes := make([]byte, 32)
 	if _, err := rand.Read(tokenBytes); err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
-	token := hex.EncodeToString(tokenBytes)
+	tokenString := hex.EncodeToString(tokenBytes)
 
-	// Create refresh token document
-	refreshToken := &models.RefreshToken{
+	// Create token document
+	token := &models.RefreshToken{
 		UserID:    userID,
-		Token:     token,
-		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // Token expires in 30 days
+		Token:     tokenString,
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // 30 days
 		Revoked:   false,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
 	// Insert token
-	result, err := s.refreshTokens.InsertOne(ctx, refreshToken)
+	result, err := s.refreshTokens.InsertOne(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create refresh token: %w", err)
 	}
 
-	refreshToken.ID = result.InsertedID.(primitive.ObjectID)
-	return refreshToken, nil
+	token.ID = result.InsertedID.(primitive.ObjectID)
+	return token, nil
 }
 
 // ValidateRefreshToken validates a refresh token
@@ -455,9 +610,6 @@ func (s *UserService) ValidateRefreshToken(ctx context.Context, token string) (*
 	filter := bson.M{
 		"token":   token,
 		"revoked": false,
-		"expires_at": bson.M{
-			"$gt": time.Now(),
-		},
 	}
 
 	err := s.refreshTokens.FindOne(ctx, filter).Decode(&refreshToken)
@@ -465,15 +617,19 @@ func (s *UserService) ValidateRefreshToken(ctx context.Context, token string) (*
 		if err == mongo.ErrNoDocuments {
 			return nil, models.ErrInvalidToken
 		}
-		return nil, fmt.Errorf("failed to find refresh token: %w", err)
+		return nil, fmt.Errorf("failed to find token: %w", err)
+	}
+
+	// Check if token is expired
+	if time.Now().After(refreshToken.ExpiresAt) {
+		return nil, models.ErrTokenExpired
 	}
 
 	return &refreshToken, nil
 }
 
-// RevokeRefreshToken revokes a refresh token
+// RevokeRefreshToken revokes a specific refresh token
 func (s *UserService) RevokeRefreshToken(ctx context.Context, token string) error {
-	filter := bson.M{"token": token}
 	update := bson.M{
 		"$set": bson.M{
 			"revoked":    true,
@@ -481,13 +637,17 @@ func (s *UserService) RevokeRefreshToken(ctx context.Context, token string) erro
 		},
 	}
 
-	_, err := s.refreshTokens.UpdateOne(ctx, filter, update)
+	_, err := s.refreshTokens.UpdateOne(
+		ctx,
+		bson.M{"token": token},
+		update,
+	)
+
 	return err
 }
 
 // RevokeAllUserRefreshTokens revokes all refresh tokens for a user
 func (s *UserService) RevokeAllUserRefreshTokens(ctx context.Context, userID primitive.ObjectID) error {
-	filter := bson.M{"user_id": userID, "revoked": false}
 	update := bson.M{
 		"$set": bson.M{
 			"revoked":    true,
@@ -495,37 +655,95 @@ func (s *UserService) RevokeAllUserRefreshTokens(ctx context.Context, userID pri
 		},
 	}
 
-	_, err := s.refreshTokens.UpdateMany(ctx, filter, update)
+	_, err := s.refreshTokens.UpdateMany(
+		ctx,
+		bson.M{
+			"user_id": userID,
+			"revoked": false,
+		},
+		update,
+	)
+
 	return err
 }
 
-// ListUsers returns a paginated list of users
-func (s *UserService) ListUsers(ctx context.Context, skip, limit int64, filter bson.M) ([]*models.User, int64, error) {
-	// Add active filter
-	filter["active"] = true
+// ============================================
+// Default Admin Management
+// ============================================
 
-	// Get total count
-	total, err := s.userCollection.CountDocuments(ctx, filter)
+// EnsureDefaultAdmin creates a default admin user if no admin exists
+func (s *UserService) EnsureDefaultAdmin(ctx context.Context) error {
+	// Check if any admin user already exists
+	filter := bson.M{
+		"role":   models.RoleAdmin,
+		"active": true,
+	}
+
+	count, err := s.userCollection.CountDocuments(ctx, filter)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count users: %w", err)
+		return fmt.Errorf("failed to check for existing admin: %w", err)
 	}
 
-	// Find users with pagination
-	findOptions := options.Find()
-	findOptions.SetSkip(skip)
-	findOptions.SetLimit(limit)
-	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}}) // Sort by creation date, newest first
+	// If admin already exists, no need to create one
+	if count > 0 {
+		return nil
+	}
 
-	cursor, err := s.userCollection.Find(ctx, filter, findOptions)
+	// Get default admin credentials from environment variables
+	adminEmail := getEnvOrDefault("DEFAULT_ADMIN_EMAIL", "admin@process-manager.local")
+	adminName := getEnvOrDefault("DEFAULT_ADMIN_NAME", "System Administrator")
+	adminDepartment := getEnvOrDefault("DEFAULT_ADMIN_DEPARTMENT", "IT")
+	adminPosition := getEnvOrDefault("DEFAULT_ADMIN_POSITION", "System Administrator")
+
+	// Create default admin user
+	defaultAdmin := &models.User{
+		Email:      adminEmail,
+		Name:       adminName,
+		Role:       models.RoleAdmin,
+		Department: adminDepartment,
+		Position:   adminPosition,
+		Status:     models.StatusActive,
+		Active:     true,
+		Verified:   true,
+	}
+
+	// Set timestamps
+	now := time.Now()
+	defaultAdmin.CreatedAt = now
+	defaultAdmin.UpdatedAt = now
+	defaultAdmin.ValidatedAt = &now
+
+	// Validate admin user
+	if !defaultAdmin.ValidateEmail() {
+		return fmt.Errorf("invalid default admin email: %s", adminEmail)
+	}
+
+	// Insert default admin into database
+	result, err := s.userCollection.InsertOne(ctx, defaultAdmin)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to find users: %w", err)
-	}
-	defer cursor.Close(ctx)
-
-	var users []*models.User
-	if err := cursor.All(ctx, &users); err != nil {
-		return nil, 0, fmt.Errorf("failed to decode users: %w", err)
+		if mongo.IsDuplicateKeyError(err) {
+			// Admin with this email already exists, which is fine
+			return nil
+		}
+		return fmt.Errorf("failed to create default admin: %w", err)
 	}
 
-	return users, total, nil
+	defaultAdmin.ID = result.InsertedID.(primitive.ObjectID)
+	
+	fmt.Printf("✅ Default admin user created successfully:\n")
+	fmt.Printf("   📧 Email: %s\n", adminEmail)
+	fmt.Printf("   👤 Name: %s\n", adminName)
+	fmt.Printf("   🔑 Role: %s\n", models.RoleAdmin)
+	fmt.Printf("   🆔 ID: %s\n", defaultAdmin.ID.Hex())
+	fmt.Println("   ⚠️  Please use OTP-based authentication to log in")
+
+	return nil
+}
+
+// getEnvOrDefault returns environment variable value or default if not set
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
