@@ -21,14 +21,12 @@ func SetupAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandler,
 		auth.POST("/request-otp", authHandler.RequestOTP)
 		auth.POST("/verify-otp", authHandler.VerifyOTP)
 		auth.POST("/refresh", authHandler.RefreshToken)
-		auth.POST("/verify-email", authHandler.VerifyEmail)
 
 		// Protected routes
 		auth.GET("/me", authMiddleware.RequireAuth(), authHandler.GetMe)
 		auth.POST("/logout", authMiddleware.RequireAuth(), authHandler.Logout)
 		auth.PUT("/profile", authMiddleware.RequireAuth(), authHandler.UpdateProfile)
 		auth.POST("/revoke-all-tokens", authMiddleware.RequireAuth(), authHandler.RevokeAllTokens)
-		auth.POST("/resend-verification", authMiddleware.RequireAuth(), authHandler.ResendVerification)
 
 		// Legacy status endpoint for backward compatibility
 		auth.GET("/status", authMiddleware.OptionalAuth(), func(c *gin.Context) {

@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // ============================================
@@ -114,26 +112,6 @@ type OTPToken struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// EmailVerificationToken represents an email verification token
-type EmailVerificationToken struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	UserID    primitive.ObjectID `bson:"user_id" json:"user_id"`
-	Token     string             `bson:"token" json:"token"`
-	ExpiresAt time.Time          `bson:"expires_at" json:"expires_at"`
-	Used      bool               `bson:"used" json:"used"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
-}
-
-// RefreshToken represents a JWT refresh token
-type RefreshToken struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	UserID    primitive.ObjectID `bson:"user_id" json:"user_id"`
-	Token     string             `bson:"token" json:"token"`
-	ExpiresAt time.Time          `bson:"expires_at" json:"expires_at"`
-	Revoked   bool               `bson:"revoked" json:"revoked"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
-}
 
 // TokenPair represents an access and refresh token pair
 type TokenPair struct {

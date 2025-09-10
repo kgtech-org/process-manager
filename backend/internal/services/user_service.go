@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"os"
 	"time"
@@ -17,19 +15,15 @@ import (
 
 // UserService handles user-related database operations
 type UserService struct {
-	db                 *DatabaseService
-	userCollection     *mongo.Collection
-	verificationTokens *mongo.Collection
-	refreshTokens      *mongo.Collection
+	db             *DatabaseService
+	userCollection *mongo.Collection
 }
 
 // NewUserService creates a new user service instance
 func NewUserService(db *DatabaseService) *UserService {
 	return &UserService{
-		db:                 db,
-		userCollection:     db.Collection("users"),
-		verificationTokens: db.Collection("email_verification_tokens"),
-		refreshTokens:      db.Collection("refresh_tokens"),
+		db:             db,
+		userCollection: db.Collection("users"),
 	}
 }
 
@@ -498,174 +492,6 @@ func (s *UserService) VerifyUser(ctx context.Context, userID primitive.ObjectID)
 	return nil
 }
 
-// ============================================
-// Email Verification Token Operations
-// ============================================
-
-// CreateEmailVerificationToken creates a new email verification token
-func (s *UserService) CreateEmailVerificationToken(ctx context.Context, userID primitive.ObjectID) (*models.EmailVerificationToken, error) {
-	// Generate token
-	tokenBytes := make([]byte, 32)
-	if _, err := rand.Read(tokenBytes); err != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", err)
-	}
-	tokenString := hex.EncodeToString(tokenBytes)
-
-	// Create token document
-	token := &models.EmailVerificationToken{
-		UserID:    userID,
-		Token:     tokenString,
-		ExpiresAt: time.Now().Add(24 * time.Hour),
-		Used:      false,
-		CreatedAt: time.Now(),
-	}
-
-	// Insert token
-	result, err := s.verificationTokens.InsertOne(ctx, token)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create verification token: %w", err)
-	}
-
-	token.ID = result.InsertedID.(primitive.ObjectID)
-	return token, nil
-}
-
-// VerifyEmailToken verifies and uses an email verification token
-func (s *UserService) VerifyEmailToken(ctx context.Context, token string) error {
-	// Find token
-	var verificationToken models.EmailVerificationToken
-	filter := bson.M{
-		"token": token,
-		"used":  false,
-	}
-
-	err := s.verificationTokens.FindOne(ctx, filter).Decode(&verificationToken)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return models.ErrInvalidToken
-		}
-		return fmt.Errorf("failed to find token: %w", err)
-	}
-
-	// Check if token is expired
-	if time.Now().After(verificationToken.ExpiresAt) {
-		return models.ErrTokenExpired
-	}
-
-	// Mark token as used
-	update := bson.M{
-		"$set": bson.M{
-			"used": true,
-		},
-	}
-	_, err = s.verificationTokens.UpdateOne(
-		ctx,
-		bson.M{"_id": verificationToken.ID},
-		update,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to mark token as used: %w", err)
-	}
-
-	// Verify the user
-	return s.VerifyUser(ctx, verificationToken.UserID)
-}
-
-// ============================================
-// Refresh Token Operations
-// ============================================
-
-// CreateRefreshToken creates a new refresh token for a user
-func (s *UserService) CreateRefreshToken(ctx context.Context, userID primitive.ObjectID) (*models.RefreshToken, error) {
-	// Generate token
-	tokenBytes := make([]byte, 32)
-	if _, err := rand.Read(tokenBytes); err != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", err)
-	}
-	tokenString := hex.EncodeToString(tokenBytes)
-
-	// Create token document
-	token := &models.RefreshToken{
-		UserID:    userID,
-		Token:     tokenString,
-		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // 30 days
-		Revoked:   false,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	// Insert token
-	result, err := s.refreshTokens.InsertOne(ctx, token)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create refresh token: %w", err)
-	}
-
-	token.ID = result.InsertedID.(primitive.ObjectID)
-	return token, nil
-}
-
-// ValidateRefreshToken validates a refresh token
-func (s *UserService) ValidateRefreshToken(ctx context.Context, token string) (*models.RefreshToken, error) {
-	var refreshToken models.RefreshToken
-	filter := bson.M{
-		"token":   token,
-		"revoked": false,
-	}
-
-	err := s.refreshTokens.FindOne(ctx, filter).Decode(&refreshToken)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, models.ErrInvalidToken
-		}
-		return nil, fmt.Errorf("failed to find token: %w", err)
-	}
-
-	// Check if token is expired
-	if time.Now().After(refreshToken.ExpiresAt) {
-		return nil, models.ErrTokenExpired
-	}
-
-	return &refreshToken, nil
-}
-
-// RevokeRefreshToken revokes a specific refresh token
-func (s *UserService) RevokeRefreshToken(ctx context.Context, token string) error {
-	update := bson.M{
-		"$set": bson.M{
-			"revoked":    true,
-			"updated_at": time.Now(),
-		},
-	}
-
-	_, err := s.refreshTokens.UpdateOne(
-		ctx,
-		bson.M{"token": token},
-		update,
-	)
-
-	return err
-}
-
-// RevokeAllUserRefreshTokens revokes all refresh tokens for a user
-func (s *UserService) RevokeAllUserRefreshTokens(ctx context.Context, userID primitive.ObjectID) error {
-	update := bson.M{
-		"$set": bson.M{
-			"revoked":    true,
-			"updated_at": time.Now(),
-		},
-	}
-
-	_, err := s.refreshTokens.UpdateMany(
-		ctx,
-		bson.M{
-			"user_id": userID,
-			"revoked": false,
-		},
-		update,
-	)
-
-	return err
-}
 
 // ============================================
 // Default Admin Management

@@ -276,60 +276,6 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 	helpers.SendSuccess(c, "Profile updated successfully", updatedUser.ToResponse())
 }
 
-// VerifyEmail handles email verification
-// POST /api/auth/verify-email
-func (h *AuthHandler) VerifyEmail(c *gin.Context) {
-	var req models.VerifyEmailRequest
-	if err := helpers.BindAndValidate(c, &req); err != nil {
-		helpers.SendValidationErrors(c, err)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-
-	err := h.userService.VerifyEmailToken(ctx, req.Token)
-	if err != nil {
-		helpers.SendError(c, err)
-		return
-	}
-
-	helpers.SendSuccess(c, "Email verified successfully", nil)
-}
-
-// ResendVerification resends email verification
-// POST /api/auth/resend-verification
-func (h *AuthHandler) ResendVerification(c *gin.Context) {
-	user, exists := middleware.GetCurrentUser(c)
-	if !exists {
-		helpers.SendInternalError(c, models.ErrUserNotFound)
-		return
-	}
-
-	if user.Verified {
-		helpers.SendBadRequest(c, "Email is already verified")
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-
-	// Create new verification token
-	verificationToken, err := h.userService.CreateEmailVerificationToken(ctx, user.ID)
-	if err != nil {
-		helpers.SendInternalError(c, err)
-		return
-	}
-
-	// Send verification email
-	if err := h.emailService.SendVerificationEmail(user.Email, user.Name, verificationToken.Token); err != nil {
-		helpers.SendInternalError(c, err)
-		return
-	}
-
-	helpers.SendSuccess(c, "Verification email sent successfully", nil)
-}
-
 // RevokeAllTokens revokes all refresh tokens for current user
 // POST /api/auth/revoke-all-tokens
 func (h *AuthHandler) RevokeAllTokens(c *gin.Context) {
