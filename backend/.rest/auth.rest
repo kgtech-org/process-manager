@@ -53,8 +53,8 @@ X-Registration-Token: {{regStep2.response.body.data.registration_token}}
 {
   "name": "John Doe",
   "phone": "+228 90 12 34 56",
-  "department_id": "68c11b595a8696a2015f217c",
-  "job_position_id": "68c11b595a8696a2015f2182"
+  "departmentId": "68c11b595a8696a2015f217c",
+  "jobPositionId": "68c11b595a8696a2015f2182"
 }
 
 ###
@@ -214,8 +214,8 @@ X-Registration-Token: {{step2.response.body.data.registration_token}}
 {
   "name": "Workflow Test User",
   "phone": "+228 90 12 34 00",
-  "department_id": "68c11b595a8696a2015f217c",
-  "job_position_id": "68c11b595a8696a2015f2182"
+  "departmentId": "68c11b595a8696a2015f217c",
+  "jobPositionId": "68c11b595a8696a2015f2182"
 }
 
 # 4. Admin validates the user (status: pending → active)

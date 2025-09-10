@@ -25,7 +25,7 @@ GET {{apiUrl}}/departments?active=true
 Content-Type: application/json
 
 ### Get departments by parent (root departments)
-GET {{apiUrl}}/departments?parent_id=null
+GET {{apiUrl}}/departments?parentId=null
 Content-Type: application/json
 
 ### Get specific department by ID
@@ -42,7 +42,7 @@ Content-Type: application/json
   "name": "Information Security",
   "code": "INFOSEC",
   "description": "Manages information security and cybersecurity operations",
-  "parent_id": "68c11b595a8696a2015f218a"
+  "parentId": "68c11b595a8696a2015f218a"
 }
 
 ### Create root department (no parent)
@@ -75,7 +75,7 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "manager_id": "68c11b595a8696a2015f218f"
+  "managerId": "68c11b595a8696a2015f218f"
 }
 
 ### Deactivate department
@@ -119,7 +119,7 @@ Content-Type: application/json
 {
   "name": "Test Department",
   "code": "TEST",
-  "parent_id": "invalid-id-format"
+  "parentId": "invalid-id-format"
 }
 
 ### Try to access protected endpoint without authentication
@@ -161,7 +161,7 @@ Content-Type: application/json
   "name": "Software Engineering",
   "code": "SW_ENG",
   "description": "Software development and engineering",
-  "parent_id": "{{parentDept.response.body.data.id}}"
+  "parentId": "{{parentDept.response.body.data.id}}"
 }
 
 ### Create another sub-department
@@ -173,5 +173,5 @@ Content-Type: application/json
   "name": "Quality Engineering",
   "code": "QE",
   "description": "Quality assurance and testing",
-  "parent_id": "{{parentDept.response.body.data.id}}"
+  "parentId": "{{parentDept.response.body.data.id}}"
 }

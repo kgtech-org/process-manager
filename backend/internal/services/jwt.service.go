@@ -20,10 +20,10 @@ type JWTService struct {
 
 // JWTCustomClaims represents the JWT claims
 type JWTCustomClaims struct {
-	UserID    primitive.ObjectID `json:"user_id"`
+	UserID    primitive.ObjectID `json:"userId"`
 	Email     string             `json:"email"`
 	Role      models.UserRole    `json:"role"`
-	TokenType string             `json:"token_type"` // "access" or "refresh"
+	TokenType string             `json:"tokenType"` // "access" or "refresh"
 	jwt.RegisteredClaims
 }
 

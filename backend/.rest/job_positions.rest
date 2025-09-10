@@ -26,7 +26,7 @@ Content-Type: application/json
 
 ### Get job positions by department
 # Replace with actual department ID
-GET {{apiUrl}}/job-positions?department_id=68c11b595a8696a2015f218a
+GET {{apiUrl}}/job-positions?departmentId=68c11b595a8696a2015f218a
 Content-Type: application/json
 
 ### Get job positions by level
@@ -47,9 +47,9 @@ Content-Type: application/json
   "title": "Senior Backend Developer",
   "code": "SR_BE_DEV",
   "description": "Senior backend developer responsible for API development and system architecture",
-  "department_id": "68c11b595a8696a2015f218a",
+  "departmentId": "68c11b595a8696a2015f218a",
   "level": "Senior",
-  "required_skills": ["Go", "MongoDB", "Docker", "Kubernetes", "Microservices"]
+  "requiredSkills": ["Go", "MongoDB", "Docker", "Kubernetes", "Microservices"]
 }
 
 ### Create another job position
@@ -61,9 +61,9 @@ Content-Type: application/json
   "title": "DevOps Engineer",
   "code": "DEVOPS_ENG",
   "description": "DevOps engineer responsible for CI/CD pipelines and infrastructure",
-  "department_id": "68c11b595a8696a2015f218a",
+  "departmentId": "68c11b595a8696a2015f218a",
   "level": "Mid",
-  "required_skills": ["Docker", "Kubernetes", "AWS", "Jenkins", "Terraform"]
+  "requiredSkills": ["Docker", "Kubernetes", "AWS", "Jenkins", "Terraform"]
 }
 
 ### Create junior position
@@ -75,9 +75,9 @@ Content-Type: application/json
   "title": "Junior Frontend Developer",
   "code": "JR_FE_DEV",
   "description": "Junior frontend developer for web applications",
-  "department_id": "68c11b595a8696a2015f218a",
+  "departmentId": "68c11b595a8696a2015f218a",
   "level": "Junior",
-  "required_skills": ["JavaScript", "React", "HTML", "CSS"]
+  "requiredSkills": ["JavaScript", "React", "HTML", "CSS"]
 }
 
 ### Update job position (Requires Authentication)
@@ -89,7 +89,7 @@ Content-Type: application/json
 {
   "title": "Lead Software Developer",
   "level": "Lead",
-  "required_skills": ["Go", "Python", "MongoDB", "PostgreSQL", "Docker", "Leadership"]
+  "requiredSkills": ["Go", "Python", "MongoDB", "PostgreSQL", "Docker", "Leadership"]
 }
 
 ### Move job position to different department
@@ -99,7 +99,7 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "department_id": "68c11b595a8696a2015f218b"
+  "departmentId": "68c11b595a8696a2015f218b"
 }
 
 ### Deactivate job position
@@ -125,7 +125,7 @@ Content-Type: application/json
 # =========================
 
 ### Get senior-level positions in IT department
-GET {{apiUrl}}/job-positions?department_id=68c11b595a8696a2015f218a&level=Senior
+GET {{apiUrl}}/job-positions?departmentId=68c11b595a8696a2015f218a&level=Senior
 Content-Type: application/json
 
 ### Get all inactive job positions
@@ -133,7 +133,7 @@ GET {{apiUrl}}/job-positions?active=false
 Content-Type: application/json
 
 ### Get all job positions in HR department
-GET {{apiUrl}}/job-positions?department_id=68c11b595a8696a2015f218b
+GET {{apiUrl}}/job-positions?departmentId=68c11b595a8696a2015f218b
 Content-Type: application/json
 
 ###
@@ -149,7 +149,7 @@ Content-Type: application/json
 {
   "title": "Another Senior Backend Developer",
   "code": "SR_BE_DEV",
-  "department_id": "68c11b595a8696a2015f218a"
+  "departmentId": "68c11b595a8696a2015f218a"
 }
 
 ### Try to create job position with invalid department_id
@@ -160,7 +160,7 @@ Content-Type: application/json
 {
   "title": "Test Position",
   "code": "TEST_POS",
-  "department_id": "invalid-department-id"
+  "departmentId": "invalid-department-id"
 }
 
 ### Try to create job position with non-existent department
@@ -171,7 +171,7 @@ Content-Type: application/json
 {
   "title": "Orphan Position",
   "code": "ORPHAN_POS",
-  "department_id": "000000000000000000000000"
+  "departmentId": "000000000000000000000000"
 }
 
 ### Try to access protected endpoint without authentication
@@ -181,7 +181,7 @@ Content-Type: application/json
 {
   "title": "Unauthorized Position",
   "code": "UNAUTH_POS",
-  "department_id": "68c11b595a8696a2015f218a"
+  "departmentId": "68c11b595a8696a2015f218a"
 }
 
 ### Try to get non-existent job position
@@ -215,9 +215,9 @@ Content-Type: application/json
   "title": "Data Scientist",
   "code": "DATA_SCI",
   "description": "Analyze data and build predictive models",
-  "department_id": "{{newDept.response.body.data.id}}",
+  "departmentId": "{{newDept.response.body.data.id}}",
   "level": "Mid",
-  "required_skills": ["Python", "R", "SQL", "Machine Learning", "Statistics"]
+  "requiredSkills": ["Python", "R", "SQL", "Machine Learning", "Statistics"]
 }
 
 ### Step 3: Create senior position for the same department
@@ -229,11 +229,11 @@ Content-Type: application/json
   "title": "Senior Data Engineer",
   "code": "SR_DATA_ENG",
   "description": "Design and maintain data pipelines and infrastructure",
-  "department_id": "{{newDept.response.body.data.id}}",
+  "departmentId": "{{newDept.response.body.data.id}}",
   "level": "Senior",
-  "required_skills": ["Python", "Apache Spark", "Kafka", "SQL", "Docker", "AWS"]
+  "requiredSkills": ["Python", "Apache Spark", "Kafka", "SQL", "Docker", "AWS"]
 }
 
 ### Step 4: Get all positions for the new department
-GET {{apiUrl}}/job-positions?department_id={{newDept.response.body.data.id}}
+GET {{apiUrl}}/job-positions?departmentId={{newDept.response.body.data.id}}
 Content-Type: application/json

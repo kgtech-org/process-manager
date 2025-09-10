@@ -12,14 +12,14 @@ type JobPosition struct {
 	Title         string             `bson:"title" json:"title" validate:"required,min=2,max=100"`
 	Code          string             `bson:"code" json:"code" validate:"required,min=2,max=20"`
 	Description   string             `bson:"description,omitempty" json:"description,omitempty"`
-	DepartmentID  primitive.ObjectID `bson:"department_id" json:"department_id" validate:"required"`
+	DepartmentID  primitive.ObjectID `bson:"department_id" json:"departmentId" validate:"required"`
 	Level         string             `bson:"level,omitempty" json:"level,omitempty"` // Junior, Mid, Senior, Lead, Manager, Director
-	RequiredSkills []string           `bson:"required_skills,omitempty" json:"required_skills,omitempty"`
+	RequiredSkills []string           `bson:"required_skills,omitempty" json:"requiredSkills,omitempty"`
 	Active        bool               `bson:"active" json:"active"`
-	CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt     time.Time          `bson:"updated_at" json:"updated_at"`
-	CreatedBy     primitive.ObjectID `bson:"created_by,omitempty" json:"created_by,omitempty"`
-	UpdatedBy     primitive.ObjectID `bson:"updated_by,omitempty" json:"updated_by,omitempty"`
+	CreatedAt     time.Time          `bson:"created_at" json:"createdAt"`
+	UpdatedAt     time.Time          `bson:"updated_at" json:"updatedAt"`
+	CreatedBy     primitive.ObjectID `bson:"created_by,omitempty" json:"createdBy,omitempty"`
+	UpdatedBy     primitive.ObjectID `bson:"updated_by,omitempty" json:"updatedBy,omitempty"`
 }
 
 // JobPositionResponse represents the API response for a job position
@@ -28,12 +28,12 @@ type JobPositionResponse struct {
 	Title          string    `json:"title"`
 	Code           string    `json:"code"`
 	Description    string    `json:"description,omitempty"`
-	DepartmentID   string    `json:"department_id"`
+	DepartmentID   string    `json:"departmentId"`
 	Level          string    `json:"level,omitempty"`
-	RequiredSkills []string  `json:"required_skills,omitempty"`
+	RequiredSkills []string  `json:"requiredSkills,omitempty"`
 	Active         bool      `json:"active"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
 }
 
 // ToResponse converts JobPosition to JobPositionResponse
@@ -57,9 +57,9 @@ type CreateJobPositionRequest struct {
 	Title          string   `json:"title" validate:"required,min=2,max=100"`
 	Code           string   `json:"code" validate:"required,min=2,max=20"`
 	Description    string   `json:"description,omitempty"`
-	DepartmentID   string   `json:"department_id" validate:"required"`
+	DepartmentID   string   `json:"departmentId" validate:"required"`
 	Level          string   `json:"level,omitempty"`
-	RequiredSkills []string `json:"required_skills,omitempty"`
+	RequiredSkills []string `json:"requiredSkills,omitempty"`
 }
 
 // UpdateJobPositionRequest represents request to update a job position
@@ -67,9 +67,9 @@ type UpdateJobPositionRequest struct {
 	Title          string   `json:"title,omitempty" validate:"omitempty,min=2,max=100"`
 	Code           string   `json:"code,omitempty" validate:"omitempty,min=2,max=20"`
 	Description    string   `json:"description,omitempty"`
-	DepartmentID   string   `json:"department_id,omitempty"`
+	DepartmentID   string   `json:"departmentId,omitempty"`
 	Level          string   `json:"level,omitempty"`
-	RequiredSkills []string `json:"required_skills,omitempty"`
+	RequiredSkills []string `json:"requiredSkills,omitempty"`
 	Active         *bool    `json:"active,omitempty"`
 }
 

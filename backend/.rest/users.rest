@@ -6,7 +6,7 @@
 @apiUrl = {{baseUrl}}/api
 
 # Variables (will be set from responses)
-@adminToken = {{adminLogin.response.body.data.access_token}}
+@adminToken = {{adminLogin.response.body.data.accessToken}}
 @testUserId = 
 @pendingUserId = {{pendingUsers.response.body.data[0].id}}
 
@@ -32,7 +32,7 @@ Content-Type: application/json
 # @name adminLogin
 POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
-X-Temp-Token: {{adminRequestOtp.response.body.data.temporary_token}}
+X-Temp-Token: {{adminRequestOtp.response.body.data.temporaryToken}}
 
 {
   "otp": "{{adminRequestOtp.response.body.data.otp}}"

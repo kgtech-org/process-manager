@@ -31,8 +31,8 @@ type Step2RegistrationRequest struct {
 type Step3RegistrationRequest struct {
 	Name          string `json:"name" validate:"required,min=2,max=100"`
 	Phone         string `json:"phone,omitempty"`
-	DepartmentID  string `json:"department_id" validate:"required"`
-	JobPositionID string `json:"job_position_id" validate:"required"`
+	DepartmentID  string `json:"departmentId" validate:"required"`
+	JobPositionID string `json:"jobPositionId" validate:"required"`
 }
 
 // VerifyOTPRequest represents the request payload for OTP verification
@@ -42,7 +42,7 @@ type VerifyOTPRequest struct {
 
 // RefreshTokenRequest represents the request payload for token refresh
 type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token" validate:"required"`
+	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
 // VerifyEmailRequest represents the request payload for email verification
@@ -52,7 +52,7 @@ type VerifyEmailRequest struct {
 
 // LogoutRequest represents the request payload for logout
 type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token,omitempty"`
+	RefreshToken string `json:"refreshToken,omitempty"`
 }
 
 // ============================================
@@ -62,37 +62,37 @@ type LogoutRequest struct {
 // LoginResponse represents the successful login response
 type LoginResponse struct {
 	User         UserResponse `json:"user"`
-	AccessToken  string       `json:"access_token"`
-	RefreshToken string       `json:"refresh_token"`
-	ExpiresAt    time.Time    `json:"expires_at"`
-	TokenType    string       `json:"token_type"`
+	AccessToken  string       `json:"accessToken"`
+	RefreshToken string       `json:"refreshToken"`
+	ExpiresAt    time.Time    `json:"expiresAt"`
+	TokenType    string       `json:"tokenType"`
 }
 
 // OTPResponse represents the OTP request response
 type OTPResponse struct {
-	TemporaryToken   string `json:"temporary_token"`
-	ExpiresInMinutes int    `json:"expires_in_minutes"`
+	TemporaryToken   string `json:"temporaryToken"`
+	ExpiresInMinutes int    `json:"expiresInMinutes"`
 	OTP              string `json:"otp,omitempty"` // Only in development mode
 }
 
 // RegistrationStep1Response represents the response for step 1 of registration
 type RegistrationStep1Response struct {
-	TemporaryToken   string `json:"temporary_token"`
-	ExpiresInMinutes int    `json:"expires_in_minutes"`
+	TemporaryToken   string `json:"temporaryToken"`
+	ExpiresInMinutes int    `json:"expiresInMinutes"`
 	OTP              string `json:"otp,omitempty"` // Only in development mode
-	NextStep         int    `json:"next_step"`
+	NextStep         int    `json:"nextStep"`
 }
 
 // RegistrationStep2Response represents the response for step 2 of registration
 type RegistrationStep2Response struct {
-	RegistrationToken string `json:"registration_token"`
-	ExpiresInMinutes  int    `json:"expires_in_minutes"`
-	NextStep          int    `json:"next_step"`
+	RegistrationToken string `json:"registrationToken"`
+	ExpiresInMinutes  int    `json:"expiresInMinutes"`
+	NextStep          int    `json:"nextStep"`
 }
 
 // RegistrationStep3Response represents the response for step 3 of registration (completion)
 type RegistrationStep3Response struct {
-	UserID   string `json:"user_id"`
+	UserID   string `json:"userId"`
 	Email    string `json:"email"`
 	Name     string `json:"name"`
 	Status   string `json:"status"`
@@ -107,22 +107,22 @@ type RegistrationStep3Response struct {
 type OTPToken struct {
 	Email     string    `json:"email"`
 	OTP       string    `json:"otp"`
-	ExpiresAt time.Time `json:"expires_at"`
+	ExpiresAt time.Time `json:"expiresAt"`
 	Attempts  int       `json:"attempts"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 
 // TokenPair represents an access and refresh token pair
 type TokenPair struct {
-	AccessToken  string    `json:"access_token"`
-	RefreshToken string    `json:"refresh_token"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	AccessToken  string    `json:"accessToken"`
+	RefreshToken string    `json:"refreshToken"`
+	ExpiresAt    time.Time `json:"expiresAt"`
 }
 
 // JWTClaims represents the custom JWT claims
 type JWTClaims struct {
-	UserID string   `json:"user_id"`
+	UserID string   `json:"userId"`
 	Email  string   `json:"email"`
 	Name   string   `json:"name"`
 	Role   UserRole `json:"role"`
