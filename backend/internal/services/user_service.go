@@ -45,8 +45,6 @@ func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequ
 		Name:       req.Name,
 		Role:       req.Role,
 		Phone:      req.Phone,
-		Department: req.Department,
-		Position:   req.Position,
 		Status:     models.StatusActive, // Admin-created users are active by default
 		Active:     true,
 		Verified:   true,
@@ -94,8 +92,6 @@ func (s *UserService) RegisterUser(ctx context.Context, req *models.RegisterUser
 		Name:       req.Name,
 		Role:       models.RoleUser, // Default role for registration
 		Phone:      req.Phone,
-		Department: req.Department,
-		Position:   req.Position,
 	}
 
 	// BeforeCreate sets status to pending and validates
@@ -183,11 +179,19 @@ func (s *UserService) UpdateUser(ctx context.Context, userID primitive.ObjectID,
 	if req.Phone != "" {
 		update["$set"].(bson.M)["phone"] = req.Phone
 	}
-	if req.Department != "" {
-		update["$set"].(bson.M)["department"] = req.Department
+	if req.DepartmentID != "" {
+		departmentID, err := primitive.ObjectIDFromHex(req.DepartmentID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid department ID: %w", err)
+		}
+		update["$set"].(bson.M)["department_id"] = departmentID
 	}
-	if req.Position != "" {
-		update["$set"].(bson.M)["position"] = req.Position
+	if req.JobPositionID != "" {
+		jobPositionID, err := primitive.ObjectIDFromHex(req.JobPositionID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid job position ID: %w", err)
+		}
+		update["$set"].(bson.M)["job_position_id"] = jobPositionID
 	}
 	if req.Avatar != "" {
 		update["$set"].(bson.M)["avatar"] = req.Avatar
@@ -417,8 +421,11 @@ func (s *UserService) GetUsersWithFilters(ctx context.Context, opts *models.User
 		filter["role"] = opts.Role
 	}
 
-	if opts.Department != "" {
-		filter["department"] = opts.Department
+	if opts.DepartmentID != "" {
+		departmentID, err := primitive.ObjectIDFromHex(opts.DepartmentID)
+		if err == nil {
+			filter["department_id"] = departmentID
+		}
 	}
 
 	if opts.Active != nil {
@@ -518,19 +525,15 @@ func (s *UserService) EnsureDefaultAdmin(ctx context.Context) error {
 	// Get default admin credentials from environment variables
 	adminEmail := getEnvOrDefault("DEFAULT_ADMIN_EMAIL", "admin@process-manager.local")
 	adminName := getEnvOrDefault("DEFAULT_ADMIN_NAME", "System Administrator")
-	adminDepartment := getEnvOrDefault("DEFAULT_ADMIN_DEPARTMENT", "IT")
-	adminPosition := getEnvOrDefault("DEFAULT_ADMIN_POSITION", "System Administrator")
 
 	// Create default admin user
 	defaultAdmin := &models.User{
-		Email:      adminEmail,
-		Name:       adminName,
-		Role:       models.RoleAdmin,
-		Department: adminDepartment,
-		Position:   adminPosition,
-		Status:     models.StatusActive,
-		Active:     true,
-		Verified:   true,
+		Email:    adminEmail,
+		Name:     adminName,
+		Role:     models.RoleAdmin,
+		Status:   models.StatusActive,
+		Active:   true,
+		Verified: true,
 	}
 
 	// Set timestamps

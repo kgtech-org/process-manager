@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"errors"
 	"os"
 	"time"
 
@@ -214,7 +213,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	// Revoke old refresh token in Redis
+	// Revoke current refresh token in Redis
 	if err := h.otpService.RevokeRefreshToken(ctx, req.RefreshToken); err != nil {
 		helpers.SendInternalError(c, err)
 		return
@@ -467,8 +466,3 @@ func (h *AuthHandler) RegisterStep3(c *gin.Context) {
 	helpers.SendCreated(c, "Registration successful. Your account is pending admin validation.", response)
 }
 
-// Register handles legacy user registration (deprecated - use 3-step process)
-// POST /api/auth/register
-func (h *AuthHandler) Register(c *gin.Context) {
-	helpers.SendError(c, errors.New("this registration endpoint is deprecated. Please use the new 3-step registration process starting with /api/auth/register/step1"))
-}

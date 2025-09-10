@@ -23,7 +23,7 @@ POST {{apiUrl}}/auth/register/step1
 Content-Type: application/json
 
 {
-  "email": "john.doe@togocom.tg"
+  "email": "john.doe2@togocom.tg"
 }
 
 # Extract temporary token from response:
@@ -101,7 +101,7 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "name": "John Doe Updated",
+  "name": "AMADOU Arouna",
   "phone": "+228 90 12 34 99"
 }
 

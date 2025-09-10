@@ -15,7 +15,6 @@ func SetupAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandler,
 		auth.POST("/register/step1", authHandler.RegisterStep1)        // Send email, get OTP
 		auth.POST("/register/step2", authHandler.RegisterStep2)        // Verify OTP, get registration token
 		auth.POST("/register/step3", authHandler.RegisterStep3)        // Complete registration with profile info
-		auth.POST("/register", authHandler.Register)                   // Deprecated - use 3-step process
 		
 		// Authentication
 		auth.POST("/request-otp", authHandler.RequestOTP)
@@ -28,7 +27,7 @@ func SetupAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandler,
 		auth.PUT("/profile", authMiddleware.RequireAuth(), authHandler.UpdateProfile)
 		auth.POST("/revoke-all-tokens", authMiddleware.RequireAuth(), authHandler.RevokeAllTokens)
 
-		// Legacy status endpoint for backward compatibility
+		// Status endpoint for authentication verification
 		auth.GET("/status", authMiddleware.OptionalAuth(), func(c *gin.Context) {
 			user, exists := middleware.GetCurrentUser(c)
 			if exists {

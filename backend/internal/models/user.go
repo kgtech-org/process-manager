@@ -45,9 +45,6 @@ type User struct {
 	Phone           string              `bson:"phone,omitempty" json:"phone,omitempty"`
 	DepartmentID    *primitive.ObjectID `bson:"department_id,omitempty" json:"department_id,omitempty"`
 	JobPositionID   *primitive.ObjectID `bson:"job_position_id,omitempty" json:"job_position_id,omitempty"`
-	// Legacy fields for backward compatibility (deprecated)
-	Department      string              `bson:"department,omitempty" json:"department,omitempty"`
-	Position        string              `bson:"position,omitempty" json:"position,omitempty"`
 	LastLogin       *time.Time          `bson:"last_login,omitempty" json:"last_login,omitempty"`
 	ValidatedBy     *primitive.ObjectID `bson:"validated_by,omitempty" json:"validated_by,omitempty"`
 	ValidatedAt     *time.Time          `bson:"validated_at,omitempty" json:"validated_at,omitempty"`
@@ -64,30 +61,30 @@ type User struct {
 
 // RegisterUserRequest represents the request payload for user registration
 type RegisterUserRequest struct {
-	Email      string `json:"email" validate:"required,email"`
-	Name       string `json:"name" validate:"required,min=2,max=100"`
-	Phone      string `json:"phone,omitempty"`
-	Department string `json:"department,omitempty"`
-	Position   string `json:"position,omitempty"`
+	Email         string `json:"email" validate:"required,email"`
+	Name          string `json:"name" validate:"required,min=2,max=100"`
+	Phone         string `json:"phone,omitempty"`
+	DepartmentID  string `json:"department_id,omitempty"`
+	JobPositionID string `json:"job_position_id,omitempty"`
 }
 
 // CreateUserRequest represents the request payload for admin user creation
 type CreateUserRequest struct {
-	Email      string   `json:"email" validate:"required,email"`
-	Name       string   `json:"name" validate:"required,min=2,max=100"`
-	Role       UserRole `json:"role" validate:"required"`
-	Phone      string   `json:"phone,omitempty"`
-	Department string   `json:"department,omitempty"`
-	Position   string   `json:"position,omitempty"`
+	Email         string   `json:"email" validate:"required,email"`
+	Name          string   `json:"name" validate:"required,min=2,max=100"`
+	Role          UserRole `json:"role" validate:"required"`
+	Phone         string   `json:"phone,omitempty"`
+	DepartmentID  string   `json:"department_id,omitempty"`
+	JobPositionID string   `json:"job_position_id,omitempty"`
 }
 
 // UpdateProfileRequest represents the request payload for profile updates
 type UpdateProfileRequest struct {
-	Name       string `json:"name" validate:"omitempty,min=2,max=100"`
-	Phone      string `json:"phone,omitempty"`
-	Department string `json:"department,omitempty"`
-	Position   string `json:"position,omitempty"`
-	Avatar     string `json:"avatar,omitempty"`
+	Name          string `json:"name" validate:"omitempty,min=2,max=100"`
+	Phone         string `json:"phone,omitempty"`
+	DepartmentID  string `json:"department_id,omitempty"`
+	JobPositionID string `json:"job_position_id,omitempty"`
+	Avatar        string `json:"avatar,omitempty"`
 }
 
 // ValidateUserRequest represents the request payload for admin user validation
@@ -117,8 +114,6 @@ type UserResponse struct {
 	Verified        bool                `json:"verified"`
 	Avatar          string              `json:"avatar,omitempty"`
 	Phone           string              `json:"phone,omitempty"`
-	Department      string              `json:"department,omitempty"`
-	Position        string              `json:"position,omitempty"`
 	LastLogin       *time.Time          `json:"last_login,omitempty"`
 	ValidatedBy     *primitive.ObjectID `json:"validated_by,omitempty"`
 	ValidatedAt     *time.Time          `json:"validated_at,omitempty"`
@@ -137,7 +132,7 @@ type UserResponse struct {
 type UserFilterOptions struct {
 	Status     UserStatus `json:"status,omitempty"`
 	Role       UserRole   `json:"role,omitempty"`
-	Department string     `json:"department,omitempty"`
+	DepartmentID string   `json:"department_id,omitempty"`
 	Verified   *bool      `json:"verified,omitempty"`
 	Active     *bool      `json:"active,omitempty"`
 	Search     string     `json:"search,omitempty"`
@@ -209,8 +204,6 @@ func (u *User) ToResponse() UserResponse {
 		Verified:        u.Verified,
 		Avatar:          u.Avatar,
 		Phone:           u.Phone,
-		Department:      u.Department,
-		Position:        u.Position,
 		LastLogin:       u.LastLogin,
 		ValidatedBy:     u.ValidatedBy,
 		ValidatedAt:     u.ValidatedAt,
@@ -253,15 +246,6 @@ func (u *User) BeforeUpdate() {
 // Database Helper Functions (moved to service)
 // ============================================
 
-// GetUserByEmail finds a user by email (placeholder - implemented in service)
-func GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	return nil, ErrUserNotFound
-}
-
-// GetUserByID finds a user by ID (placeholder - implemented in service)
-func GetUserByID(ctx context.Context, id primitive.ObjectID) (*User, error) {
-	return nil, ErrUserNotFound
-}
 
 // CreateUserIndexes creates MongoDB indexes for the user collection
 func CreateUserIndexes(ctx context.Context) []bson.D {
