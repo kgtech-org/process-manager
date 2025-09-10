@@ -14,12 +14,17 @@ func SetupDepartmentRoutes(router *gin.RouterGroup, departmentHandler *handlers.
 		departments.GET("/", departmentHandler.GetDepartments)             // List all departments
 		departments.GET("/:id", departmentHandler.GetDepartment)           // Get specific department
 
-		// Protected routes - require authentication
-		protected := departments.Group("").Use(authMiddleware.RequireAuth())
+		// Manager-level operations - require manager or admin role
+		managerOps := departments.Group("").Use(authMiddleware.RequireManager())
 		{
-			protected.POST("/", departmentHandler.CreateDepartment)        // Create new department
-			protected.PUT("/:id", departmentHandler.UpdateDepartment)      // Update department
-			protected.DELETE("/:id", departmentHandler.DeleteDepartment)   // Delete department
+			managerOps.POST("/", departmentHandler.CreateDepartment)       // Create new department
+			managerOps.PUT("/:id", departmentHandler.UpdateDepartment)     // Update department
+		}
+
+		// Admin-only operations - high-risk operations
+		adminOps := departments.Group("").Use(authMiddleware.RequireAdmin())
+		{
+			adminOps.DELETE("/:id", departmentHandler.DeleteDepartment)    // Delete department (admin only)
 		}
 	}
 }

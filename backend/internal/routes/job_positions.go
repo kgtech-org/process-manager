@@ -14,12 +14,17 @@ func SetupJobPositionRoutes(router *gin.RouterGroup, jobPositionHandler *handler
 		jobPositions.GET("/", jobPositionHandler.GetJobPositions)             // List all job positions
 		jobPositions.GET("/:id", jobPositionHandler.GetJobPosition)           // Get specific job position
 
-		// Protected routes - require authentication
-		protected := jobPositions.Group("").Use(authMiddleware.RequireAuth())
+		// Manager-level operations - require manager or admin role
+		managerOps := jobPositions.Group("").Use(authMiddleware.RequireManager())
 		{
-			protected.POST("/", jobPositionHandler.CreateJobPosition)         // Create new job position
-			protected.PUT("/:id", jobPositionHandler.UpdateJobPosition)       // Update job position
-			protected.DELETE("/:id", jobPositionHandler.DeleteJobPosition)    // Delete job position
+			managerOps.POST("/", jobPositionHandler.CreateJobPosition)        // Create new job position
+			managerOps.PUT("/:id", jobPositionHandler.UpdateJobPosition)      // Update job position
+		}
+
+		// Admin-only operations - high-risk operations
+		adminOps := jobPositions.Group("").Use(authMiddleware.RequireAdmin())
+		{
+			adminOps.DELETE("/:id", jobPositionHandler.DeleteJobPosition)     // Delete job position (admin only)
 		}
 	}
 }
