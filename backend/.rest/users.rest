@@ -8,7 +8,7 @@
 # Variables (will be set from responses)
 @adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhiZmFmNjA5ZGRmMDFjMGRkYTU0MzYwIiwiZW1haWwiOiJhZG1pbkBwcm9jZXNzLW1hbmFnZXIubG9jYWwiLCJyb2xlIjoiYWRtaW4iLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaXNzIjoicHJvY2Vzcy1tYW5hZ2VyLWFwaSIsInN1YiI6IjY4YmZhZjYwOWRkZjAxYzBkZGE1NDM2MCIsImV4cCI6MTc1NzQ4MzgxMywibmJmIjoxNzU3NDgyOTEzLCJpYXQiOjE3NTc0ODI5MTN9.pmiGf2eXqY-TEQx7rHe3HUy3qk812Ft6uSjoZ6_PSfk
 @testUserId = 
-@pendingUserId = 
+@pendingUserId = 68c1119f9b1d13b9ddf7080a
 
 ###
 # =========================
@@ -17,6 +17,7 @@
 
 ### Admin Login (OTP Flow)
 # First request OTP for admin user
+# @name adminRequestOtp
 POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
@@ -24,14 +25,18 @@ Content-Type: application/json
   "email": "admin@process-manager.local"
 }
 
+# Extract temporary token and OTP from response (for VS Code REST Client):
+# @adminTempToken = {{adminRequestOtp.response.body.data.temporary_token}}
+# @adminOtp = {{adminRequestOtp.response.body.data.otp}}
+
 ### Verify admin OTP and get token
 # @name adminLogin
 POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
+X-Temp-Token: {{adminTempToken}}
 
 {
-  "email": "admin@process-manager.local",
-  "otp": "487254"
+  "otp": "{{adminOtp}}"
 }
 
 # Extract admin token: @adminToken = {{adminLogin.response.body.data.access_token}}
@@ -87,7 +92,7 @@ Content-Type: application/json
 # =========================
 
 ### Approve pending user registration
-PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/validate
+PUT {{apiUrl}}/users/{{pendingUserId}}/validate
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
@@ -97,7 +102,7 @@ Content-Type: application/json
 }
 
 ### Approve pending user with manager role
-PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/validate
+PUT {{apiUrl}}/users/68c1119f9b1d13b9ddf7080a/validate
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 

@@ -140,10 +140,25 @@ func SendValidationError(c *gin.Context, errors []models.ValidationError) {
 // Conditional Response Handlers
 // ============================================
 
-// SendOTPResponse sends OTP response based on environment
+// SendOTPResponse sends OTP response based on environment (deprecated)
 func SendOTPResponse(c *gin.Context, email string, otp string, isDevelopment bool) {
 	response := models.OTPResponse{
-		Email:            email,
+		TemporaryToken:   "", // This function is deprecated, use SendOTPResponseWithToken
+		ExpiresInMinutes: 5,
+	}
+
+	// Include OTP in response for development mode
+	if isDevelopment {
+		response.OTP = otp
+	}
+
+	SendSuccess(c, "OTP sent to your email address", response)
+}
+
+// SendOTPResponseWithToken sends OTP response with temporary token
+func SendOTPResponseWithToken(c *gin.Context, tempToken string, otp string, isDevelopment bool) {
+	response := models.OTPResponse{
+		TemporaryToken:   tempToken,
 		ExpiresInMinutes: 5,
 	}
 

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -158,6 +159,48 @@ func (s *OTPService) generateRandomOTP() (string, error) {
 // getOTPKey generates Redis key for OTP storage
 func (s *OTPService) getOTPKey(email string) string {
 	return fmt.Sprintf("otp:%s", email)
+}
+
+// GenerateTemporaryToken generates a secure temporary token for OTP verification
+func (s *OTPService) GenerateTemporaryToken(ctx context.Context, email string) (string, error) {
+	// Generate 32 random bytes
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return "", fmt.Errorf("failed to generate token: %w", err)
+	}
+	
+	// Encode to base64 URL-safe string
+	token := base64.URLEncoding.EncodeToString(tokenBytes)
+	
+	// Store token-email mapping in Redis with same expiry as OTP
+	key := fmt.Sprintf("temp_token:%s", token)
+	err := s.redisClient.Set(ctx, key, email, s.otpExpiry).Err()
+	if err != nil {
+		return "", fmt.Errorf("failed to store temporary token: %w", err)
+	}
+	
+	return token, nil
+}
+
+// GetEmailFromTemporaryToken retrieves the email associated with a temporary token
+func (s *OTPService) GetEmailFromTemporaryToken(ctx context.Context, token string) (string, error) {
+	key := fmt.Sprintf("temp_token:%s", token)
+	
+	email, err := s.redisClient.Get(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", models.ErrInvalidToken
+		}
+		return "", fmt.Errorf("failed to get email from token: %w", err)
+	}
+	
+	return email, nil
+}
+
+// DeleteTemporaryToken removes a temporary token from Redis
+func (s *OTPService) DeleteTemporaryToken(ctx context.Context, token string) error {
+	key := fmt.Sprintf("temp_token:%s", token)
+	return s.redisClient.Del(ctx, key).Err()
 }
 
 // SetOTPExpiry sets the OTP expiry duration

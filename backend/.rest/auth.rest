@@ -66,7 +66,7 @@ POST {{apiUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "invalid@test.com"
+  "email": "jane.smith@togocom.tg"
 }
 
 ### Register with invalid email format
@@ -95,6 +95,8 @@ Content-Type: application/json
 
 ### Request OTP for active user
 # Note: User must be approved by admin first
+# Response will include temporary_token to use in verify-otp
+# @name requestOTP
 POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
@@ -102,12 +104,16 @@ Content-Type: application/json
   "email": "admin@process-manager.local"
 }
 
+# Extract temporary token from response (for VS Code REST Client):
+# @tempToken = {{requestOTP.response.body.data.temporary_token}}
+# @otpCode = {{requestOTP.response.body.data.otp}}
+
 ### Request OTP for pending user (should fail)
 POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "jane.smith@togocom.tg"
+  "email": "john.doe@togocom.tg"
 }
 
 ### Request OTP for non-existent user (secure response)
@@ -115,35 +121,44 @@ POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
 {
-  "email": "nonexistent@example.com"
+  "email": "jane.smith@togocom.tg"
 }
 
 ### Verify OTP and login
-# Note: Replace OTP with actual code from email or development response
+# Note: Replace OTP and temporary token with actual values from request-otp response
+# IMPORTANT: No email needed in body, only OTP. Email is retrieved from temporary token.
 POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
+X-Temp-Token: C3jSb0ve0pBfufc-m1xjN6PysNcbQFanhXRQF08LlRI=
 
 {
-  "email": "admin@process-manager.local",
-  "otp": "233092"
+  "otp": "624557"
 }
 
 ### Verify OTP with wrong code
 POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
+X-Temp-Token: REPLACE_WITH_TEMPORARY_TOKEN
 
 {
-  "email": "john.doe@togocom.tg",
   "otp": "000000"
 }
 
-### Verify OTP with expired code
+### Verify OTP without temporary token (should fail)
 POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
 
 {
-  "email": "john.doe@togocom.tg",
-  "otp": "expired_otp"
+  "otp": "123456"
+}
+
+### Verify OTP with invalid temporary token
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+X-Temp-Token: invalid_token_12345
+
+{
+  "otp": "123456"
 }
 
 ###
@@ -393,7 +408,7 @@ Content-Type: application/json
 # 2. Admin validates the user (see users.rest for admin operations)
 
 # 3. Request OTP for login
-# @name requestOtp
+# @name workflowRequestOtp
 POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
 
@@ -401,14 +416,18 @@ Content-Type: application/json
   "email": "workflow.test@togocom.tg"
 }
 
-# 4. Verify OTP and login
-# @name login
+# Extract temporary token and OTP (for VS Code REST Client):
+# @workflowTempToken = {{workflowRequestOtp.response.body.data.temporary_token}}
+# @workflowOtp = {{workflowRequestOtp.response.body.data.otp}}
+
+# 4. Verify OTP and login using temporary token
+# @name workflowLogin
 POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
+X-Temp-Token: {{workflowTempToken}}
 
 {
-  "email": "workflow.test@togocom.tg",
-  "otp": "REPLACE_WITH_ACTUAL_OTP"
+  "otp": "{{workflowOtp}}"
 }
 
 # 5. Extract tokens from login response and test protected endpoints
@@ -512,7 +531,8 @@ Content-Type: application/json
 # 4. Admin deactivates → Status: INACTIVE (cannot login)
 
 # OTP Workflow:
-# 1. User requests OTP → Email sent with 6-digit code (5min expiry)
-# 2. User verifies OTP → Receives JWT tokens for authentication
-# 3. Failed attempts are tracked (max 3 attempts)
-# 4. Development mode returns OTP in API response for testing
+# 1. User requests OTP → Returns temporary token + Email sent with 6-digit code (5min expiry)
+# 2. User sends OTP with temporary token in header → Receives JWT tokens for authentication
+# 3. Temporary token identifies the user (no email needed in verify-otp body)
+# 4. Failed attempts are tracked (max 3 attempts)
+# 5. Development mode returns OTP in API response for testing

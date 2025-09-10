@@ -17,8 +17,7 @@ type LoginRequest struct {
 
 // VerifyOTPRequest represents the request payload for OTP verification
 type VerifyOTPRequest struct {
-	Email string `json:"email" validate:"required,email"`
-	OTP   string `json:"otp" validate:"required,len=6"`
+	OTP string `json:"otp" validate:"required,len=6"`
 }
 
 // RefreshTokenRequest represents the request payload for token refresh
@@ -51,7 +50,7 @@ type LoginResponse struct {
 
 // OTPResponse represents the OTP request response
 type OTPResponse struct {
-	Email            string `json:"email"`
+	TemporaryToken   string `json:"temporary_token"`
 	ExpiresInMinutes int    `json:"expires_in_minutes"`
 	OTP              string `json:"otp,omitempty"` // Only in development mode
 }

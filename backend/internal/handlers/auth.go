@@ -63,6 +63,13 @@ func (h *AuthHandler) RequestOTP(c *gin.Context) {
 		return
 	}
 
+	// Generate temporary token for OTP verification
+	tempToken, err := h.otpService.GenerateTemporaryToken(ctx, user.Email)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
 	// Send OTP via email
 	if err := h.emailService.SendOTPEmail(user.Email, user.Name, otp); err != nil {
 		helpers.SendInternalError(c, err)
@@ -72,13 +79,20 @@ func (h *AuthHandler) RequestOTP(c *gin.Context) {
 	// Check if development mode
 	isDevelopment := os.Getenv("GIN_MODE") == "debug" || os.Getenv("DEVELOPMENT_MODE") == "true"
 
-	// Send OTP response using centralized function
-	helpers.SendOTPResponse(c, user.Email, otp, isDevelopment)
+	// Send OTP response with temporary token
+	helpers.SendOTPResponseWithToken(c, tempToken, otp, isDevelopment)
 }
 
 // VerifyOTP verifies the OTP and logs in the user
 // POST /api/auth/verify-otp
 func (h *AuthHandler) VerifyOTP(c *gin.Context) {
+	// Get temporary token from header
+	tempToken := c.GetHeader("X-Temp-Token")
+	if tempToken == "" {
+		helpers.SendError(c, models.ErrInvalidToken)
+		return
+	}
+
 	var req models.VerifyOTPRequest
 	if err := helpers.BindAndValidate(c, &req); err != nil {
 		helpers.SendValidationErrors(c, err)
@@ -88,14 +102,24 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	// Verify OTP
-	if err := h.otpService.VerifyOTP(ctx, req.Email, req.OTP); err != nil {
+	// Get email from temporary token
+	email, err := h.otpService.GetEmailFromTemporaryToken(ctx, tempToken)
+	if err != nil {
 		helpers.SendError(c, err)
 		return
 	}
 
+	// Verify OTP
+	if err := h.otpService.VerifyOTP(ctx, email, req.OTP); err != nil {
+		helpers.SendError(c, err)
+		return
+	}
+
+	// Delete temporary token after successful verification
+	h.otpService.DeleteTemporaryToken(ctx, tempToken)
+
 	// Get user for token generation
-	user, err := h.userService.GetUserByEmail(ctx, req.Email)
+	user, err := h.userService.GetUserByEmail(ctx, email)
 	if err != nil {
 		helpers.SendError(c, err)
 		return
