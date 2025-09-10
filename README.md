@@ -19,10 +19,16 @@ This application provides a structured multi-step form interface for creating an
 ### Monorepo Structure
 ```
 process-manager/
-├── backend/                    # Go API server
+├── backend/                    # Go API server with clean architecture
 │   ├── cmd/                   # Application entrypoints
 │   ├── internal/              # Private application code
-│   ├── pkg/                   # Public packages
+│   │   ├── models/            # Data models (*.model.go)
+│   │   ├── services/          # Business logic (*.service.go)
+│   │   ├── handlers/          # HTTP handlers (*.handler.go)
+│   │   ├── routes/            # API routes (*.routes.go)
+│   │   ├── middleware/        # HTTP middleware (*.middleware.go)
+│   │   └── helpers/           # Utility functions (*.helper.go)
+│   ├── .rest/                 # REST API test files
 │   ├── templates/             # PDF generation templates
 │   ├── Dockerfile             # Backend container
 │   ├── go.mod                 # Go dependencies
@@ -49,13 +55,15 @@ process-manager/
 ### Technology Stack
 
 #### Backend (Go)
-- **Framework**: Gin HTTP web framework
-- **Database**: MongoDB for document storage
-- **Cache**: Redis for session management and caching
-- **Authentication**: JWT tokens with role-based access
-- **File Storage**: MinIO for document and attachment storage
-- **PDF Generation**: Go-based PDF generator with YAS template layout
-- **Background Jobs**: Worker queues for notifications
+- **Framework**: Gin HTTP web framework with clean architecture
+- **Database**: MongoDB for document storage with BSON snake_case fields
+- **Cache**: Redis for session management and JWT token storage
+- **Authentication**: 3-step registration with OTP, JWT access/refresh tokens
+- **Authorization**: Role-based access control (Admin/Manager/User)
+- **File Storage**: MinIO for profile pictures and document attachments
+- **API Format**: camelCase JSON requests and responses
+- **File Organization**: Descriptive naming with layer suffixes (*.service.go, *.handler.go)
+- **Security**: Input validation, rate limiting, content-type detection
 
 #### Frontend (Next.js)
 - **Framework**: Next.js 14 with App Router
@@ -72,11 +80,11 @@ process-manager/
 #### Documents
 ```go
 type Document struct {
-    ID              primitive.ObjectID `bson:"_id,omitempty"`
-    Reference       string            `bson:"reference"`        // e.g., "TG-TELCO-PRO-101"
-    Title           string            `bson:"title"`
-    Version         string            `bson:"version"`          // e.g., "v1.0"
-    Status          DocumentStatus    `bson:"status"`           // draft, review, approved, archived
+    ID              primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+    Reference       string            `bson:"reference" json:"reference"`        // e.g., "TG-TELCO-PRO-101"
+    Title           string            `bson:"title" json:"title"`
+    Version         string            `bson:"version" json:"version"`          // e.g., "v1.0"
+    Status          DocumentStatus    `bson:"status" json:"status"`           // draft, review, approved, archived
     
     // Contributors Section
     Contributors    Contributors      `bson:"contributors"`
@@ -90,10 +98,10 @@ type Document struct {
     // Annexes Section
     Annexes         []Annex           `bson:"annexes"`
     
-    CreatedBy       primitive.ObjectID `bson:"created_by"`
-    CreatedAt       time.Time         `bson:"created_at"`
-    UpdatedAt       time.Time         `bson:"updated_at"`
-    ApprovedAt      *time.Time        `bson:"approved_at,omitempty"`
+    CreatedBy       primitive.ObjectID `bson:"created_by" json:"createdBy"`
+    CreatedAt       time.Time         `bson:"created_at" json:"createdAt"`
+    UpdatedAt       time.Time         `bson:"updated_at" json:"updatedAt"`
+    ApprovedAt      *time.Time        `bson:"approved_at,omitempty" json:"approvedAt,omitempty"`
 }
 
 type Contributors struct {
@@ -684,15 +692,41 @@ NEXTAUTH_SECRET=your-nextauth-secret
 
 ## 🔐 Authentication & Authorization
 
-### JWT Token Structure
+### JWT Token Structure (camelCase API format)
 ```json
 {
-  "user_id": "user_object_id",
+  "userId": "507f1f77bcf86cd799439011",
   "email": "user@togocom.tg",
   "role": "manager",
-  "department": "NOC",
-  "permissions": ["read_incidents", "create_incidents", "approve_documents"],
-  "exp": 1640995200
+  "tokenType": "access",
+  "exp": 1640995200,
+  "iat": 1640991600
+}
+```
+
+### API Request/Response Format
+All API endpoints use camelCase JSON formatting:
+
+**Request Example:**
+```json
+{
+  "departmentId": "507f1f77bcf86cd799439011",
+  "jobPositionId": "507f1f77bcf86cd799439012",
+  "requiredSkills": ["Go", "MongoDB", "Docker"]
+}
+```
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "message": "User updated successfully",
+  "data": {
+    "userId": "507f1f77bcf86cd799439011",
+    "lastLogin": "2025-01-15T09:15:00Z",
+    "createdAt": "2025-01-10T08:00:00Z",
+    "departmentId": "507f1f77bcf86cd799439013"
+  }
 }
 ```
 
@@ -706,13 +740,67 @@ NEXTAUTH_SECRET=your-nextauth-secret
 
 ### Authentication Endpoints
 ```
-POST /api/auth/login
-POST /api/auth/refresh
-POST /api/auth/logout
-GET  /api/auth/me
+# 3-Step Registration Process
+POST /api/auth/register/step1    # Send OTP to email
+POST /api/auth/register/step2    # Verify OTP, get registration token  
+POST /api/auth/register/step3    # Complete profile setup
+
+# OTP-based Login
+POST /api/auth/request-otp       # Request login OTP
+POST /api/auth/verify-otp        # Verify OTP and login
+POST /api/auth/refresh           # Refresh access token
+POST /api/auth/logout            # Logout current session
+POST /api/auth/revoke-all-tokens # Revoke all user tokens
+
+# Profile Management
+GET  /api/auth/me                # Get current user profile
+PUT  /api/auth/profile           # Update user profile
+POST /api/auth/avatar            # Upload profile picture
+DELETE /api/auth/avatar          # Remove profile picture
 ```
 
-### Document Management
+### User Management (Admin Only)
+```
+GET    /api/users               # List all users with filtering
+POST   /api/users               # Create new user  
+GET    /api/users/{id}          # Get user details
+PUT    /api/users/{id}          # Update user
+DELETE /api/users/{id}          # Soft delete user
+PUT    /api/users/{id}/activate # Activate user
+PUT    /api/users/{id}/deactivate # Deactivate user
+PUT    /api/users/{id}/role     # Update user role
+PUT    /api/users/{id}/validate # Validate pending registration
+```
+
+### Department Management
+```
+# Public endpoints (no authentication required)
+GET    /api/departments         # List all departments
+GET    /api/departments/{id}    # Get specific department
+
+# Manager+ operations (managers and admins)
+POST   /api/departments         # Create new department
+PUT    /api/departments/{id}    # Update department
+
+# Admin-only operations
+DELETE /api/departments/{id}    # Delete department
+```
+
+### Job Position Management
+```
+# Public endpoints (no authentication required)
+GET    /api/job-positions       # List all job positions
+GET    /api/job-positions/{id}  # Get specific job position
+
+# Manager+ operations (managers and admins)
+POST   /api/job-positions       # Create new job position
+PUT    /api/job-positions/{id}  # Update job position
+
+# Admin-only operations
+DELETE /api/job-positions/{id}  # Delete job position
+```
+
+### Document Management (Future Implementation)
 ```
 GET    /api/documents
 POST   /api/documents

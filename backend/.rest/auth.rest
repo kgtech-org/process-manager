@@ -1,0 +1,267 @@
+# Process Manager Backend - Authentication API Tests
+# Use with REST Client extension in VS Code or any REST client
+
+@baseUrl = http://localhost:8080
+@apiUrl = {{baseUrl}}/api
+
+# Variables (will be set from responses)
+@accessToken =  {{verifyOTP.response.body.data.access_token}}
+@refreshToken =  {{verifyOTP.response.body.data.refresh_token}}
+
+### Health Check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+###
+# =================================
+# 3-STEP REGISTRATION WORKFLOW
+# =================================
+
+### Registration Step 1: Send email, get OTP
+# @name regStep1
+POST {{apiUrl}}/auth/register/step1
+Content-Type: application/json
+
+{
+  "email": "john.doe2@togocom.tg"
+}
+
+# Extract temporary token from response:
+# @regTempToken = {{regStep1.response.body.data.temporary_token}}
+# @regOtp = {{regStep1.response.body.data.otp}}
+
+### Registration Step 2: Verify OTP, get registration token
+# Use the temporary token from Step 1 in the header
+# @name regStep2
+POST {{apiUrl}}/auth/register/step2
+Content-Type: application/json
+X-Temp-Token: {{regStep1.response.body.data.temporary_token}}
+
+{
+  "otp": "{{regStep1.response.body.data.otp}}"
+}
+
+# Extract registration token from response:
+# @regToken = {{regStep2.response.body.data.registration_token}}
+
+### Registration Step 3: Complete registration with profile info
+# Get department and job position IDs first, then use them below
+POST {{apiUrl}}/auth/register/step3
+Content-Type: application/json
+X-Registration-Token: {{regStep2.response.body.data.registration_token}}
+
+{
+  "name": "John Doe",
+  "phone": "+228 90 12 34 56",
+  "departmentId": "68c11b595a8696a2015f217c",
+  "jobPositionId": "68c11b595a8696a2015f2182"
+}
+
+###
+# =========================
+# OTP AUTHENTICATION FLOW
+# =========================
+
+### Request OTP for login
+# @name requestOTP
+POST {{apiUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.local"
+}
+
+# Extract temporary token from response:
+# @tempToken = {{requestOTP.response.body.data.temporary_token}}
+# @otpCode = {{requestOTP.response.body.data.otp}}
+
+### Verify OTP and login
+# @name verifyOTP
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+X-Temp-Token: {{requestOTP.response.body.data.temporary_token}}
+
+{
+  "otp": "{{requestOTP.response.body.data.otp}}"
+}
+
+###
+# =========================
+# PROTECTED ENDPOINTS
+# =========================
+
+### Get current user profile
+GET {{apiUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Update user profile (JSON)
+PUT {{apiUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "AMADOU Arouna",
+  "phone": "+228 90 12 34 99"
+}
+
+### Upload Avatar (Profile Picture)
+POST {{apiUrl}}/auth/avatar
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="profile.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/profile-image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Delete Avatar (Profile Picture)
+DELETE {{apiUrl}}/auth/avatar
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# TOKEN MANAGEMENT
+# =========================
+
+### Refresh access token
+POST {{apiUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### Revoke all user tokens
+POST {{apiUrl}}/auth/revoke-all-tokens
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Logout
+POST {{apiUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+###
+# =========================
+# EMAIL VERIFICATION
+# =========================
+
+### Verify email
+POST {{apiUrl}}/auth/verify-email
+Content-Type: application/json
+
+{
+  "token": "your-verification-token-here"
+}
+
+### Resend verification email
+POST {{apiUrl}}/auth/resend-verification
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# HELPER ENDPOINTS
+# =========================
+
+### Get departments (for registration step 3)
+GET {{baseUrl}}/api/departments
+Content-Type: application/json
+
+### Get job positions (for registration step 3)
+GET {{baseUrl}}/api/job-positions
+Content-Type: application/json
+
+###
+# =========================
+# COMPLETE WORKFLOW EXAMPLE
+# =========================
+
+# Complete 3-Step Registration and Login Flow:
+
+# 1. Registration Step 1: Send email
+# @name step1
+POST {{apiUrl}}/auth/register/step1
+Content-Type: application/json
+
+{
+  "email": "workflow.test@togocom.tg"
+}
+
+# 2. Registration Step 2: Verify OTP
+# @name step2
+POST {{apiUrl}}/auth/register/step2
+Content-Type: application/json
+X-Temp-Token: {{step1.response.body.data.temporary_token}}
+
+{
+  "otp": "{{step1.response.body.data.otp}}"
+}
+
+# 3. Registration Step 3: Complete profile
+POST {{apiUrl}}/auth/register/step3
+Content-Type: application/json
+X-Registration-Token: {{step2.response.body.data.registration_token}}
+
+{
+  "name": "Workflow Test User",
+  "phone": "+228 90 12 34 00",
+  "departmentId": "68c11b595a8696a2015f217c",
+  "jobPositionId": "68c11b595a8696a2015f2182"
+}
+
+# 4. Admin validates the user (status: pending → active)
+
+# 5. Request OTP for login
+# @name loginOtp
+POST {{apiUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "workflow.test@togocom.tg"
+}
+
+# 6. Verify OTP and login
+# @name login
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+X-Temp-Token: {{loginOtp.response.body.data.temporary_token}}
+
+{
+  "otp": "{{loginOtp.response.body.data.otp}}"
+}
+
+# Extract tokens from login response:
+# @accessToken = {{login.response.body.data.access_token}}
+# @refreshToken = {{login.response.body.data.refresh_token}}
+
+# 7. Test protected endpoint
+GET {{apiUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+# 8. Update profile
+PUT {{apiUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Workflow Test User"
+}
+
+# 9. Logout
+POST {{apiUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}

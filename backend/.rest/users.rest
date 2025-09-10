@@ -1,0 +1,251 @@
+# Process Manager Backend - User Management API Tests (Admin Only)
+# Use with REST Client extension in VS Code or any REST client
+# All endpoints require admin authentication
+
+@baseUrl = http://localhost:8080
+@apiUrl = {{baseUrl}}/api
+
+# Variables (will be set from responses)
+@adminToken = {{adminLogin.response.body.data.accessToken}}
+@testUserId = 
+@pendingUserId = {{pendingUsers.response.body.data[0].id}}
+
+###
+# =========================
+# ADMIN AUTHENTICATION
+# =========================
+
+### Admin Login (OTP Flow)
+# @name adminRequestOtp
+POST {{apiUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.local"
+}
+
+# Extract temporary token and OTP from response:
+# @adminTempToken = {{adminRequestOtp.response.body.data.temporary_token}}
+# @adminOtp = {{adminRequestOtp.response.body.data.otp}}
+
+### Verify admin OTP and get token
+# @name adminLogin
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+X-Temp-Token: {{adminRequestOtp.response.body.data.temporaryToken}}
+
+{
+  "otp": "{{adminRequestOtp.response.body.data.otp}}"
+}
+
+# Extract admin token: @adminToken = {{adminLogin.response.body.data.access_token}}
+
+###
+# =========================
+# USER LISTING & FILTERING
+# =========================
+
+### Get all users
+GET {{apiUrl}}/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### Get users with pagination
+GET {{apiUrl}}/users?page=1&limit=10
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### Filter users by status (pending)
+#  @name pendingUsers
+GET {{apiUrl}}/users?status=pending
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### Filter users by status (active)
+GET {{apiUrl}}/users?status=active
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### Filter users by role
+GET {{apiUrl}}/users?role=user
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+###
+# =========================
+# USER VALIDATION WORKFLOW
+# =========================
+
+### Approve pending user registration
+PUT {{apiUrl}}/users/{{pendingUserId}}/validate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "action": "approve",
+  "role": "user"
+}
+
+### Reject pending user registration
+PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/validate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "action": "reject",
+  "reason": "Application does not meet company requirements"
+}
+
+###
+# =========================
+# USER CRUD OPERATIONS
+# =========================
+
+### Get specific user by ID
+GET {{apiUrl}}/users/REPLACE_WITH_USER_ID
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### Create new user (admin creation)
+POST {{apiUrl}}/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "admin.created@togocom.tg",
+  "name": "Admin Created User",
+  "role": "manager",
+  "phone": "+228 90 12 34 99",
+  "department_id": "REPLACE_WITH_DEPARTMENT_ID",
+  "job_position_id": "REPLACE_WITH_JOB_POSITION_ID"
+}
+
+### Update user profile (admin)
+PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated User Name",
+  "phone": "+228 90 12 34 88",
+  "department_id": "REPLACE_WITH_DEPARTMENT_ID",
+  "job_position_id": "REPLACE_WITH_JOB_POSITION_ID"
+}
+
+### Soft delete user
+DELETE {{apiUrl}}/users/REPLACE_WITH_USER_ID
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+###
+# =========================
+# USER STATUS MANAGEMENT
+# =========================
+
+### Activate user account
+PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/activate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### Deactivate user account
+PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/deactivate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+###
+# =========================
+# ROLE MANAGEMENT
+# =========================
+
+### Update user role to manager
+PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "manager"
+}
+
+### Update user role to admin
+PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "admin"
+}
+
+###
+# =========================
+# COMPLETE USER WORKFLOW
+# =========================
+
+# 1. List pending users
+GET {{apiUrl}}/users?status=pending
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+# 2. Get specific pending user details
+GET {{apiUrl}}/users/PENDING_USER_ID
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+# 3. Approve the user
+PUT {{apiUrl}}/users/PENDING_USER_ID/validate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "action": "approve",
+  "role": "user"
+}
+
+# 4. Update user role if needed
+PUT {{apiUrl}}/users/PENDING_USER_ID/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "manager"
+}
+
+# 5. Verify user is now active
+GET {{apiUrl}}/users/PENDING_USER_ID
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+###
+# =========================
+# DOCUMENTATION
+# =========================
+
+# Testing Instructions:
+# 1. First authenticate as admin using the OTP flow above
+# 2. Extract admin token and set @adminToken variable
+# 3. Test user listing and filtering capabilities
+# 4. Create test users via registration (auth.rest) to have pending users
+# 5. Test the complete validation workflow (approve/reject)
+# 6. Test user lifecycle management (activate/deactivate/role changes)
+
+# Expected Status Codes:
+# - 200: Successful operations (list, get, update, activate, etc.)
+# - 201: Successful user creation
+# - 400: Bad request (validation errors, invalid formats)
+# - 401: Unauthorized (missing/invalid admin token)
+# - 403: Forbidden (non-admin trying to access admin endpoints)
+# - 404: Not found (invalid user ID, non-existent users)
+
+# Admin User Management Features:
+# 1. User Registration Validation (approve/reject pending users)
+# 2. User CRUD Operations (create, read, update, delete)
+# 3. User Status Management (activate/deactivate accounts)
+# 4. Role Management (assign user/manager/admin roles)
+# 5. User Filtering and Pagination (status, role, pagination)
+
+# User Status Transitions:
+# PENDING → ACTIVE (via approval)
+# PENDING → REJECTED (via rejection)
+# ACTIVE ↔ INACTIVE (via activate/deactivate)
+
+# Role Hierarchy:
+# admin > manager > user

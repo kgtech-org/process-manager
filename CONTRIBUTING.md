@@ -145,21 +145,70 @@ npm run dev
 docker-compose up -d mongodb redis minio
 ```
 
+## 📁 File Organization Standards
+
+### Backend File Naming Convention
+
+The project uses descriptive file naming with folder-based suffixes for better code organization:
+
+**Structure** (`/backend/internal/`):
+```
+models/          → *.model.go         (auth.model.go, user.model.go, department.model.go)
+services/        → *.service.go       (jwt.service.go, email.service.go, user.service.go)
+handlers/        → *.handler.go       (auth.handler.go, user.handler.go, department.handler.go)
+routes/          → *.routes.go        (auth.routes.go, departments.routes.go, users.routes.go)
+middleware/      → *.middleware.go    (auth.middleware.go)
+helpers/         → *.helper.go        (validation.helper.go, upload.helper.go, response.helper.go)
+```
+
+**Benefits:**
+- Immediate identification of file purpose and layer
+- Better IDE navigation and autocomplete
+- Consistent organization across all architectural layers  
+- Clear separation of concerns
+- Easier code discovery and maintenance
+
+**When creating new files, always use the appropriate suffix:**
+```bash
+# ✅ Correct naming
+user.model.go           # User data model
+email.service.go        # Email service logic  
+avatar.handler.go       # Avatar upload handler
+departments.routes.go   # Department API routes
+
+# ❌ Incorrect naming (old pattern)
+user.go                # Ambiguous purpose
+email.go               # Unclear what layer
+avatar.go              # Missing context
+departments.go         # No layer indication
+```
+
 ## 📝 Code Style Guidelines
 
 ### Go Backend
 
+- **File Naming**: Use descriptive suffixes (*.model.go, *.service.go, *.handler.go)
 - **Formatting**: Use `gofmt` and `goimports`
 - **Linting**: Use `golangci-lint` for code quality
 - **Naming**: Follow Go naming conventions (PascalCase for exports, camelCase for local)
+- **JSON Tags**: Use camelCase for all JSON field tags (json:"userId", json:"createdAt")
 - **Error Handling**: Always handle errors explicitly
 - **Documentation**: Add godoc comments for exported functions and types
 
 ```go
-// Example: Good Go code style
+// Example: Good Go code style with proper naming
+// File: document.service.go
 type DocumentService struct {
     db     *mongo.Database
     logger *slog.Logger
+}
+
+// Document model with camelCase JSON tags
+type Document struct {
+    ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+    Title     string            `bson:"title" json:"title"`
+    CreatedAt time.Time         `bson:"created_at" json:"createdAt"`
+    UpdatedAt time.Time         `bson:"updated_at" json:"updatedAt"`
 }
 
 // CreateDocument creates a new document with validation
@@ -208,25 +257,44 @@ export const ProcessStepEditor: React.FC<ProcessStepProps> = ({
 ### Database Conventions
 
 - **Collections**: Use snake_case for collection names (`documents`, `process_steps`)
-- **Fields**: Use snake_case for field names (`created_at`, `user_id`)
+- **BSON Fields**: Use snake_case for database field names (`created_at`, `user_id`)
+- **JSON API**: Use camelCase for API responses (`createdAt`, `userId`)
 - **Indexes**: Create indexes for frequently queried fields
 - **Validation**: Use MongoDB schema validation where appropriate
+
+**Important**: Database uses snake_case, but API responses use camelCase:
+```go
+type User struct {
+    CreatedAt time.Time `bson:"created_at" json:"createdAt"`  // DB: snake_case, API: camelCase
+    UserID    string    `bson:"user_id" json:"userId"`        // DB: snake_case, API: camelCase
+}
+```
 
 ### API Conventions
 
 - **REST**: Follow RESTful API design principles
-- **Endpoints**: Use kebab-case for multi-word resources (`/api/process-groups`)
+- **Endpoints**: Use kebab-case for multi-word resources (`/api/job-positions`, `/api/process-groups`)
 - **HTTP Methods**: Use appropriate methods (GET, POST, PUT, DELETE, PATCH)
 - **Status Codes**: Use appropriate HTTP status codes
+- **JSON Format**: Use camelCase for all JSON fields in requests and responses
 - **Responses**: Consistent JSON response format
 
 ```json
 {
   "success": true,
-  "data": {...},
+  "data": {
+    "userId": "507f1f77bcf86cd799439011",
+    "departmentId": "507f1f77bcf86cd799439012",
+    "createdAt": "2025-01-15T10:30:00Z",
+    "lastLogin": "2025-01-15T09:15:00Z"
+  },
   "message": "Operation completed successfully",
-  "errors": null,
-  "pagination": {...}
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "totalPages": 8
+  }
 }
 ```
 
