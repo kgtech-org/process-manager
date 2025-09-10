@@ -8,10 +8,73 @@ This is a Process Manager application for telecommunications companies, designed
 
 ## Architecture
 
-- **Backend**: Go/Gin with MongoDB, Redis, JWT authentication
+- **Backend**: Go/Gin with MongoDB, Redis, JWT authentication, camelCase JSON APIs
 - **Frontend**: Next.js 14 with Shadcn UI and Tailwind CSS
-- **Storage**: MinIO for object storage
-- **Infrastructure**: Full Docker containerization
+- **Storage**: MinIO for object storage (profile pictures, documents)
+- **Infrastructure**: Full Docker containerization with health checks
+
+## Code Standards and Conventions
+
+### File Naming Convention
+The project uses descriptive file naming with folder-based suffixes for better organization:
+
+**Backend Structure** (`/backend/internal/`):
+```
+models/          → *.model.go         (auth.model.go, user.model.go)
+services/        → *.service.go       (jwt.service.go, email.service.go) 
+handlers/        → *.handler.go       (auth.handler.go, user.handler.go)
+routes/          → *.routes.go        (auth.routes.go, departments.routes.go)
+middleware/      → *.middleware.go    (auth.middleware.go)
+helpers/         → *.helper.go        (validation.helper.go, upload.helper.go)
+```
+
+**Benefits:**
+- Immediate file purpose identification
+- Better IDE navigation and search
+- Consistent organization across all layers
+- Clear separation of concerns
+
+### JSON API Standards
+All API requests and responses use **camelCase** formatting:
+
+**Request Format:**
+```json
+{
+  "departmentId": "507f1f77bcf86cd799439011",
+  "jobPositionId": "507f1f77bcf86cd799439012", 
+  "requiredSkills": ["Go", "MongoDB"],
+  "createdAt": "2025-01-15T10:30:00Z"
+}
+```
+
+**Response Format:**
+```json
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": {
+    "userId": "507f1f77bcf86cd799439011",
+    "lastLogin": "2025-01-15T09:15:00Z",
+    "validatedAt": "2025-01-15T08:00:00Z",
+    "departmentId": "507f1f77bcf86cd799439013"
+  }
+}
+```
+
+**Key Conversions:**
+- `department_id` → `departmentId`
+- `job_position_id` → `jobPositionId`
+- `created_at` → `createdAt`
+- `updated_at` → `updatedAt`
+- `last_login` → `lastLogin`
+- `required_skills` → `requiredSkills`
+
+### Authentication & Security Architecture
+- **3-Step Registration**: Email → OTP → Profile completion
+- **JWT Tokens**: Access/refresh token pairs with Redis storage
+- **Role-based Security**: Admin/Manager/User with granular permissions
+- **Route Protection**: RequireAuth(), RequireManager(), RequireAdmin()
+- **File Upload Security**: Content validation, size limits, MinIO integration
 
 ## Contributing Workflow
 
