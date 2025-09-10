@@ -26,6 +26,10 @@ func SetupAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandler,
 		auth.POST("/logout", authMiddleware.RequireAuth(), authHandler.Logout)
 		auth.PUT("/profile", authMiddleware.RequireAuth(), authHandler.UpdateProfile)
 		auth.POST("/revoke-all-tokens", authMiddleware.RequireAuth(), authHandler.RevokeAllTokens)
+		
+		// Avatar management
+		auth.POST("/avatar", authMiddleware.RequireAuth(), authHandler.UploadAvatar)
+		auth.DELETE("/avatar", authMiddleware.RequireAuth(), authHandler.DeleteAvatar)
 
 		// Status endpoint for authentication verification
 		auth.GET("/status", authMiddleware.OptionalAuth(), func(c *gin.Context) {

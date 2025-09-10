@@ -6,9 +6,9 @@
 @apiUrl = {{baseUrl}}/api
 
 # Variables (will be set from responses)
-@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhjMTFiNTk1YTg2OTZhMjAxNWYyMThmIiwiZW1haWwiOiJhZG1pbkBwcm9jZXNzLW1hbmFnZXIubG9jYWwiLCJyb2xlIjoiYWRtaW4iLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaXNzIjoicHJvY2Vzcy1tYW5hZ2VyLWFwaSIsInN1YiI6IjY4YzExYjU5NWE4Njk2YTIwMTVmMjE4ZiIsImV4cCI6MTc1NzQ4NzI0MywibmJmIjoxNzU3NDg2MzQzLCJpYXQiOjE3NTc0ODYzNDN9.IJ_jDHWGzQaMbg8fa0YnNtDagOMbZVY6xLV-f5ki5QE
+@adminToken = {{adminLogin.response.body.data.access_token}}
 @testUserId = 
-@pendingUserId = 68c1119f9b1d13b9ddf7080a
+@pendingUserId = {{pendingUsers.response.body.data[0].id}}
 
 ###
 # =========================
@@ -16,7 +16,6 @@
 # =========================
 
 ### Admin Login (OTP Flow)
-# First request OTP for admin user
 # @name adminRequestOtp
 POST {{apiUrl}}/auth/request-otp
 Content-Type: application/json
@@ -25,7 +24,7 @@ Content-Type: application/json
   "email": "admin@process-manager.local"
 }
 
-# Extract temporary token and OTP from response (for VS Code REST Client):
+# Extract temporary token and OTP from response:
 # @adminTempToken = {{adminRequestOtp.response.body.data.temporary_token}}
 # @adminOtp = {{adminRequestOtp.response.body.data.otp}}
 
@@ -33,10 +32,10 @@ Content-Type: application/json
 # @name adminLogin
 POST {{apiUrl}}/auth/verify-otp
 Content-Type: application/json
-X-Temp-Token: {{adminTempToken}}
+X-Temp-Token: {{adminRequestOtp.response.body.data.temporary_token}}
 
 {
-  "otp": "{{adminOtp}}"
+  "otp": "{{adminRequestOtp.response.body.data.otp}}"
 }
 
 # Extract admin token: @adminToken = {{adminLogin.response.body.data.access_token}}
@@ -46,7 +45,7 @@ X-Temp-Token: {{adminTempToken}}
 # USER LISTING & FILTERING
 # =========================
 
-### Get all users (basic listing)
+### Get all users
 GET {{apiUrl}}/users
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
@@ -57,6 +56,7 @@ Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 ### Filter users by status (pending)
+#  @name pendingUsers
 GET {{apiUrl}}/users?status=pending
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
@@ -66,23 +66,8 @@ GET {{apiUrl}}/users?status=active
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
-### Filter users by status (rejected)
-GET {{apiUrl}}/users?status=rejected
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
 ### Filter users by role
 GET {{apiUrl}}/users?role=user
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Filter users by role (manager)
-GET {{apiUrl}}/users?role=manager
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Combined filters (pending users with user role)
-GET {{apiUrl}}/users?status=pending&role=user&page=1&limit=5
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
@@ -101,16 +86,6 @@ Content-Type: application/json
   "role": "user"
 }
 
-### Approve pending user with manager role
-PUT {{apiUrl}}/users/68c1119f9b1d13b9ddf7080a/validate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "action": "approve",
-  "role": "manager"
-}
-
 ### Reject pending user registration
 PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/validate
 Authorization: Bearer {{adminToken}}
@@ -118,46 +93,7 @@ Content-Type: application/json
 
 {
   "action": "reject",
-  "reason": "Invalid department or insufficient qualifications"
-}
-
-### Reject with detailed reason
-PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/validate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "action": "reject",
-  "reason": "Application does not meet company requirements. Please contact HR for more information."
-}
-
-### Try to validate already processed user (should fail)
-PUT {{apiUrl}}/users/REPLACE_WITH_ACTIVE_USER_ID/validate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "action": "approve",
-  "role": "user"
-}
-
-### Validate with invalid action (should fail)
-PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/validate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "action": "invalid_action"
-}
-
-### Validate with invalid role (should fail)
-PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/validate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "action": "approve",
-  "role": "invalid_role"
+  "reason": "Application does not meet company requirements"
 }
 
 ###
@@ -170,7 +106,7 @@ GET {{apiUrl}}/users/REPLACE_WITH_USER_ID
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
-### Create new user (admin creation - bypasses validation)
+### Create new user (admin creation)
 POST {{apiUrl}}/users
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
@@ -180,8 +116,8 @@ Content-Type: application/json
   "name": "Admin Created User",
   "role": "manager",
   "phone": "+228 90 12 34 99",
-  "department": "Management",
-  "position": "Department Manager"
+  "department_id": "REPLACE_WITH_DEPARTMENT_ID",
+  "job_position_id": "REPLACE_WITH_JOB_POSITION_ID"
 }
 
 ### Update user profile (admin)
@@ -192,8 +128,8 @@ Content-Type: application/json
 {
   "name": "Updated User Name",
   "phone": "+228 90 12 34 88",
-  "department": "Updated Department",
-  "position": "Updated Position"
+  "department_id": "REPLACE_WITH_DEPARTMENT_ID",
+  "job_position_id": "REPLACE_WITH_JOB_POSITION_ID"
 }
 
 ### Soft delete user
@@ -203,7 +139,7 @@ Content-Type: application/json
 
 ###
 # =========================
-# USER ACTIVATION MANAGEMENT
+# USER STATUS MANAGEMENT
 # =========================
 
 ### Activate user account
@@ -213,16 +149,6 @@ Content-Type: application/json
 
 ### Deactivate user account
 PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/deactivate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Try to activate already active user
-PUT {{apiUrl}}/users/REPLACE_WITH_ACTIVE_USER_ID/activate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Try to deactivate already inactive user
-PUT {{apiUrl}}/users/REPLACE_WITH_INACTIVE_USER_ID/deactivate
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
@@ -249,139 +175,10 @@ Content-Type: application/json
   "role": "admin"
 }
 
-### Downgrade user role to user
-PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/role
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "role": "user"
-}
-
-### Try to set invalid role (should fail)
-PUT {{apiUrl}}/users/REPLACE_WITH_USER_ID/role
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "role": "invalid_role"
-}
-
 ###
 # =========================
-# ERROR SCENARIOS
+# COMPLETE USER WORKFLOW
 # =========================
-
-### Access user management without authentication
-GET {{apiUrl}}/users
-Content-Type: application/json
-
-### Access user management with non-admin token
-# First get a user token, then try to access admin endpoints
-GET {{apiUrl}}/users
-Authorization: Bearer USER_TOKEN_HERE
-Content-Type: application/json
-
-### Get non-existent user
-GET {{apiUrl}}/users/507f1f77bcf86cd799439011
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Update non-existent user
-PUT {{apiUrl}}/users/507f1f77bcf86cd799439011
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "name": "Non-existent User"
-}
-
-### Delete non-existent user
-DELETE {{apiUrl}}/users/507f1f77bcf86cd799439011
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Validate with invalid user ID format
-PUT {{apiUrl}}/users/invalid-id/validate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "action": "approve"
-}
-
-### Create user with duplicate email
-POST {{apiUrl}}/users
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "email": "john.doe@togocom.tg",
-  "name": "Duplicate Email User",
-  "role": "user"
-}
-
-### Create user with invalid email format
-POST {{apiUrl}}/users
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "email": "invalid-email",
-  "name": "Invalid Email User",
-  "role": "user"
-}
-
-### Create user missing required fields
-POST {{apiUrl}}/users
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "email": "incomplete@togocom.tg"
-}
-
-###
-# =========================
-# BULK OPERATIONS TESTING
-# =========================
-
-### Multiple user validations (approve several pending users)
-PUT {{apiUrl}}/users/USER_ID_1/validate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "action": "approve",
-  "role": "user"
-}
-
-###
-PUT {{apiUrl}}/users/USER_ID_2/validate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "action": "approve",
-  "role": "manager"
-}
-
-###
-PUT {{apiUrl}}/users/USER_ID_3/validate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "action": "reject",
-  "reason": "Bulk rejection test"
-}
-
-###
-# =========================
-# COMPLEX WORKFLOW TESTING
-# =========================
-
-# Complete User Lifecycle Test:
 
 # 1. List pending users
 GET {{apiUrl}}/users?status=pending
@@ -403,14 +200,7 @@ Content-Type: application/json
   "role": "user"
 }
 
-# 4. Verify user is now active
-GET {{apiUrl}}/users/PENDING_USER_ID
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-# 5. Test that user can now login (switch to auth.rest)
-
-# 6. Update user role to manager
+# 4. Update user role if needed
 PUT {{apiUrl}}/users/PENDING_USER_ID/role
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
@@ -419,121 +209,8 @@ Content-Type: application/json
   "role": "manager"
 }
 
-# 7. Deactivate user
-PUT {{apiUrl}}/users/PENDING_USER_ID/deactivate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-# 8. Verify user cannot login (status should be inactive)
-
-# 9. Reactivate user
-PUT {{apiUrl}}/users/PENDING_USER_ID/activate
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-# 10. Final verification
+# 5. Verify user is now active
 GET {{apiUrl}}/users/PENDING_USER_ID
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-###
-# =========================
-# SECURITY TESTS
-# =========================
-
-### Try to elevate own permissions (admin trying to change own role)
-PUT {{apiUrl}}/users/ADMIN_USER_ID/role
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "role": "admin"
-}
-
-### SQL Injection attempt in user ID
-GET {{apiUrl}}/users/'; DROP TABLE users; --
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### XSS attempt in user creation
-POST {{apiUrl}}/users
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "email": "xss@togocom.tg",
-  "name": "<script>alert('XSS')</script>",
-  "role": "user"
-}
-
-### Very long strings (buffer overflow test)
-POST {{apiUrl}}/users
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-{
-  "email": "test@togocom.tg",
-  "name": "A".repeat(1000),
-  "role": "user"
-}
-
-###
-# =========================
-# PERFORMANCE TESTS
-# =========================
-
-### Rapid pagination requests
-GET {{apiUrl}}/users?page=1&limit=100
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-###
-GET {{apiUrl}}/users?page=2&limit=100
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-###
-GET {{apiUrl}}/users?page=3&limit=100
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Large limit test (should be capped at 100)
-GET {{apiUrl}}/users?limit=10000
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-###
-# =========================
-# EDGE CASES
-# =========================
-
-### Negative page number
-GET {{apiUrl}}/users?page=-1
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Zero page number  
-GET {{apiUrl}}/users?page=0
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Non-numeric page parameter
-GET {{apiUrl}}/users?page=abc
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Very large page number
-GET {{apiUrl}}/users?page=999999
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Invalid status filter
-GET {{apiUrl}}/users?status=invalid_status
-Authorization: Bearer {{adminToken}}
-Content-Type: application/json
-
-### Invalid role filter
-GET {{apiUrl}}/users?role=invalid_role
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
@@ -543,15 +220,12 @@ Content-Type: application/json
 # =========================
 
 # Testing Instructions:
-# 1. First authenticate as admin using auth.rest
+# 1. First authenticate as admin using the OTP flow above
 # 2. Extract admin token and set @adminToken variable
 # 3. Test user listing and filtering capabilities
 # 4. Create test users via registration (auth.rest) to have pending users
 # 5. Test the complete validation workflow (approve/reject)
 # 6. Test user lifecycle management (activate/deactivate/role changes)
-# 7. Verify email notifications are sent during validation
-# 8. Test error scenarios and edge cases
-# 9. Verify security measures and access controls
 
 # Expected Status Codes:
 # - 200: Successful operations (list, get, update, activate, etc.)
@@ -560,9 +234,6 @@ Content-Type: application/json
 # - 401: Unauthorized (missing/invalid admin token)
 # - 403: Forbidden (non-admin trying to access admin endpoints)
 # - 404: Not found (invalid user ID, non-existent users)
-# - 409: Conflict (duplicate email in user creation)
-# - 422: Unprocessable entity (invalid role, status mismatches)
-# - 500: Internal server error (database issues)
 
 # Admin User Management Features:
 # 1. User Registration Validation (approve/reject pending users)
@@ -570,15 +241,11 @@ Content-Type: application/json
 # 3. User Status Management (activate/deactivate accounts)
 # 4. Role Management (assign user/manager/admin roles)
 # 5. User Filtering and Pagination (status, role, pagination)
-# 6. Email Notifications (approval/rejection emails sent automatically)
 
 # User Status Transitions:
 # PENDING → ACTIVE (via approval)
 # PENDING → REJECTED (via rejection)
 # ACTIVE ↔ INACTIVE (via activate/deactivate)
-# Note: REJECTED users cannot be reactivated through normal flow
 
 # Role Hierarchy:
 # admin > manager > user
-# Admins can manage all users and roles
-# Role assignments affect access to different parts of the system

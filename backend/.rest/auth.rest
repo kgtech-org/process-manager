@@ -95,7 +95,7 @@ GET {{apiUrl}}/auth/me
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
-### Update user profile
+### Update user profile (JSON)
 PUT {{apiUrl}}/auth/profile
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -104,6 +104,23 @@ Content-Type: application/json
   "name": "AMADOU Arouna",
   "phone": "+228 90 12 34 99"
 }
+
+### Upload Avatar (Profile Picture)
+POST {{apiUrl}}/auth/avatar
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="profile.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/profile-image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Delete Avatar (Profile Picture)
+DELETE {{apiUrl}}/auth/avatar
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
 
 ###
 # =========================

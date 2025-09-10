@@ -19,15 +19,17 @@ type AuthHandler struct {
 	jwtService   *services.JWTService
 	emailService *services.EmailService
 	otpService   *services.OTPService
+	minioService *services.MinIOService
 }
 
 // NewAuthHandler creates a new auth handler instance
-func NewAuthHandler(userService *services.UserService, jwtService *services.JWTService, emailService *services.EmailService, otpService *services.OTPService) *AuthHandler {
+func NewAuthHandler(userService *services.UserService, jwtService *services.JWTService, emailService *services.EmailService, otpService *services.OTPService, minioService *services.MinIOService) *AuthHandler {
 	return &AuthHandler{
 		userService:  userService,
 		jwtService:   jwtService,
 		emailService: emailService,
 		otpService:   otpService,
+		minioService: minioService,
 	}
 }
 
@@ -464,5 +466,141 @@ func (h *AuthHandler) RegisterStep3(c *gin.Context) {
 	}
 
 	helpers.SendCreated(c, "Registration successful. Your account is pending admin validation.", response)
+}
+
+// UploadAvatar handles user avatar/profile picture upload
+// POST /api/auth/avatar
+func (h *AuthHandler) UploadAvatar(c *gin.Context) {
+	// Get current user from middleware
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendInternalError(c, models.ErrUserNotFound)
+		return
+	}
+
+	// Parse multipart form
+	err := c.Request.ParseMultipartForm(10 << 20) // 10MB max memory
+	if err != nil {
+		helpers.SendBadRequest(c, "Failed to parse multipart form")
+		return
+	}
+
+	// Get the file from form
+	fileHeader, err := c.FormFile("avatar")
+	if err != nil {
+		helpers.SendBadRequest(c, "No file provided. Please include 'avatar' field in form")
+		return
+	}
+
+	// Get upload limits
+	maxSizeMB, _ := h.minioService.GetUploadLimits()
+	maxSizeMBInt := maxSizeMB / (1024 * 1024)
+
+	// Validate the uploaded file
+	validation := helpers.ValidateImageUpload(fileHeader, maxSizeMBInt)
+	if !validation.Valid {
+		helpers.SendBadRequest(c, validation.Error)
+		return
+	}
+
+	// Open the file
+	file, err := fileHeader.Open()
+	if err != nil {
+		helpers.SendInternalError(c, models.ErrServiceUnavailable)
+		return
+	}
+	defer file.Close()
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	// Delete old avatar if exists
+	if user.Avatar != "" {
+		err := h.minioService.DeleteAvatar(ctx, user.Avatar)
+		if err != nil {
+			// Log error but don't fail the upload
+		}
+	}
+
+	// Upload new avatar to MinIO
+	avatarURL, err := h.minioService.UploadAvatar(
+		ctx,
+		user.ID.Hex(),
+		file,
+		fileHeader.Size,
+		validation.ContentType,
+		validation.Filename,
+	)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Update user's avatar URL in database
+	updateReq := &models.UpdateProfileRequest{
+		Avatar: avatarURL,
+	}
+
+	updatedUser, err := h.userService.UpdateUser(ctx, user.ID, updateReq)
+	if err != nil {
+		// Avatar uploaded but failed to update database
+		// Try to clean up the uploaded file
+		h.minioService.DeleteAvatar(ctx, avatarURL)
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Return success response
+	response := gin.H{
+		"user_id":    updatedUser.ID.Hex(),
+		"avatar_url": avatarURL,
+		"message":    "Profile picture uploaded successfully",
+	}
+
+	helpers.SendSuccess(c, "Profile picture uploaded successfully", response)
+}
+
+// DeleteAvatar handles user avatar deletion
+// DELETE /api/auth/avatar
+func (h *AuthHandler) DeleteAvatar(c *gin.Context) {
+	// Get current user from middleware
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendInternalError(c, models.ErrUserNotFound)
+		return
+	}
+
+	if user.Avatar == "" {
+		helpers.SendBadRequest(c, "No profile picture to delete")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Delete avatar from MinIO
+	err := h.minioService.DeleteAvatar(ctx, user.Avatar)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Update user's avatar URL in database (set to empty)
+	updateReq := &models.UpdateProfileRequest{
+		Avatar: "",
+	}
+
+	updatedUser, err := h.userService.UpdateUser(ctx, user.ID, updateReq)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	response := gin.H{
+		"user_id": updatedUser.ID.Hex(),
+		"message": "Profile picture deleted successfully",
+	}
+
+	helpers.SendSuccess(c, "Profile picture deleted successfully", response)
 }
 

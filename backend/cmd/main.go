@@ -55,6 +55,12 @@ func main() {
 		}
 	}()
 
+	// Initialize MinIO service
+	minioService, err := services.InitMinIOService()
+	if err != nil {
+		log.Fatalf("Failed to initialize MinIO: %v", err)
+	}
+
 	// Initialize services
 	jwtService := services.NewJWTService()
 	userService := services.NewUserService(db)
@@ -72,7 +78,7 @@ func main() {
 	authMiddleware := middleware.NewAuthMiddleware(jwtService, userService)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService)
+	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService, minioService)
 	userHandler := handlers.NewUserHandler(userService, emailService)
 
 	// Initialize Gin router
@@ -102,8 +108,13 @@ func main() {
 			redisHealthy = false
 		}
 
+		minioHealthy := true
+		if err := minioService.Health(ctx); err != nil {
+			minioHealthy = false
+		}
+
 		status := "healthy"
-		if !dbHealthy || !redisHealthy {
+		if !dbHealthy || !redisHealthy || !minioHealthy {
 			status = "degraded"
 		}
 
@@ -113,6 +124,7 @@ func main() {
 			"version":   "1.0.0",
 			"database":  dbHealthy,
 			"redis":     redisHealthy,
+			"minio":     minioHealthy,
 			"timestamp": time.Now().Unix(),
 		})
 	})
