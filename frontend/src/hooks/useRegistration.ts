@@ -17,6 +17,8 @@ interface RegistrationState {
   isLoading: boolean;
   departments: Department[];
   jobPositions: JobPosition[];
+  isComplete: boolean;
+  userName: string;
 }
 
 // Registration hook for multi-step registration flow
@@ -29,6 +31,8 @@ export const useRegistration = () => {
     isLoading: false,
     departments: [],
     jobPositions: [],
+    isComplete: false,
+    userName: '',
   });
 
   // Step 1: Send registration email
@@ -81,7 +85,13 @@ export const useRegistration = () => {
       
       const response = await authService.registerStep3(data, state.registrationToken);
       
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState(prev => ({ 
+        ...prev, 
+        step: 4,
+        isLoading: false,
+        isComplete: true,
+        userName: data.name 
+      }));
 
       return response;
     } catch (error) {
@@ -129,6 +139,8 @@ export const useRegistration = () => {
       isLoading: false,
       departments: [],
       jobPositions: [],
+      isComplete: false,
+      userName: '',
     });
   }, []);
 

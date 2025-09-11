@@ -29,6 +29,8 @@ export const RegisterWizard: React.FC = () => {
     isLoading,
     departments,
     jobPositions,
+    isComplete,
+    userName,
     registerStep1,
     registerStep2,
     registerStep3,
@@ -103,7 +105,7 @@ export const RegisterWizard: React.FC = () => {
     try {
       setError('');
       await registerStep3(data);
-      router.push('/login?message=Registration successful! Please wait for admin approval.');
+      // Success step is now handled by the hook (step 4)
     } catch (error: any) {
       setError(error.message || 'Registration failed');
     }
@@ -125,6 +127,7 @@ export const RegisterWizard: React.FC = () => {
       case 1: return 'Create Account';
       case 2: return 'Verify Email';
       case 3: return 'Complete Profile';
+      case 4: return 'Registration Successful!';
       default: return 'Registration';
     }
   };
@@ -134,6 +137,7 @@ export const RegisterWizard: React.FC = () => {
       case 1: return 'Enter your email address to get started';
       case 2: return `We sent a 6-digit code to ${email}`;
       case 3: return 'Complete your profile information';
+      case 4: return 'Your account has been created and is pending approval';
       default: return '';
     }
   };
@@ -148,10 +152,10 @@ export const RegisterWizard: React.FC = () => {
           {/* Progress Indicator */}
           <div className="flex justify-center mt-4">
             <div className="flex space-x-2">
-              {[1, 2, 3].map((stepNumber) => (
+              {[1, 2, 3, 4].map((stepNumber) => (
                 <div
                   key={stepNumber}
-                  className={`h-2 w-8 rounded-full ${
+                  className={`h-2 w-6 rounded-full ${
                     stepNumber <= step ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
                 />
@@ -335,18 +339,76 @@ export const RegisterWizard: React.FC = () => {
             </Form>
           )}
 
-          <div className="text-center text-sm text-gray-600">
-            <p>
-              Already have an account?{' '}
-              <button
+          {step === 4 && (
+            <div className="text-center space-y-4">
+              {/* Success Icon */}
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+
+              {/* Success Message */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Welcome, {userName}!
+                </h3>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p>
+                    Your account has been successfully created and is now 
+                    <span className="font-medium text-yellow-600"> pending admin approval</span>.
+                  </p>
+                  <p>
+                    You will receive an email notification once your account 
+                    has been validated by an administrator.
+                  </p>
+                </div>
+              </div>
+
+              {/* What's Next */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+                <div className="font-medium text-blue-900 mb-2">What happens next?</div>
+                <div className="text-blue-800 space-y-1">
+                  <p>1. An administrator will review your application</p>
+                  <p>2. You'll receive an email when approved</p>
+                  <p>3. Once approved, you can sign in to your account</p>
+                </div>
+              </div>
+
+              {/* Go to Login Button */}
+              <Button 
                 onClick={() => router.push('/login')}
-                className="font-medium text-blue-600 hover:text-blue-500"
-                disabled={isLoading}
+                className="w-full"
               >
-                Sign in here
-              </button>
-            </p>
-          </div>
+                Go to Sign In
+              </Button>
+            </div>
+          )}
+
+          {step !== 4 && (
+            <div className="text-center text-sm text-gray-600">
+              <p>
+                Already have an account?{' '}
+                <button
+                  onClick={() => router.push('/login')}
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                  disabled={isLoading}
+                >
+                  Sign in here
+                </button>
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
