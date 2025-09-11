@@ -54,7 +54,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
         })}
         
         {rootDepartments.length === 0 && (
-          <SelectItem value="" disabled>
+          <SelectItem value="no-departments" disabled>
             No departments available
           </SelectItem>
         )}

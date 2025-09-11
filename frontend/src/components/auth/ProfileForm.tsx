@@ -214,7 +214,7 @@ export const ProfileForm: React.FC = () => {
                       <FormControl>
                         <DepartmentSelector
                           departments={departments}
-                          value={field.value}
+                          value={field.value || ''}
                           onValueChange={handleDepartmentChange}
                           disabled={isUpdating}
                         />
@@ -233,7 +233,7 @@ export const ProfileForm: React.FC = () => {
                       <FormControl>
                         <JobPositionSelector
                           jobPositions={jobPositions}
-                          value={field.value}
+                          value={field.value || ''}
                           onValueChange={field.onChange}
                           disabled={isUpdating || !selectedDepartmentId}
                           departmentId={selectedDepartmentId}

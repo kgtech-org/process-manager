@@ -85,7 +85,7 @@ export const JobPositionSelector: React.FC<JobPositionSelectorProps> = ({
             </div>
           ))
         ) : (
-          <SelectItem value="" disabled>
+          <SelectItem value="no-positions" disabled>
             {departmentId ? 'No positions available for this department' : 'No job positions available'}
           </SelectItem>
         )}

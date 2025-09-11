@@ -68,7 +68,7 @@ services:
     container_name: process-manager-backend
     restart: always
     ports:
-      - "8080:8080"
+      - "8080"
     # env_file:
       # - ../.env
     environment:
@@ -81,13 +81,13 @@ services:
       - MINIO_BUCKET_NAME=process-documents
       - MINIO_USE_SSL=false
       - JWT_SECRET=your-supersec
-      - CORS_ORIGINS=http://localhost:3000
+      - CORS_ORIGINS=http://localhost
       - SMTP_HOST=smtp.hostinger.com
       - SMTP_PORT=465
       - SMTP_USER=admin@k-jstore
       - SMTP_PASSWORD=0n3@L1f3@
       - EMAIL_FROM=Process Manager <admin@k-j.store>
-      - FRONTEND_URL=http://localhost:3000
+      - FRONTEND_URL=http://localhost
       - LOG_LEVEL=info
       - DEVELOPMENT_MODE=true
     depends_on:
@@ -113,16 +113,16 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+        - NEXT_PUBLIC_API_URL=http://localhost/api
     container_name: process-manager-frontend
     restart: always
     ports:
-      - "3000:3000"
+      - "3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+      - NEXT_PUBLIC_API_URL=http://localhost/api
       - NEXT_PUBLIC_APP_NAME=Process Manager
-      - NEXTAUTH_URL=http://localhost:3000
-      - NEXTAUTH_SECRET=your-nextauth-secret-change-in-production
+      - NEXTAUTH_URL=http://localhost
+      - NEXTAUTH_SECRET=your-supersec
     depends_on:
       backend:
         condition: service_healthy
