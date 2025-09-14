@@ -18,22 +18,18 @@ export const LoginForm: React.FC = () => {
   const [error, setError] = useState<string>('');
 
   // Step 1 Form - Email Input
-  const emailForm = useForm<LoginRequestData>({
+  const step1Form = useForm<LoginRequestData>({
     resolver: zodResolver(loginRequestSchema),
-    defaultValues: {
-      email: '',
-    },
+    defaultValues: { email: '' },
   });
 
   // Step 2 Form - OTP Verification
-  const otpForm = useForm<LoginVerifyData>({
+  const step2Form = useForm<LoginVerifyData>({
     resolver: zodResolver(loginVerifySchema),
-    defaultValues: {
-      otp: '',
-    },
+    defaultValues: { otp: '' },
   });
 
-  const handleEmailSubmit = async (data: LoginRequestData) => {
+  const handleStep1Submit = async (data: LoginRequestData) => {
     try {
       setError('');
       await requestOtp(data);
@@ -42,7 +38,7 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  const handleOtpSubmit = async (data: LoginVerifyData) => {
+  const handleStep2Submit = async (data: LoginVerifyData) => {
     try {
       setError('');
       await verifyOtp(data);
@@ -79,11 +75,11 @@ export const LoginForm: React.FC = () => {
             </div>
           )}
 
-          {step === 1 ? (
-            <Form {...emailForm}>
-              <form onSubmit={emailForm.handleSubmit(handleEmailSubmit)} className="space-y-4">
+          {step === 1 && (
+            <Form {...step1Form}>
+              <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-4">
                 <FormField
-                  control={emailForm.control}
+                  control={step1Form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -100,21 +96,23 @@ export const LoginForm: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Sending OTP...' : 'Send OTP'}
                 </Button>
               </form>
             </Form>
-          ) : (
-            <Form {...otpForm}>
-              <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-6">
+          )}
+
+          {step === 2 && (
+            <Form {...step2Form}>
+              <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
                 <FormField
-                  control={otpForm.control}
+                  control={step2Form.control}
                   name="otp"
                   render={({ field }) => (
                     <FormItem className="text-center">
@@ -132,14 +130,14 @@ export const LoginForm: React.FC = () => {
                 />
 
                 <div className="space-y-3">
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={isLoading}
                   >
                     {isLoading ? 'Verifying...' : 'Verify & Sign In'}
                   </Button>
-                  
+
                   <Button
                     type="button"
                     variant="ghost"
