@@ -2,7 +2,7 @@
 # Use with REST Client extension in VS Code or any REST client
 # All endpoints require admin authentication
 
-@baseUrl = http://localhost:8080
+@baseUrl = http://localhost
 @apiUrl = {{baseUrl}}/api
 
 # Variables (will be set from responses)

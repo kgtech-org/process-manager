@@ -17,7 +17,7 @@ export default function HomePage() {
 
   if (isAuthenticated && user) {
     // Redirect authenticated users to dashboard
-    router.push('/profile');
+    router.push('/dashboard');
     return null;
   }
 

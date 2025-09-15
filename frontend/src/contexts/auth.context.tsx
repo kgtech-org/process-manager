@@ -1,8 +1,10 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { User } from '@/lib/validation';
 import { authService } from '@/lib/auth';
+import { apiClient } from '@/lib/api';
 
 // Authentication Context Types
 interface AuthContextType {
@@ -27,10 +29,17 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   // Initialize authentication state on mount
   useEffect(() => {
     initializeAuth();
+    setupTokenRefreshCallback();
+    setupAuthEventListeners();
+
+    return () => {
+      cleanupAuthEventListeners();
+    };
   }, []);
 
   const initializeAuth = async () => {
@@ -108,6 +117,76 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateUser = (updatedUser: User): void => {
     setUser(updatedUser);
+  };
+
+  // Setup token refresh callback to sync auth state
+  const setupTokenRefreshCallback = (): void => {
+    apiClient.setTokenRefreshCallback(async (newToken: string) => {
+      if (!newToken) {
+        // Token refresh failed - logout user
+        setUser(null);
+        return;
+      }
+
+      try {
+        // Refresh user data when token is refreshed
+        const currentUser = await authService.getCurrentUser();
+        setUser(currentUser);
+        console.log('User session refreshed automatically');
+      } catch (error) {
+        console.error('Failed to refresh user data after token refresh:', error);
+        setUser(null);
+      }
+    });
+  };
+
+  // Setup auth event listeners
+  const setupAuthEventListeners = (): void => {
+    if (typeof window === 'undefined') return;
+
+    // Listen for auth logout events
+    window.addEventListener('auth:logout', handleAuthLogout);
+
+    // Listen for visibility change to refresh token when app becomes visible
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Listen for focus to refresh token when window gains focus
+    window.addEventListener('focus', handleWindowFocus);
+  };
+
+  const cleanupAuthEventListeners = (): void => {
+    if (typeof window === 'undefined') return;
+
+    window.removeEventListener('auth:logout', handleAuthLogout);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('focus', handleWindowFocus);
+  };
+
+  const handleAuthLogout = (): void => {
+    setUser(null);
+    router.push('/login');
+  };
+
+  const handleVisibilityChange = async (): Promise<void> => {
+    if (document.visibilityState === 'visible' && user && authService.isAuthenticated()) {
+      try {
+        // Refresh user data when app becomes visible (in case of role changes, etc.)
+        await refreshUser();
+      } catch (error) {
+        console.warn('Failed to refresh user on visibility change:', error);
+      }
+    }
+  };
+
+  const handleWindowFocus = async (): Promise<void> => {
+    if (user && authService.isAuthenticated()) {
+      try {
+        // Check if token needs refresh when window gains focus
+        await apiClient.refreshToken();
+      } catch (error) {
+        console.warn('Token refresh on focus failed:', error);
+      }
+    }
   };
 
   // Context value

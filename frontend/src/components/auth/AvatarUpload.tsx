@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/hooks/useAuth';
 import { avatarUploadSchema } from '@/lib/validation';
 
 interface AvatarUploadProps {
@@ -15,10 +16,44 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   currentAvatarUrl,
   onAvatarUpdate,
 }) => {
+  const { user } = useAuth();
   const { isUploadingAvatar, uploadProgress, uploadAvatar, deleteAvatar } = useProfile();
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [error, setError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getInitials = (fullName: string) => {
+    const names = fullName.trim().split(' ');
+    if (names.length === 1) {
+      // If only one name, take first two letters
+      return names[0].slice(0, 2).toUpperCase();
+    }
+    // Take first letter of first name and first letter of last name
+    const firstName = names[0];
+    const lastName = names[names.length - 1];
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+  };
+
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      { bg: 'from-blue-500 to-blue-600', text: 'text-white' },
+      { bg: 'from-green-500 to-green-600', text: 'text-white' },
+      { bg: 'from-purple-500 to-purple-600', text: 'text-white' },
+      { bg: 'from-orange-500 to-orange-600', text: 'text-white' },
+      { bg: 'from-pink-500 to-pink-600', text: 'text-white' },
+      { bg: 'from-indigo-500 to-indigo-600', text: 'text-white' },
+      { bg: 'from-teal-500 to-teal-600', text: 'text-white' },
+      { bg: 'from-red-500 to-red-600', text: 'text-white' },
+    ];
+
+    // Simple hash function to get consistent color for same name
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -93,12 +128,13 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
-                  <span className="text-white text-xl font-bold">
-                    {/* Show first letter of user's name or default */}
-                    <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
+                <div className={`h-full w-full flex items-center justify-center bg-gradient-to-br ${user?.name ? getAvatarColor(user.name).bg : 'from-gray-400 to-gray-500'}`}>
+                  <span className={`${user?.name ? getAvatarColor(user.name).text : 'text-white'} text-xl font-bold`}>
+                    {user?.name ? getInitials(user.name) : (
+                      <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    )}
                   </span>
                 </div>
               )}
