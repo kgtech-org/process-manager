@@ -174,22 +174,22 @@ class ApiClient {
     });
 
     const response = await refreshInstance.post('/auth/refresh', {
-      refresh_token: refreshToken,
+      refreshToken: refreshToken,
     });
 
     if (!response.data?.success || !response.data?.data) {
       throw new Error('Token refresh failed');
     }
 
-    const { access_token, refresh_token: newRefreshToken } = response.data.data;
-    TokenManager.setTokens(access_token, newRefreshToken);
+    const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+    TokenManager.setTokens(accessToken, newRefreshToken);
 
     // Notify auth context about token refresh
     if (this.tokenRefreshCallback) {
-      this.tokenRefreshCallback(access_token);
+      this.tokenRefreshCallback(accessToken);
     }
 
-    return access_token;
+    return accessToken;
   }
 
   private handleRefreshFailure(): void {

@@ -54,10 +54,14 @@ func (h *UserHandler) GetAllUsers(c *gin.Context) {
 		return
 	}
 
-	// Convert to response format
-	userResponses := make([]models.UserResponse, len(users))
-	for i, user := range users {
-		userResponses[i] = user.ToResponse()
+	// Convert to response format with populated details
+	userResponses, err := h.userService.ToResponseListWithDetails(ctx, users)
+	if err != nil {
+		// Fallback to basic response if population fails
+		userResponses = make([]models.UserResponse, len(users))
+		for i, user := range users {
+			userResponses[i] = user.ToResponse()
+		}
 	}
 
 	helpers.SendPaginated(c, userResponses, page, limit, total)
@@ -85,7 +89,14 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	helpers.SendSuccess(c, "User retrieved successfully", user.ToResponse())
+	// Convert to response with populated details
+	userResponse, err := h.userService.ToResponseWithDetails(ctx, user)
+	if err != nil {
+		// Fallback to basic response if population fails
+		userResponse = user.ToResponse()
+	}
+
+	helpers.SendSuccess(c, "User retrieved successfully", userResponse)
 }
 
 // CreateUser creates a new user (admin only)
@@ -114,7 +125,14 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	helpers.SendCreated(c, "User created successfully", createdUser.ToResponse())
+	// Get user response with populated details
+	userResponse, err := h.userService.ToResponseWithDetails(ctx, createdUser)
+	if err != nil {
+		// Fallback to basic response if population fails
+		userResponse = createdUser.ToResponse()
+	}
+
+	helpers.SendCreated(c, "User created successfully", userResponse)
 }
 
 // UpdateUser updates a user (admin only)
@@ -145,7 +163,14 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	helpers.SendSuccess(c, "User updated successfully", updatedUser.ToResponse())
+	// Get user response with populated details
+	userResponse, err := h.userService.ToResponseWithDetails(ctx, updatedUser)
+	if err != nil {
+		// Fallback to basic response if population fails
+		userResponse = updatedUser.ToResponse()
+	}
+
+	helpers.SendSuccess(c, "User updated successfully", userResponse)
 }
 
 // DeleteUser soft deletes a user (admin only)
@@ -329,7 +354,14 @@ func (h *UserHandler) ValidateUser(c *gin.Context) {
 			// Log error but don't fail the approval
 		}
 
-		helpers.SendSuccess(c, "User approved successfully", updatedUser.ToResponse())
+		// Get user response with populated details
+		userResponse, err := h.userService.ToResponseWithDetails(ctx, updatedUser)
+		if err != nil {
+			// Fallback to basic response if population fails
+			userResponse = updatedUser.ToResponse()
+		}
+
+		helpers.SendSuccess(c, "User approved successfully", userResponse)
 
 	} else if req.Action == "reject" {
 		// Reject user
@@ -347,7 +379,14 @@ func (h *UserHandler) ValidateUser(c *gin.Context) {
 			// Log error but don't fail the rejection
 		}
 
-		helpers.SendSuccess(c, "User rejected successfully", updatedUser.ToResponse())
+		// Get user response with populated details
+		userResponse, err := h.userService.ToResponseWithDetails(ctx, updatedUser)
+		if err != nil {
+			// Fallback to basic response if population fails
+			userResponse = updatedUser.ToResponse()
+		}
+
+		helpers.SendSuccess(c, "User rejected successfully", userResponse)
 
 	} else {
 		helpers.SendBadRequest(c, "Invalid action. Must be 'approve' or 'reject'")

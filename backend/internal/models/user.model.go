@@ -114,6 +114,10 @@ type UserResponse struct {
 	Verified        bool                `json:"verified"`
 	Avatar          string              `json:"avatar,omitempty"`
 	Phone           string              `json:"phone,omitempty"`
+	DepartmentID    *primitive.ObjectID `json:"departmentId,omitempty"`
+	JobPositionID   *primitive.ObjectID `json:"jobPositionId,omitempty"`
+	Department      *DepartmentResponse `json:"department,omitempty"`
+	JobPosition     *JobPositionResponse `json:"jobPosition,omitempty"`
 	LastLogin       *time.Time          `json:"lastLogin,omitempty"`
 	ValidatedBy     *primitive.ObjectID `json:"validatedBy,omitempty"`
 	ValidatedAt     *time.Time          `json:"validatedAt,omitempty"`
@@ -204,6 +208,8 @@ func (u *User) ToResponse() UserResponse {
 		Verified:        u.Verified,
 		Avatar:          u.Avatar,
 		Phone:           u.Phone,
+		DepartmentID:    u.DepartmentID,
+		JobPositionID:   u.JobPositionID,
 		LastLogin:       u.LastLogin,
 		ValidatedBy:     u.ValidatedBy,
 		ValidatedAt:     u.ValidatedAt,

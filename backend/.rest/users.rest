@@ -102,7 +102,7 @@ Content-Type: application/json
 # =========================
 
 ### Get specific user by ID
-GET {{apiUrl}}/users/REPLACE_WITH_USER_ID
+GET {{apiUrl}}/users/68c15b0aba912a0c2ef43c47
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
