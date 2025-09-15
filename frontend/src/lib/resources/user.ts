@@ -20,7 +20,7 @@ export interface User {
     title: string;
     code: string;
   };
-  avatarUrl?: string;
+  avatar?: string;
   emailVerified: boolean;
   lastLogin?: string;
   validatedAt?: string;

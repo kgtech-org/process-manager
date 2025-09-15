@@ -63,9 +63,10 @@ func main() {
 
 	// Initialize services
 	jwtService := services.NewJWTService()
-	userService := services.NewUserService(db)
+	userService := services.InitUserService(db)
 	emailService := services.NewEmailService()
 	otpService := services.NewOTPService(redisService.Client)
+	activityLogService := services.InitActivityLogService(db)
 
 	// Ensure default admin exists
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -76,12 +77,14 @@ func main() {
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtService, userService)
+	activityLogMiddleware := middleware.NewActivityLogMiddleware(activityLogService)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService, minioService)
 	userHandler := handlers.NewUserHandler(userService, emailService)
 	departmentHandler := handlers.NewDepartmentHandler(db)
 	jobPositionHandler := handlers.NewJobPositionHandler(db)
+	activityLogHandler := handlers.NewActivityLogHandler(activityLogService)
 
 	// Initialize Gin router
 	r := gin.Default()
@@ -93,6 +96,9 @@ func main() {
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	r.Use(cors.New(corsConfig))
+
+	// Global middleware for activity logging
+	r.Use(activityLogMiddleware.LogActivity())
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -139,6 +145,7 @@ func main() {
 		routes.SetupUserRoutes(api, userHandler, authMiddleware)
 		routes.SetupDepartmentRoutes(api, departmentHandler, authMiddleware)
 		routes.SetupJobPositionRoutes(api, jobPositionHandler, authMiddleware)
+		routes.SetupActivityLogRoutes(api, activityLogHandler, authMiddleware)
 		routes.SetupDocumentRoutes(api, authMiddleware)
 		routes.SetupProcessRoutes(api, authMiddleware)
 	}
@@ -152,6 +159,7 @@ func main() {
 	log.Printf("🚀 Process Manager Backend starting on port %s", port)
 	log.Printf("📊 Health check available at: http://localhost:%s/health", port)
 	log.Printf("🔐 Authentication API available at: http://localhost:%s/api/auth", port)
+	log.Printf("📝 Activity logs API available at: http://localhost:%s/api/activity-logs", port)
 	log.Fatal(r.Run(":" + port))
 }
 

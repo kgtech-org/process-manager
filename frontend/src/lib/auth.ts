@@ -209,8 +209,8 @@ class AuthService {
   /**
    * Upload profile avatar
    */
-  async uploadAvatar(file: File, onProgress?: (progress: number) => void): Promise<{ avatarUrl: string }> {
-    const response = await apiClient.uploadFile<{ avatarUrl: string }>('/auth/avatar', file, onProgress);
+  async uploadAvatar(file: File, onProgress?: (progress: number) => void): Promise<{ avatar: string }> {
+    const response = await apiClient.uploadFile<{ avatar: string }>('/auth/avatar', file, onProgress);
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Avatar upload failed');
     }

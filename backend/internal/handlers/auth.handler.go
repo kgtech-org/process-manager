@@ -569,9 +569,9 @@ func (h *AuthHandler) UploadAvatar(c *gin.Context) {
 
 	// Return success response
 	response := gin.H{
-		"user_id":    updatedUser.ID.Hex(),
-		"avatar_url": avatarURL,
-		"message":    "Profile picture uploaded successfully",
+		"userId": updatedUser.ID.Hex(),
+		"avatar": avatarURL,
+		"message": "Profile picture uploaded successfully",
 	}
 
 	helpers.SendSuccess(c, "Profile picture uploaded successfully", response)

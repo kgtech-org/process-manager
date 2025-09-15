@@ -193,9 +193,9 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                 <div className="flex flex-col items-center space-y-4">
                   {/* Avatar */}
                   <div className="h-24 w-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg">
-                    {user.avatarUrl ? (
+                    {user.avatar ? (
                       <img
-                        src={user.avatarUrl}
+                        src={user.avatar}
                         alt={user.name}
                         className="h-full w-full object-cover"
                       />

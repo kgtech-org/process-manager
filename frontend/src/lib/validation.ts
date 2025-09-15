@@ -135,7 +135,7 @@ export const userSchema = z.object({
   status: z.enum(['pending', 'active', 'inactive']),
   departmentId: z.string().optional(),
   jobPositionId: z.string().optional(),
-  avatarUrl: z.string().optional(),
+  avatar: z.string().optional(),
   emailVerified: z.boolean(),
   lastLogin: z.string().optional(),
   validatedAt: z.string().optional(),

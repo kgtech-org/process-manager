@@ -9,7 +9,7 @@ import { avatarUploadSchema } from '@/lib/validation';
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string;
-  onAvatarUpdate?: (avatarUrl: string | null) => void;
+  onAvatarUpdate?: (avatar: string | null) => void;
 }
 
 export const AvatarUpload: React.FC<AvatarUploadProps> = ({
@@ -78,7 +78,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
       // Upload file
       const result = await uploadAvatar(file);
-      onAvatarUpdate?.(result.avatarUrl);
+      onAvatarUpdate?.(result.avatar);
       setPreviewUrl(''); // Clear preview after successful upload
       
     } catch (error: any) {

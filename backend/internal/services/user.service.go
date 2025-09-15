@@ -736,3 +736,24 @@ func getEnvOrDefault(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
+// Singleton pattern for global access
+var userService *UserService
+
+// InitUserService initializes the global user service
+func InitUserService(db *DatabaseService) *UserService {
+	if userService == nil {
+		userService = NewUserService(db)
+	}
+	return userService
+}
+
+// GetUserService returns the global user service instance
+func GetUserService() *UserService {
+	if userService == nil {
+		// Return a basic instance for activity log service calls
+		// This should ideally be initialized in main.go first
+		return nil
+	}
+	return userService
+}

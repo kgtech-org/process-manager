@@ -1,0 +1,260 @@
+# Process Manager Backend - Activity Logs API Tests
+# Use with REST Client extension in VS Code or any REST client
+
+@baseUrl = http://localhost:8080
+@apiUrl = {{baseUrl}}/api
+
+# Authentication variables (get these from auth.rest)
+@accessToken = your_access_token_here
+@adminToken = your_admin_token_here
+@userId = 507f1f77bcf86cd799439011
+
+### Health Check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+###
+# =================================
+# ACTIVITY LOGS - USER ENDPOINTS
+# =================================
+
+### Get My Activity Logs (Authenticated User)
+GET {{apiUrl}}/activity-logs/me
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+### Get My Activity Logs with Pagination
+GET {{apiUrl}}/activity-logs/me?page=1&limit=10
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+### Get My Activity Logs with Filters
+GET {{apiUrl}}/activity-logs/me?category=authentication&action=user_login&dateFrom=2025-09-01T00:00:00Z&dateTo=2025-09-30T23:59:59Z
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+### Get My Activity Summary (Last 30 days)
+GET {{apiUrl}}/activity-logs/me/summary
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+### Get My Activity Summary (Last 7 days)
+GET {{apiUrl}}/activity-logs/me/summary?days=7
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+###
+# =================================
+# ACTIVITY LOGS - MANAGER ENDPOINTS
+# =================================
+
+### Get User Activity Summary (Manager Access)
+GET {{apiUrl}}/activity-logs/users/{{userId}}/summary
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get User Activity Summary with Custom Period
+GET {{apiUrl}}/activity-logs/users/{{userId}}/summary?days=14
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+###
+# =================================
+# ACTIVITY LOGS - ADMIN ENDPOINTS
+# =================================
+
+### Get All Activity Logs (Admin Only)
+GET {{apiUrl}}/activity-logs
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Activity Logs with Pagination
+GET {{apiUrl}}/activity-logs?page=1&limit=20
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Activity Logs with Filters
+GET {{apiUrl}}/activity-logs?action=user_login&success=true&page=1&limit=10
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Activity Logs by Category
+GET {{apiUrl}}/activity-logs?category=user_management&level=audit
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Activity Logs by User
+GET {{apiUrl}}/activity-logs?userId={{userId}}&page=1&limit=15
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Activity Logs by Date Range
+GET {{apiUrl}}/activity-logs?dateFrom=2025-09-01T00:00:00Z&dateTo=2025-09-15T23:59:59Z
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Failed Activities Only
+GET {{apiUrl}}/activity-logs?success=false&level=warning
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Activity Logs by Resource Type
+GET {{apiUrl}}/activity-logs?resourceType=user&action=user_updated
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Activity Logs by IP Address
+GET {{apiUrl}}/activity-logs?ipAddress=127.0.0.1
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Specific Activity Log by ID
+# @name getActivityLog
+GET {{apiUrl}}/activity-logs/66f6e6c9b123456789abcdef
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Activity Log Statistics
+GET {{apiUrl}}/activity-logs/stats
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+###
+# =================================
+# ACTIVITY LOGS - ADMIN OPERATIONS
+# =================================
+
+### Create Manual Activity Log Entry
+POST {{apiUrl}}/activity-logs
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "action": "system_maintenance",
+  "description": "Manual system maintenance performed by admin",
+  "success": true,
+  "details": {
+    "maintenanceType": "database_cleanup",
+    "duration": 1500,
+    "recordsProcessed": 1000
+  }
+}
+
+### Create Activity Log with Target User
+POST {{apiUrl}}/activity-logs
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "action": "user_role_changed",
+  "description": "User role manually updated by administrator",
+  "targetUserId": "{{userId}}",
+  "targetName": "John Doe",
+  "resourceType": "user",
+  "resourceId": "{{userId}}",
+  "success": true,
+  "details": {
+    "oldRole": "user",
+    "newRole": "manager",
+    "reason": "Promotion approved"
+  }
+}
+
+### Create Failed Activity Log
+POST {{apiUrl}}/activity-logs
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "action": "user_updated",
+  "description": "Failed to update user profile due to validation error",
+  "targetUserId": "{{userId}}",
+  "success": false,
+  "errorMessage": "Invalid email format provided",
+  "details": {
+    "validationErrors": [
+      {
+        "field": "email",
+        "message": "Email format is invalid"
+      }
+    ]
+  }
+}
+
+### Cleanup Old Activity Logs (Delete logs older than 365 days)
+DELETE {{apiUrl}}/activity-logs/cleanup
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Cleanup Old Activity Logs (Custom period - 180 days)
+DELETE {{apiUrl}}/activity-logs/cleanup?olderThanDays=180
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+###
+# =================================
+# ACTIVITY LOGS - COMPLEX QUERIES
+# =================================
+
+### Get Authentication Events Only
+GET {{apiUrl}}/activity-logs?category=authentication&page=1&limit=25
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Critical System Events
+GET {{apiUrl}}/activity-logs?level=critical&category=system
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get User Management Activities
+GET {{apiUrl}}/activity-logs?category=user_management&action=user_approved&dateFrom=2025-09-01T00:00:00Z
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Failed Login Attempts
+GET {{apiUrl}}/activity-logs?action=login_failed&success=false
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Department Management Activities
+GET {{apiUrl}}/activity-logs?category=department_management&level=audit
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Recent High-Priority Events (Last 24 hours)
+GET {{apiUrl}}/activity-logs?level=critical&dateFrom=2025-09-14T00:00:00Z&dateTo=2025-09-15T23:59:59Z
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+### Get Activity Logs with All Filters
+GET {{apiUrl}}/activity-logs?userId={{userId}}&category=user_management&level=audit&success=true&action=user_updated&dateFrom=2025-09-01T00:00:00Z&dateTo=2025-09-15T23:59:59Z&page=1&limit=10
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+###
+# =================================
+# TESTING NOTES
+# =================================
+
+# To use these requests:
+# 1. First authenticate using auth.rest to get access tokens
+# 2. Replace {{accessToken}} and {{adminToken}} with actual tokens
+# 3. Replace {{userId}} with a real user ID from your system
+# 4. Adjust date ranges to match your data
+# 5. For testing, trigger some activities (login, user updates, etc.) first
+
+# Common Activity Actions to Filter By:
+# - user_login, user_logout, login_failed
+# - user_registered, user_approved, user_rejected
+# - user_updated, user_role_changed, user_deleted
+# - user_avatar_uploaded, department_created
+# - job_position_created, token_refreshed
+
+# Common Categories:
+# - authentication, user_management, department_management
+# - job_position_management, security, system
+
+# Common Levels:
+# - info, warning, error, critical, audit
+
+# Date Format: ISO 8601 (2025-09-15T10:30:00Z)

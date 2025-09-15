@@ -217,7 +217,7 @@ export const Navigation: React.FC = () => {
                 <Button variant="ghost" className="w-full justify-start p-2 h-auto">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.avatarUrl} alt={user?.name} />
+                      <AvatarImage src={user?.avatar} alt={user?.name} />
                       <AvatarFallback className={`${user?.name ? getAvatarColor(user.name).bg : 'bg-gray-100'} ${user?.name ? getAvatarColor(user.name).text : 'text-gray-700'} text-xs font-semibold`}>
                         {user?.name ? getInitials(user.name) : 'U'}
                       </AvatarFallback>

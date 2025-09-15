@@ -123,7 +123,7 @@ export const ProfileForm: React.FC = () => {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Avatar Upload Section */}
       <AvatarUpload 
-        currentAvatarUrl={user.avatarUrl} 
+        currentAvatarUrl={user.avatar} 
         onAvatarUpdate={handleAvatarUpdate}
       />
 

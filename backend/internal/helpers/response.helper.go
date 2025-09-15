@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kodesonik/process-manager/internal/models"
@@ -36,7 +37,60 @@ func SendNoContent(c *gin.Context) {
 // Error Response Handlers
 // ============================================
 
-// SendError sends an error response based on error type
+// PaginationInfo represents pagination information
+type PaginationInfo struct {
+	Page       int `json:"page"`
+	Limit      int `json:"limit"`
+	Total      int `json:"total"`
+	TotalPages int `json:"totalPages"`
+}
+
+// GetPaginationParams extracts pagination parameters from query
+func GetPaginationParams(c *gin.Context) (page, limit int) {
+	page = 1
+	limit = 20
+
+	if pageStr := c.Query("page"); pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+
+	return page, limit
+}
+
+// SendSuccessWithPagination sends a success response with pagination info
+func SendSuccessWithPagination(c *gin.Context, message string, data interface{}, pagination PaginationInfo) {
+	response := gin.H{
+		"success": true,
+		"message": message,
+		"data":    data,
+		"pagination": pagination,
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+// SendErrorWithCode sends a generic error response with status code
+func SendErrorWithCode(c *gin.Context, statusCode int, message string, details ...string) {
+	errorResponse := gin.H{
+		"success": false,
+		"error":   message,
+	}
+
+	if len(details) > 0 {
+		errorResponse["details"] = details[0]
+	}
+
+	c.JSON(statusCode, errorResponse)
+}
+
+// SendError sends an error response based on error type (existing function for backward compatibility)
 func SendError(c *gin.Context, err error) {
 	switch {
 	case err == models.ErrUserNotFound:
@@ -64,6 +118,11 @@ func SendError(c *gin.Context, err error) {
 	default:
 		SendInternalError(c, err)
 	}
+}
+
+// SendModelError sends an error response based on error type (alias for SendError)
+func SendModelError(c *gin.Context, err error) {
+	SendError(c, err)
 }
 
 // SendBadRequest sends a bad request error response
@@ -128,11 +187,11 @@ func SendInternalError(c *gin.Context, err error) {
 }
 
 // SendValidationError sends a validation error response
-func SendValidationError(c *gin.Context, errors []models.ValidationError) {
-	c.JSON(http.StatusBadRequest, models.ValidationErrorResponse{
-		Success: false,
-		Error:   "Validation failed",
-		Errors:  errors,
+func SendValidationError(c *gin.Context, message string, err error) {
+	c.JSON(http.StatusBadRequest, gin.H{
+		"success": false,
+		"error":   message,
+		"details": err.Error(),
 	})
 }
 
