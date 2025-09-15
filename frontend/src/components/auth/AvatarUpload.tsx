@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
-import { avatarUploadSchema } from '@/lib/validation';
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string;
@@ -63,9 +62,13 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       setError('');
       
       // Validate file
-      const validation = avatarUploadSchema.safeParse({ avatar: file });
-      if (!validation.success) {
-        setError(validation.error.errors[0].message);
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB');
+        return;
+      }
+
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        setError('File must be a valid image format (JPEG, PNG, WebP)');
         return;
       }
 

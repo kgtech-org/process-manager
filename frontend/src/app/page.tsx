@@ -138,7 +138,7 @@ export default function HomePage() {
               Streamline Your Operational Procedures
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Built specifically for telecommunications companies following Togocom's standardized format (TG-TELCO-PRO-101 v1.0)
+              Built specifically for telecommunications companies following Togocom&apos;s standardized format (TG-TELCO-PRO-101 v1.0)
             </p>
           </div>
 

@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TokenStatus } from '@/components/auth/TokenStatus';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +17,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const navigationItems = [
+const getNavigationItems = (t: any) => [
   {
-    name: 'Home',
+    name: t('navigation.home'),
     href: '/dashboard',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,7 +28,16 @@ const navigationItems = [
     ),
   },
   {
-    name: 'Profile',
+    name: t('navigation.myActivity'),
+    href: '/activity-logs',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+    ),
+  },
+  {
+    name: t('navigation.profile'),
     href: '/profile',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,9 +47,9 @@ const navigationItems = [
   },
 ];
 
-const adminItems = [
+const getAdminItems = (t: any) => [
   {
-    name: 'User Management',
+    name: t('navigation.userManagement'),
     href: '/admin/users',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +58,16 @@ const adminItems = [
     ),
   },
   {
-    name: 'Departments',
+    name: t('navigation.activityLogs'),
+    href: '/admin/activity-logs',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 2h.01M9 8h.01M9 12h3m-3 4h3m4-8h.01M15 8h.01M15 12h.01M15 16h.01" />
+      </svg>
+    ),
+  },
+  {
+    name: t('navigation.departments'),
     href: '/admin/departments',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,7 +76,7 @@ const adminItems = [
     ),
   },
   {
-    name: 'Job Positions',
+    name: t('navigation.jobPositions'),
     href: '/admin/job-positions',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,6 +88,7 @@ const adminItems = [
 
 export const Navigation: React.FC = () => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -108,6 +129,8 @@ export const Navigation: React.FC = () => {
   };
 
   const isAdmin = user?.role === 'admin';
+  const navigationItems = getNavigationItems(t);
+  const adminItems = getAdminItems(t);
 
   return (
     <>
@@ -178,7 +201,7 @@ export const Navigation: React.FC = () => {
               <>
                 <div className="pt-6 mt-6 border-t border-gray-200">
                   <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Administration
+                    {t('navigation.administration')}
                   </p>
                 </div>
                 {adminItems.map((item) => {
@@ -204,6 +227,11 @@ export const Navigation: React.FC = () => {
               </>
             )}
           </nav>
+
+          {/* Language Switcher */}
+          <div className="border-t border-gray-200 px-4 py-2">
+            <LanguageSwitcher />
+          </div>
 
           {/* Token Status */}
           <div className="border-t border-gray-200 px-4 py-2">
@@ -239,7 +267,7 @@ export const Navigation: React.FC = () => {
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    Profile Settings
+                    {t('navigation.profile')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -247,7 +275,7 @@ export const Navigation: React.FC = () => {
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
-                  Sign out
+                  {t('navigation.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

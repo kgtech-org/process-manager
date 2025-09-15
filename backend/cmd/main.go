@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/kodesonik/process-manager/internal/handlers"
+	"github.com/kodesonik/process-manager/internal/i18n"
 	"github.com/kodesonik/process-manager/internal/middleware"
 	"github.com/kodesonik/process-manager/internal/models"
 	"github.com/kodesonik/process-manager/internal/routes"
@@ -26,6 +27,11 @@ func main() {
 	// Set Gin mode
 	if os.Getenv("GIN_MODE") == "" {
 		gin.SetMode(gin.ReleaseMode)
+	}
+
+	// Initialize i18n
+	if err := i18n.Initialize(); err != nil {
+		log.Printf("Failed to initialize i18n: %v", err)
 	}
 
 	// Initialize database
@@ -93,9 +99,12 @@ func main() {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{"http://localhost:3000", "https://localhost:3000"}
 	corsConfig.AllowCredentials = true
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept-Language", "X-Language"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	r.Use(cors.New(corsConfig))
+
+	// i18n middleware
+	r.Use(i18n.Middleware())
 
 	// Global middleware for activity logging
 	r.Use(activityLogMiddleware.LogActivity())

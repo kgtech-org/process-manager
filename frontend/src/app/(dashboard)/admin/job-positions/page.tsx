@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdminGuard } from '@/components/auth/AdminGuard';
 import { JobPositionResource, DepartmentResource, type JobPosition, type Department } from '@/lib/resources';
+import { useTranslation } from '@/lib/i18n';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 // JobPosition and Department interfaces are now imported from resources
 
 export default function AdminJobPositionsPage() {
+  const { t } = useTranslation('jobPositions');
   const [jobPositions, setJobPositions] = useState<JobPosition[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,13 +107,13 @@ export default function AdminJobPositionsPage() {
   const getLevelBadge = (level: JobPosition['level']) => {
     switch (level) {
       case 'entry':
-        return <Badge className="bg-green-100 text-green-800">Entry</Badge>;
+        return <Badge className="bg-green-100 text-green-800">{t('levels.entry')}</Badge>;
       case 'mid':
-        return <Badge className="bg-blue-100 text-blue-800">Mid</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800">{t('levels.mid')}</Badge>;
       case 'senior':
-        return <Badge className="bg-purple-100 text-purple-800">Senior</Badge>;
+        return <Badge className="bg-purple-100 text-purple-800">{t('levels.senior')}</Badge>;
       case 'lead':
-        return <Badge className="bg-red-100 text-red-800">Lead</Badge>;
+        return <Badge className="bg-red-100 text-red-800">{t('levels.lead')}</Badge>;
       default:
         return <Badge variant="outline">{level}</Badge>;
     }
@@ -143,9 +145,9 @@ export default function AdminJobPositionsPage() {
       <div className="p-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Job Position Management</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
             <p className="text-gray-600 mt-2">
-              Manage job positions and their requirements across departments.
+              {t('subtitle')}
             </p>
           </div>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -154,40 +156,40 @@ export default function AdminJobPositionsPage() {
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                New Position
+                {t('actions.create')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Create New Job Position</DialogTitle>
+                <DialogTitle>{t('create.title')}</DialogTitle>
                 <DialogDescription>
-                  Add a new job position to a department.
+                  {t('create.subtitle')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title">Job Title</Label>
+                  <Label htmlFor="title">{t('form.title')}</Label>
                   <Input
                     id="title"
                     value={newPosition.title}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPosition({ ...newPosition, title: e.target.value })}
-                    placeholder="e.g., Senior Software Developer"
+                    placeholder={t('form.titlePlaceholder')}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="code">Job Code</Label>
+                  <Label htmlFor="code">{t('form.code')}</Label>
                   <Input
                     id="code"
                     value={newPosition.code}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPosition({ ...newPosition, code: e.target.value.toUpperCase() })}
-                    placeholder="e.g., SSD"
+                    placeholder={t('form.codePlaceholder')}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="department">Department</Label>
+                  <Label htmlFor="department">{t('form.department')}</Label>
                   <Select value={newPosition.departmentId} onValueChange={(value) => setNewPosition({ ...newPosition, departmentId: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
+                      <SelectValue placeholder={t('form.selectDepartment')} />
                     </SelectTrigger>
                     <SelectContent>
                       {departments.filter(d => d.active).map(dept => (
@@ -199,46 +201,46 @@ export default function AdminJobPositionsPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="level">Level</Label>
+                  <Label htmlFor="level">{t('form.level')}</Label>
                   <Select value={newPosition.level} onValueChange={(value: JobPosition['level']) => setNewPosition({ ...newPosition, level: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="entry">Entry Level</SelectItem>
-                      <SelectItem value="mid">Mid Level</SelectItem>
-                      <SelectItem value="senior">Senior Level</SelectItem>
-                      <SelectItem value="lead">Lead Level</SelectItem>
+                      <SelectItem value="entry">{t('levels.entryFull')}</SelectItem>
+                      <SelectItem value="mid">{t('levels.midFull')}</SelectItem>
+                      <SelectItem value="senior">{t('levels.seniorFull')}</SelectItem>
+                      <SelectItem value="lead">{t('levels.leadFull')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="skills">Required Skills (comma-separated)</Label>
+                  <Label htmlFor="skills">{t('form.skills')}</Label>
                   <Input
                     id="skills"
                     value={newPosition.requiredSkills}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPosition({ ...newPosition, requiredSkills: e.target.value })}
-                    placeholder="e.g., JavaScript, React, Node.js"
+                    placeholder={t('form.skillsPlaceholder')}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Label htmlFor="description">{t('form.description')}</Label>
                   <Textarea
                     id="description"
                     value={newPosition.description}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewPosition({ ...newPosition, description: e.target.value })}
-                    placeholder="Brief description of the role and responsibilities"
+                    placeholder={t('form.descriptionPlaceholder')}
                   />
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Cancel
+                    {t('actions.cancel')}
                   </Button>
                   <Button
                     onClick={handleCreatePosition}
                     disabled={!newPosition.title || !newPosition.code || !newPosition.departmentId}
                   >
-                    Create Position
+                    {t('actions.createPosition')}
                   </Button>
                 </div>
               </div>
@@ -249,17 +251,17 @@ export default function AdminJobPositionsPage() {
         {/* Filters and Search */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Input
-            placeholder="Search positions by title or department..."
+            placeholder={t('search.placeholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="sm:max-w-xs"
           />
           <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
             <SelectTrigger className="sm:max-w-xs">
-              <SelectValue placeholder="Filter by department" />
+              <SelectValue placeholder={t('filters.department.placeholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Departments</SelectItem>
+              <SelectItem value="all">{t('filters.department.all')}</SelectItem>
               {departments.map(dept => (
                 <SelectItem key={dept.id} value={dept.id}>
                   {dept.name} ({dept.code})
@@ -272,7 +274,7 @@ export default function AdminJobPositionsPage() {
         {/* Job Positions List */}
         <Card>
           <CardHeader>
-            <CardTitle>Job Positions ({filteredPositions.length})</CardTitle>
+            <CardTitle>{t('list.title', { count: filteredPositions.length })}</CardTitle>
           </CardHeader>
           <CardContent>
             {filteredPositions.length === 0 ? (
@@ -280,7 +282,7 @@ export default function AdminJobPositionsPage() {
                 <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
                 </svg>
-                <p className="text-gray-500">No job positions found matching your criteria.</p>
+                <p className="text-gray-500">{t('list.empty')}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -299,11 +301,11 @@ export default function AdminJobPositionsPage() {
                           <p className="text-sm font-medium text-gray-900">{position.title}</p>
                           {getLevelBadge(position.level)}
                           <Badge className={position.active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-                            {position.active ? 'Active' : 'Inactive'}
+                            {position.active ? t('status.active') : t('status.inactive')}
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-500 mb-1">
-                          📁 {position.department?.name || 'No Department'} {position.department?.code ? `(${position.department.code})` : ''}
+                          📁 {position.department?.name || t('details.noDepartment')} {position.department?.code ? `(${position.department.code})` : ''}
                         </p>
                         {position.description && (
                           <p className="text-sm text-gray-500 mb-1">{position.description}</p>
@@ -317,13 +319,13 @@ export default function AdminJobPositionsPage() {
                             ))}
                             {position.requiredSkills.length > 3 && (
                               <Badge variant="outline" className="text-xs">
-                                +{position.requiredSkills.length - 3} more
+                                +{position.requiredSkills.length - 3} {t('details.moreSkills')}
                               </Badge>
                             )}
                           </div>
                         )}
                         <span className="text-xs text-gray-500">
-                          Created: {formatDate(position.createdAt)}
+                          {t('details.created')}: {formatDate(position.createdAt)}
                         </span>
                       </div>
                     </div>
@@ -335,13 +337,13 @@ export default function AdminJobPositionsPage() {
                         variant="outline"
                         onClick={() => handleToggleActive(position.id)}
                       >
-                        {position.active ? 'Deactivate' : 'Activate'}
+                        {position.active ? t('actions.deactivate') : t('actions.activate')}
                       </Button>
                       <Button size="sm" variant="outline">
-                        Edit
+                        {t('actions.edit')}
                       </Button>
                       <Button size="sm" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
-                        Delete
+                        {t('actions.delete')}
                       </Button>
                     </div>
                   </div>

@@ -85,13 +85,21 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request Interceptor - Add auth token
+    // Request Interceptor - Add auth token and language
     this.instance.interceptors.request.use(
       (config) => {
         const token = TokenManager.getAccessToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Add language header
+        if (typeof window !== 'undefined') {
+          const language = localStorage.getItem('preferred-language') || 'fr';
+          config.headers['X-Language'] = language;
+          config.headers['Accept-Language'] = language;
+        }
+
         return config;
       },
       (error) => Promise.reject(error)

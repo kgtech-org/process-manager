@@ -1,0 +1,133 @@
+{
+  "title": "Activity Logs",
+  "myActivity": "My Activity",
+  "allActivity": "All Activity",
+  "userActivity": "User Activity",
+  "subtitle": "Monitor system-wide activity and user actions",
+  "mySubtitle": "Track your account activity and actions",
+  "filters": {
+    "title": "Filters",
+    "clearAll": "Clear All",
+    "dateFrom": "From Date",
+    "dateTo": "To Date",
+    "category": "Category",
+    "selectCategory": "Select category",
+    "allCategories": "All Categories",
+    "level": "Level",
+    "selectLevel": "Select level",
+    "allLevels": "All Levels",
+    "status": "Status",
+    "selectStatus": "Select status",
+    "allStatus": "All Status",
+    "success": "Success",
+    "failed": "Failed",
+    "userId": "User ID",
+    "userIdPlaceholder": "Enter user ID",
+    "ipAddress": "IP Address",
+    "ipAddressPlaceholder": "Enter IP address",
+    "active": "{{count}} active"
+  },
+  "summary": {
+    "title": "Activity Summary",
+    "lastDays": "Last {{days}} days",
+    "totalActivities": "Total Activities",
+    "successRate": "Success Rate",
+    "failed": "Failed",
+    "failed24h": "Failed (24h)",
+    "last24h": "Last 24h",
+    "successVsFailed": "Success vs Failed",
+    "byCategory": "Activity by Category",
+    "noData": "No activity data available"
+  },
+  "list": {
+    "noLogs": "No activity logs found",
+    "noLogsDescription": "There are no activity logs to display for the selected filters.",
+    "loading": "Loading activity logs...",
+    "groupByDate": "Group by Date",
+    "simpleList": "Simple List",
+    "searchPlaceholder": "Search activities...",
+    "exportCsv": "Export CSV",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "target": "Target",
+    "duration": "Duration",
+    "justNow": "Just now",
+    "minuteAgo": "{{count}} minute ago",
+    "minutesAgo": "{{count}} minutes ago",
+    "hourAgo": "{{count}} hour ago",
+    "hoursAgo": "{{count}} hours ago",
+    "dayAgo": "{{count}} day ago",
+    "daysAgo": "{{count}} days ago"
+  },
+  "categories": {
+    "authentication": "Authentication",
+    "user_management": "User Management",
+    "department_management": "Department Management",
+    "job_position_management": "Job Position Management",
+    "document_management": "Document Management",
+    "process_management": "Process Management",
+    "system": "System",
+    "security": "Security"
+  },
+  "levels": {
+    "info": "Info",
+    "warning": "Warning",
+    "error": "Error",
+    "critical": "Critical",
+    "audit": "Audit"
+  },
+  "actions": {
+    "user_login": "User Login",
+    "user_logout": "User Logout",
+    "login_failed": "Login Failed",
+    "otp_requested": "OTP Requested",
+    "otp_verified": "OTP Verified",
+    "token_refreshed": "Token Refreshed",
+    "user_registered": "User Registered",
+    "user_approved": "User Approved",
+    "user_rejected": "User Rejected",
+    "user_updated": "User Updated",
+    "user_role_changed": "User Role Changed",
+    "user_activated": "User Activated",
+    "user_deactivated": "User Deactivated",
+    "user_deleted": "User Deleted",
+    "user_avatar_uploaded": "Avatar Uploaded",
+    "department_created": "Department Created",
+    "department_updated": "Department Updated",
+    "department_deleted": "Department Deleted",
+    "job_position_created": "Job Position Created",
+    "job_position_updated": "Job Position Updated",
+    "job_position_deleted": "Job Position Deleted",
+    "system_maintenance": "System Maintenance",
+    "system_backup": "System Backup",
+    "config_updated": "Config Updated"
+  },
+  "error": {
+    "title": "Error Loading Activity Logs",
+    "tryAgain": "Try Again",
+    "exportFailed": "Failed to export activity logs"
+  },
+  "title": {
+    "userLogs": "User Activity Logs",
+    "allLogs": "All Activity Logs",
+    "myLogs": "My Activity Logs"
+  },
+  "subtitle": {
+    "userLogs": "View activity logs for a specific user",
+    "allLogs": "Monitor system-wide activity and user actions",
+    "myLogs": "Track your account activity and actions"
+  },
+  "actions": {
+    "exportCsv": "Export CSV"
+  },
+  "search": {
+    "placeholder": "Search activities..."
+  },
+  "views": {
+    "groupedByDate": "Group by Date",
+    "simpleList": "Simple List"
+  },
+  "pagination": {
+    "perPage": "{{count}} per page"
+  }
+}

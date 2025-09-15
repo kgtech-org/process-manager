@@ -11,11 +11,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { OTPInput } from './OTPInput';
 import { useLogin } from '@/hooks/useLogin';
 import { loginRequestSchema, loginVerifySchema, LoginRequestData, LoginVerifyData } from '@/lib/validation';
+import { useTranslation } from '@/lib/i18n';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
   const { step, email, isLoading, requestOtp, verifyOtp, goBackToEmail } = useLogin();
   const [error, setError] = useState<string>('');
+  const { t } = useTranslation('auth');
 
   // Step 1 Form - Email Input
   const step1Form = useForm<LoginRequestData>({
@@ -34,7 +36,7 @@ export const LoginForm: React.FC = () => {
       setError('');
       await requestOtp(data);
     } catch (error: any) {
-      setError(error.message || 'Failed to send OTP');
+      setError(error.message || t('login.loginFailed'));
     }
   };
 
@@ -44,7 +46,7 @@ export const LoginForm: React.FC = () => {
       await verifyOtp(data);
       router.push('/'); // Redirect to dashboard
     } catch (error: any) {
-      setError(error.message || 'Invalid OTP');
+      setError(error.message || t('login.invalidOtp'));
     }
   };
 
@@ -58,12 +60,12 @@ export const LoginForm: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            {step === 1 ? 'Sign In' : 'Verify OTP'}
+            {step === 1 ? t('login.title') : t('login.otp')}
           </CardTitle>
           <CardDescription>
-            {step === 1 
-              ? 'Enter your email address to receive an OTP'
-              : `We sent a 6-digit code to ${email}`
+            {step === 1
+              ? t('login.subtitle')
+              : t('login.otpSent', { email })
             }
           </CardDescription>
         </CardHeader>
@@ -83,11 +85,11 @@ export const LoginForm: React.FC = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>{t('login.email')}</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
-                          placeholder="your.email@togocom.tg"
+                          placeholder={t('login.emailPlaceholder')}
                           {...field}
                           disabled={isLoading}
                         />
@@ -102,7 +104,7 @@ export const LoginForm: React.FC = () => {
                   className="w-full"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Sending OTP...' : 'Send OTP'}
+                  {isLoading ? t('login.sendOtp') + '...' : t('login.sendOtp')}
                 </Button>
               </form>
             </Form>
@@ -116,7 +118,7 @@ export const LoginForm: React.FC = () => {
                   name="otp"
                   render={({ field }) => (
                     <FormItem className="text-center">
-                      <FormLabel>Verification Code</FormLabel>
+                      <FormLabel>{t('login.otp')}</FormLabel>
                       <FormControl>
                         <OTPInput
                           value={field.value}
@@ -135,7 +137,7 @@ export const LoginForm: React.FC = () => {
                     className="w-full"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Verifying...' : 'Verify & Sign In'}
+                    {isLoading ? t('login.verify') + '...' : t('login.verify')}
                   </Button>
 
                   <Button
@@ -145,7 +147,7 @@ export const LoginForm: React.FC = () => {
                     onClick={handleGoBack}
                     disabled={isLoading}
                   >
-                    Back to Email
+                    {t('login.resendOtp')}
                   </Button>
                 </div>
               </form>
@@ -154,13 +156,13 @@ export const LoginForm: React.FC = () => {
 
           <div className="text-center text-sm text-gray-600">
             <p>
-              Don't have an account?{' '}
+              {t('login.noAccount')}{' '}
               <button
                 onClick={() => router.push('/register')}
                 className="font-medium text-blue-600 hover:text-blue-500"
                 disabled={isLoading}
               >
-                Sign up here
+                {t('login.register')}
               </button>
             </p>
           </div>

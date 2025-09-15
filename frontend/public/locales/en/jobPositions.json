@@ -1,0 +1,99 @@
+{
+  "title": "Job Position Management",
+  "subtitle": "Manage job positions and job descriptions",
+  "addJobPosition": "Add Job Position",
+  "editJobPosition": "Edit Job Position",
+  "deleteJobPosition": "Delete Job Position",
+  "jobPositionDetails": "Job Position Details",
+  "fields": {
+    "title": "Title",
+    "code": "Code",
+    "description": "Description",
+    "department": "Department",
+    "level": "Level",
+    "requiredSkills": "Required Skills",
+    "status": "Status",
+    "employeeCount": "Employee Count",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At"
+  },
+  "placeholders": {
+    "searchJobPositions": "Search job positions...",
+    "enterTitle": "Enter job title",
+    "enterCode": "Enter job code",
+    "enterDescription": "Enter job description",
+    "selectDepartment": "Select department",
+    "selectLevel": "Select level",
+    "enterSkills": "Enter skills (comma separated)"
+  },
+  "levels": {
+    "junior": "Junior",
+    "mid": "Mid-level",
+    "senior": "Senior",
+    "lead": "Lead",
+    "principal": "Principal",
+    "director": "Director"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "actions": {
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "viewEmployees": "View Employees",
+    "copyPosition": "Copy Position",
+    "exportDescription": "Export Description",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "filters": {
+    "title": "Filters",
+    "allPositions": "All Positions",
+    "activePositions": "Active Positions",
+    "inactivePositions": "Inactive Positions",
+    "allLevels": "All Levels",
+    "allDepartments": "All Departments",
+    "withEmployees": "With Employees",
+    "withoutEmployees": "Without Employees"
+  },
+  "messages": {
+    "positionCreated": "Job position created successfully",
+    "positionUpdated": "Job position updated successfully",
+    "positionDeleted": "Job position deleted successfully",
+    "positionActivated": "Job position activated successfully",
+    "positionDeactivated": "Job position deactivated successfully",
+    "positionCopied": "Job position copied successfully",
+    "confirmDelete": "Are you sure you want to delete this job position?",
+    "confirmDeactivate": "Are you sure you want to deactivate this job position?",
+    "noPositions": "No job positions found",
+    "noPositionsDescription": "There are no job positions matching the selected criteria.",
+    "hasEmployees": "This position is assigned to {{count}} employee(s). Please reassign them first.",
+    "codeExists": "This job position code already exists",
+    "skillsHelp": "Enter skills separated by commas (e.g., JavaScript, React, Node.js)"
+  },
+  "stats": {
+    "totalPositions": "Total Positions",
+    "activePositions": "Active Positions",
+    "totalEmployees": "Total Employees",
+    "averageEmployees": "Average per Position"
+  },
+  "requirements": {
+    "title": "Requirements",
+    "skills": "Skills",
+    "experience": "Experience",
+    "education": "Education",
+    "certifications": "Certifications",
+    "languages": "Languages"
+  },
+  "search": {
+    "placeholder": "Search job positions..."
+  },
+  "list": {
+    "title": "Job Position List"
+  },
+  "details": {
+    "created": "Created"
+  }
+}

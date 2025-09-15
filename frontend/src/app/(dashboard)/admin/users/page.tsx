@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdminGuard } from '@/components/auth/AdminGuard';
 import { UserResource, type User, type PaginationData } from '@/lib/resources';
+import { useTranslation } from '@/lib/i18n';
 import {
   Pagination,
   PaginationContent,
@@ -22,6 +23,7 @@ import {
 // User interface is now imported from resources
 
 export default function AdminUsersPage() {
+  const { t } = useTranslation('users');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -65,11 +67,11 @@ export default function AdminUsersPage() {
   const getStatusBadge = (status: User['status']) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+        return <Badge className="bg-green-100 text-green-800">{t('status.active')}</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">{t('status.pending')}</Badge>;
       case 'inactive':
-        return <Badge className="bg-gray-100 text-gray-800">Inactive</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">{t('status.inactive')}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -78,11 +80,11 @@ export default function AdminUsersPage() {
   const getRoleBadge = (role: User['role']) => {
     switch (role) {
       case 'admin':
-        return <Badge variant="destructive">Admin</Badge>;
+        return <Badge variant="destructive">{t('role.admin')}</Badge>;
       case 'manager':
-        return <Badge className="bg-blue-100 text-blue-800">Manager</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800">{t('role.manager')}</Badge>;
       case 'user':
-        return <Badge variant="outline">User</Badge>;
+        return <Badge variant="outline">{t('role.user')}</Badge>;
       default:
         return <Badge variant="outline">{role}</Badge>;
     }
@@ -237,40 +239,40 @@ export default function AdminUsersPage() {
     <AdminGuard>
       <div className="p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
           <p className="text-gray-600 mt-2">
-            Manage user accounts, approvals, and permissions.
+            {t('subtitle')}
           </p>
         </div>
 
         {/* Filters and Search */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Input
-            placeholder="Search users by name or email..."
+            placeholder={t('search.placeholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="sm:max-w-xs"
           />
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="sm:max-w-xs">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t('filters.status.placeholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Users</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="all">{t('filters.status.all')}</SelectItem>
+              <SelectItem value="active">{t('status.active')}</SelectItem>
+              <SelectItem value="pending">{t('status.pending')}</SelectItem>
+              <SelectItem value="inactive">{t('status.inactive')}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={pagination.limit.toString()} onValueChange={handlePageSizeChange}>
             <SelectTrigger className="sm:max-w-xs">
-              <SelectValue placeholder="Items per page" />
+              <SelectValue placeholder={t('pagination.perPageLabel')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="5">5 per page</SelectItem>
-              <SelectItem value="10">10 per page</SelectItem>
-              <SelectItem value="20">20 per page</SelectItem>
-              <SelectItem value="50">50 per page</SelectItem>
+              <SelectItem value="5">{t('pagination.perPage', { count: 5 })}</SelectItem>
+              <SelectItem value="10">{t('pagination.perPage', { count: 10 })}</SelectItem>
+              <SelectItem value="20">{t('pagination.perPage', { count: 20 })}</SelectItem>
+              <SelectItem value="50">{t('pagination.perPage', { count: 50 })}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -278,7 +280,7 @@ export default function AdminUsersPage() {
         {/* Users List */}
         <Card>
           <CardHeader>
-            <CardTitle>Users ({pagination.total} total)</CardTitle>
+            <CardTitle>{t('list.title', { count: pagination.total })}</CardTitle>
           </CardHeader>
           <CardContent>
             {filteredUsers.length === 0 ? (
@@ -286,7 +288,7 @@ export default function AdminUsersPage() {
                 <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-1a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
-                <p className="text-gray-500">No users found matching your criteria.</p>
+                <p className="text-gray-500">{t('list.empty')}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -321,11 +323,11 @@ export default function AdminUsersPage() {
                         </div>
                         <div className="flex items-center space-x-4 mt-1">
                           <span className="text-xs text-gray-500">
-                            Joined: {formatDate(user.createdAt)}
+                            {t('details.joined')}: {formatDate(user.createdAt)}
                           </span>
                           {user.lastLogin && (
                             <span className="text-xs text-gray-500">
-                              Last login: {formatDate(user.lastLogin)}
+                              {t('details.lastLogin')}: {formatDate(user.lastLogin)}
                             </span>
                           )}
                         </div>
@@ -341,7 +343,7 @@ export default function AdminUsersPage() {
                             onClick={() => handleApprove(user.id)}
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            Approve
+                            {t('actions.approve')}
                           </Button>
                           <Button
                             size="sm"
@@ -349,13 +351,13 @@ export default function AdminUsersPage() {
                             onClick={() => handleReject(user.id)}
                             className="text-red-600 border-red-300 hover:bg-red-50"
                           >
-                            Reject
+                            {t('actions.reject')}
                           </Button>
                         </>
                       )}
                       <Button size="sm" variant="outline" asChild>
                         <Link href={`/admin/users/${user.id}`}>
-                          View Details
+                          {t('actions.viewDetails')}
                         </Link>
                       </Button>
                     </div>
@@ -371,8 +373,11 @@ export default function AdminUsersPage() {
           <div className="mt-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="text-sm text-gray-500 order-2 sm:order-1">
-                Showing {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} users
+                {t('pagination.showing', {
+                  from: Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total),
+                  to: Math.min(pagination.page * pagination.limit, pagination.total),
+                  total: pagination.total
+                })}
               </div>
               <div className="order-1 sm:order-2">
                 <Pagination className="mx-0">

@@ -1,0 +1,84 @@
+{
+  "title": "Gestion des Départements",
+  "subtitle": "Gérer la structure organisationnelle et les départements",
+  "addDepartment": "Ajouter un département",
+  "editDepartment": "Modifier le département",
+  "deleteDepartment": "Supprimer le département",
+  "departmentDetails": "Détails du département",
+  "fields": {
+    "name": "Nom",
+    "code": "Code",
+    "description": "Description",
+    "parentDepartment": "Département parent",
+    "manager": "Manager",
+    "status": "Statut",
+    "employeeCount": "Nombre d'employés",
+    "createdAt": "Créé le",
+    "updatedAt": "Mis à jour le"
+  },
+  "placeholders": {
+    "searchDepartments": "Rechercher des départements...",
+    "enterName": "Entrer le nom du département",
+    "enterCode": "Entrer le code du département",
+    "enterDescription": "Entrer la description",
+    "selectParent": "Sélectionner le département parent",
+    "selectManager": "Sélectionner un manager"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "actions": {
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "viewEmployees": "Voir les employés",
+    "assignManager": "Assigner un manager",
+    "createSubDepartment": "Créer un sous-département",
+    "viewHierarchy": "Voir la hiérarchie",
+    "create": "Créer",
+    "edit": "Modifier",
+    "delete": "Supprimer"
+  },
+  "filters": {
+    "title": "Filtres",
+    "allDepartments": "Tous les départements",
+    "activeDepartments": "Départements actifs",
+    "inactiveDepartments": "Départements inactifs",
+    "withManager": "Avec manager",
+    "withoutManager": "Sans manager"
+  },
+  "messages": {
+    "departmentCreated": "Département créé avec succès",
+    "departmentUpdated": "Département mis à jour avec succès",
+    "departmentDeleted": "Département supprimé avec succès",
+    "departmentActivated": "Département activé avec succès",
+    "departmentDeactivated": "Département désactivé avec succès",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce département ?",
+    "confirmDeactivate": "Êtes-vous sûr de vouloir désactiver ce département ?",
+    "noDepartments": "Aucun département trouvé",
+    "noDepartmentsDescription": "Il n'y a aucun département correspondant aux critères sélectionnés.",
+    "hasEmployees": "Ce département contient {{count}} employé(s). Veuillez d'abord les réassigner.",
+    "codeExists": "Ce code de département existe déjà"
+  },
+  "stats": {
+    "totalDepartments": "Total des départements",
+    "activeDepartments": "Départements actifs",
+    "totalEmployees": "Total des employés",
+    "averageEmployees": "Moyenne par département"
+  },
+  "hierarchy": {
+    "title": "Hiérarchie des départements",
+    "rootDepartments": "Départements racines",
+    "subDepartments": "Sous-départements",
+    "level": "Niveau {{level}}"
+  },
+  "search": {
+    "placeholder": "Rechercher des départements..."
+  },
+  "list": {
+    "title": "Liste des Départements"
+  },
+  "details": {
+    "created": "Créé"
+  }
+}

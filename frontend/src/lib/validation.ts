@@ -60,12 +60,13 @@ export const profileUpdateSchema = z.object({
 
 export type ProfileUpdateData = z.infer<typeof profileUpdateSchema>;
 
-// Avatar Upload
+// Avatar Upload - Client-side only schema
 export const avatarUploadSchema = z.object({
-  avatar: z.instanceof(File)
-    .refine((file) => file.size <= 5 * 1024 * 1024, 'File size must be less than 5MB')
+  avatar: z.any()
+    .refine((file) => typeof window !== 'undefined' && file instanceof File, 'Must be a valid file')
+    .refine((file) => !file || file.size <= 5 * 1024 * 1024, 'File size must be less than 5MB')
     .refine(
-      (file) => ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type),
+      (file) => !file || ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type),
       'File must be a valid image format (JPEG, PNG, WebP)'
     ),
 });

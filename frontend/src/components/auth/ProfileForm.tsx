@@ -13,9 +13,11 @@ import { JobPositionSelector } from './JobPositionSelector';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/auth';
+import { useTranslation } from '@/lib/i18n';
 import { profileUpdateSchema, ProfileUpdateData, Department, JobPosition } from '@/lib/validation';
 
 export const ProfileForm: React.FC = () => {
+  const { t } = useTranslation('auth');
   const { user, refreshUser } = useAuth();
   const { isUpdating, updateProfile } = useProfile();
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -84,12 +86,12 @@ export const ProfileForm: React.FC = () => {
       setSuccess('');
       
       await updateProfile(data);
-      setSuccess('Profile updated successfully');
+      setSuccess(t('profile.updateSuccess'));
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (error: any) {
-      setError(error.message || 'Failed to update profile');
+      setError(error.message || t('profile.updateFailed'));
     }
   };
 
@@ -113,7 +115,7 @@ export const ProfileForm: React.FC = () => {
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
           <div className="h-8 w-8 mx-auto animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-          <p className="mt-2 text-sm text-gray-600">Loading profile...</p>
+          <p className="mt-2 text-sm text-gray-600">{t('common.loading', { ns: 'common', defaultValue: 'Loading...' })}</p>
         </div>
       </div>
     );
@@ -130,9 +132,9 @@ export const ProfileForm: React.FC = () => {
       {/* Profile Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
+          <CardTitle>{t('profile.personalInfo')}</CardTitle>
           <CardDescription>
-            Update your personal information and organizational details.
+            {t('profile.subtitle')}
           </CardDescription>
         </CardHeader>
         
@@ -159,7 +161,7 @@ export const ProfileForm: React.FC = () => {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>{t('profile.name')}</FormLabel>
                       <FormControl>
                         <Input {...field} disabled={isUpdating} />
                       </FormControl>
@@ -173,7 +175,7 @@ export const ProfileForm: React.FC = () => {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel>{t('profile.phone')}</FormLabel>
                       <FormControl>
                         <Input
                           type="tel"
@@ -190,7 +192,7 @@ export const ProfileForm: React.FC = () => {
 
               {/* Email (Read-only) */}
               <FormItem>
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel>{t('profile.email')}</FormLabel>
                 <FormControl>
                   <Input 
                     value={user.email} 

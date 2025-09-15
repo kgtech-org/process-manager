@@ -380,7 +380,7 @@ export const RegisterWizard: React.FC = () => {
                 <div className="font-medium text-blue-900 mb-2">What happens next?</div>
                 <div className="text-blue-800 space-y-1">
                   <p>1. An administrator will review your application</p>
-                  <p>2. You'll receive an email when approved</p>
+                  <p>2. You&apos;ll receive an email when approved</p>
                   <p>3. Once approved, you can sign in to your account</p>
                 </div>
               </div>

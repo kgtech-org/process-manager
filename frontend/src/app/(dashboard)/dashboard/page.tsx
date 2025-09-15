@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { dashboardApi } from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 
 interface DashboardStats {
   totalUsers: number;
@@ -32,6 +33,7 @@ interface ActivityItem {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { t } = useTranslation('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     pendingUsers: 0,
@@ -118,15 +120,15 @@ export default function DashboardPage() {
   const getActivityBadge = (type: ActivityItem['type']) => {
     switch (type) {
       case 'user_registered':
-        return <Badge variant="outline" className="text-blue-600 border-blue-200">New Registration</Badge>;
+        return <Badge variant="outline" className="text-blue-600 border-blue-200">{t('activity.types.userRegistered')}</Badge>;
       case 'user_approved':
-        return <Badge variant="outline" className="text-green-600 border-green-200">Approved</Badge>;
+        return <Badge variant="outline" className="text-green-600 border-green-200">{t('activity.types.userApproved')}</Badge>;
       case 'user_rejected':
-        return <Badge variant="outline" className="text-red-600 border-red-200">Rejected</Badge>;
+        return <Badge variant="outline" className="text-red-600 border-red-200">{t('activity.types.userRejected')}</Badge>;
       case 'department_created':
-        return <Badge variant="outline" className="text-purple-600 border-purple-200">New Department</Badge>;
+        return <Badge variant="outline" className="text-purple-600 border-purple-200">{t('activity.types.departmentCreated')}</Badge>;
       default:
-        return <Badge variant="outline">Activity</Badge>;
+        return <Badge variant="outline">{t('activity.types.general')}</Badge>;
     }
   };
 
@@ -159,10 +161,10 @@ export default function DashboardPage() {
     <div className="p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back, {user?.name?.split(' ')[0]}!
+          {t('welcome', { name: user?.name?.split(' ')[0] })}
         </h1>
         <p className="text-gray-600 mt-2">
-          Here's an overview of your Process Manager system.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -171,7 +173,7 @@ export default function DashboardPage() {
         {/* Total Users */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.totalUsers')}</CardTitle>
             <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-1a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
@@ -179,8 +181,8 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalUsers}</div>
             <p className="text-xs text-gray-600">
-              <span className="text-green-600">{stats.activeUsers} active</span> •
-              <span className="text-yellow-600 ml-1">{stats.pendingUsers} pending</span>
+              <span className="text-green-600">{t('stats.activeCount', { count: stats.activeUsers })}</span> •
+              <span className="text-yellow-600 ml-1">{t('stats.pendingCount', { count: stats.pendingUsers })}</span>
             </p>
           </CardContent>
         </Card>
@@ -188,7 +190,7 @@ export default function DashboardPage() {
         {/* Pending Approvals */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.pendingApprovals')}</CardTitle>
             <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -196,7 +198,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingUsers}</div>
             <p className="text-xs text-gray-600">
-              User registrations awaiting approval
+              {t('stats.pendingApprovalsDesc')}
             </p>
           </CardContent>
         </Card>
@@ -204,7 +206,7 @@ export default function DashboardPage() {
         {/* Active Users */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.activeUsers')}</CardTitle>
             <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -212,7 +214,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeUsers}</div>
             <p className="text-xs text-gray-600">
-              Users with active accounts
+              {t('stats.activeUsersDesc')}
             </p>
           </CardContent>
         </Card>
@@ -220,7 +222,7 @@ export default function DashboardPage() {
         {/* Departments */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Departments</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.departments')}</CardTitle>
             <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
@@ -228,7 +230,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalDepartments}</div>
             <p className="text-xs text-gray-600">
-              <span className="text-green-600">{stats.activeDepartments} active</span>
+              <span className="text-green-600">{t('stats.activeCount', { count: stats.activeDepartments })}</span>
             </p>
           </CardContent>
         </Card>
@@ -236,7 +238,7 @@ export default function DashboardPage() {
         {/* Job Positions */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Job Positions</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.jobPositions')}</CardTitle>
             <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
             </svg>
@@ -244,7 +246,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalJobPositions}</div>
             <p className="text-xs text-gray-600">
-              Available positions
+              {t('stats.jobPositionsDesc')}
             </p>
           </CardContent>
         </Card>
@@ -252,13 +254,13 @@ export default function DashboardPage() {
         {/* System Status */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Status</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.systemStatus')}</CardTitle>
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">Healthy</div>
+            <div className="text-2xl font-bold text-green-600">{t('stats.healthy')}</div>
             <p className="text-xs text-gray-600">
-              All systems operational
+              {t('stats.allSystemsOperational')}
             </p>
           </CardContent>
         </Card>
@@ -267,8 +269,8 @@ export default function DashboardPage() {
       {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <p className="text-sm text-gray-600">Latest system events and user actions</p>
+          <CardTitle>{t('activity.title')}</CardTitle>
+          <p className="text-sm text-gray-600">{t('activity.subtitle')}</p>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -289,7 +291,7 @@ export default function DashboardPage() {
                     {activity.actor && (
                       <>
                         <span className="mx-1">•</span>
-                        <span>by {activity.actor}</span>
+                        <span>{t('activity.by', { actor: activity.actor })}</span>
                       </>
                     )}
                   </div>

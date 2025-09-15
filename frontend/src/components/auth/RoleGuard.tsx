@@ -37,7 +37,7 @@ const AccessDeniedFallback: React.FC = () => (
         Access Denied
       </h2>
       <p className="text-gray-600">
-        You don't have permission to access this resource.
+        You don&apos;t have permission to access this resource.
       </p>
     </div>
   </div>

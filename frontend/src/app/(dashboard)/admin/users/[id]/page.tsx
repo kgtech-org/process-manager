@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { AdminGuard } from '@/components/auth/AdminGuard';
 import { UserResource, type User } from '@/lib/resources';
 import { ArrowLeft, Mail, Phone, Calendar, Shield, Building, Briefcase } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 
 interface UserDetailsPageProps {
   params: {
@@ -16,6 +17,7 @@ interface UserDetailsPageProps {
 }
 
 export default function UserDetailsPage({ params }: UserDetailsPageProps) {
+  const { t } = useTranslation('users');
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -153,7 +155,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
             </div>
             <Button onClick={() => router.push('/admin/users')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Users
+              {t('navigation.backToUsers')}
             </Button>
           </div>
         </div>
@@ -173,7 +175,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
               onClick={() => router.push('/admin/users')}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Users
+              {t('navigation.backToUsers')}
             </Button>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">User Details</h1>
