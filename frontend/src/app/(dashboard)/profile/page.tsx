@@ -3,7 +3,6 @@
 import React from 'react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ProfileForm } from '@/components/auth/ProfileForm';
-import { TokenStatus } from '@/components/auth/TokenStatus';
 import { useTranslation } from '@/lib/i18n';
 
 export default function ProfilePage() {
@@ -17,13 +16,8 @@ export default function ProfilePage() {
           <p className="text-gray-600">{t('profile.subtitle', { defaultValue: 'Manage your account information and preferences.' })}</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <ProfileForm />
-          </div>
-          <div className="lg:col-span-1">
-            <TokenStatus showDetails={true} />
-          </div>
+        <div className="max-w-4xl mx-auto">
+          <ProfileForm />
         </div>
       </div>
     </AuthGuard>
