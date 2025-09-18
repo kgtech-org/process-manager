@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import { Navigation } from '@/components/layout/Navigation';
+import { NavigationWrapper } from '@/components/layout/NavigationWrapper';
 
 export default function DashboardLayout({
   children,
@@ -11,11 +11,12 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50 flex">
-        <Navigation />
-        <main className="flex-1 lg:ml-64">
-          {children}
-        </main>
+      <div className="min-h-screen bg-gray-50">
+        <NavigationWrapper>
+          <main className="w-full">
+            {children}
+          </main>
+        </NavigationWrapper>
       </div>
     </AuthGuard>
   );

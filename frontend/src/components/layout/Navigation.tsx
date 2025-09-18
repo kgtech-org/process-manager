@@ -36,12 +36,24 @@ const getNavigationItems = (t: any) => [
       </svg>
     ),
   },
+];
+
+const getManagerItems = (t: any) => [
   {
-    name: t('navigation.profile'),
-    href: '/profile',
+    name: t('navigation.userManagement'),
+    href: '/admin/users',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-1a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+  },
+  {
+    name: t('navigation.activityLogs'),
+    href: '/admin/activity-logs',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 2h.01M9 8h.01M9 12h3m-3 4h3m4-8h.01M15 8h.01M15 12h.01M15 16h.01" />
       </svg>
     ),
   },
@@ -129,8 +141,11 @@ export const Navigation: React.FC = () => {
   };
 
   const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'manager';
+  const hasAdminAccess = isAdmin || isManager;
+
   const navigationItems = getNavigationItems(t);
-  const adminItems = getAdminItems(t);
+  const adminItems = isAdmin ? getAdminItems(t) : getManagerItems(t);
 
   return (
     <>
@@ -196,12 +211,12 @@ export const Navigation: React.FC = () => {
               );
             })}
 
-            {/* Admin Section */}
-            {isAdmin && (
+            {/* Admin/Manager Section */}
+            {hasAdminAccess && (
               <>
                 <div className="pt-6 mt-6 border-t border-gray-200">
                   <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    {t('navigation.administration')}
+                    {isAdmin ? t('navigation.administration') : t('navigation.management')}
                   </p>
                 </div>
                 {adminItems.map((item) => {
