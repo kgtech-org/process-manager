@@ -50,6 +50,24 @@ func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequ
 		Verified:   true,
 	}
 
+	// Handle department ID
+	if req.DepartmentID != "" {
+		departmentOID, err := primitive.ObjectIDFromHex(req.DepartmentID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid department ID: %w", err)
+		}
+		user.DepartmentID = &departmentOID
+	}
+
+	// Handle job position ID
+	if req.JobPositionID != "" {
+		jobPositionOID, err := primitive.ObjectIDFromHex(req.JobPositionID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid job position ID: %w", err)
+		}
+		user.JobPositionID = &jobPositionOID
+	}
+
 	// Set timestamps
 	now := time.Now()
 	user.CreatedAt = now
@@ -92,6 +110,24 @@ func (s *UserService) RegisterUser(ctx context.Context, req *models.RegisterUser
 		Name:       req.Name,
 		Role:       models.RoleUser, // Default role for registration
 		Phone:      req.Phone,
+	}
+
+	// Handle department ID
+	if req.DepartmentID != "" {
+		departmentOID, err := primitive.ObjectIDFromHex(req.DepartmentID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid department ID: %w", err)
+		}
+		user.DepartmentID = &departmentOID
+	}
+
+	// Handle job position ID
+	if req.JobPositionID != "" {
+		jobPositionOID, err := primitive.ObjectIDFromHex(req.JobPositionID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid job position ID: %w", err)
+		}
+		user.JobPositionID = &jobPositionOID
 	}
 
 	// BeforeCreate sets status to pending and validates
@@ -616,10 +652,108 @@ func (s *UserService) CreateUserFromRegistration(ctx context.Context, email stri
 	return user, nil
 }
 
+// ============================================
+// User Response Population Methods
+// ============================================
+
+// ToResponseWithDetails converts a User to UserResponse with populated department and job position
+func (s *UserService) ToResponseWithDetails(ctx context.Context, user *models.User) (models.UserResponse, error) {
+	response := user.ToResponse()
+
+	// Populate department if user has one
+	if user.DepartmentID != nil {
+		department, err := s.getDepartmentByID(ctx, *user.DepartmentID)
+		if err == nil && department != nil {
+			deptResponse := department.ToResponse()
+			response.Department = &deptResponse
+		}
+	}
+
+	// Populate job position if user has one
+	if user.JobPositionID != nil {
+		jobPosition, err := s.getJobPositionByID(ctx, *user.JobPositionID)
+		if err == nil && jobPosition != nil {
+			jpResponse := jobPosition.ToResponse()
+			response.JobPosition = &jpResponse
+		}
+	}
+
+	return response, nil
+}
+
+// ToResponseListWithDetails converts a list of Users to UserResponse with populated details
+func (s *UserService) ToResponseListWithDetails(ctx context.Context, users []*models.User) ([]models.UserResponse, error) {
+	responses := make([]models.UserResponse, len(users))
+
+	for i, user := range users {
+		response, err := s.ToResponseWithDetails(ctx, user)
+		if err != nil {
+			// If population fails, use basic response
+			response = user.ToResponse()
+		}
+		responses[i] = response
+	}
+
+	return responses, nil
+}
+
+// getDepartmentByID fetches department by ID
+func (s *UserService) getDepartmentByID(ctx context.Context, departmentID primitive.ObjectID) (*models.Department, error) {
+	departmentCollection := s.db.Collection("departments")
+
+	var department models.Department
+	err := departmentCollection.FindOne(ctx, bson.M{"_id": departmentID}).Decode(&department)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &department, nil
+}
+
+// getJobPositionByID fetches job position by ID
+func (s *UserService) getJobPositionByID(ctx context.Context, jobPositionID primitive.ObjectID) (*models.JobPosition, error) {
+	jobPositionCollection := s.db.Collection("job_positions")
+
+	var jobPosition models.JobPosition
+	err := jobPositionCollection.FindOne(ctx, bson.M{"_id": jobPositionID}).Decode(&jobPosition)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &jobPosition, nil
+}
+
 // getEnvOrDefault returns environment variable value or default if not set
 func getEnvOrDefault(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
 	return defaultValue
+}
+
+// Singleton pattern for global access
+var userService *UserService
+
+// InitUserService initializes the global user service
+func InitUserService(db *DatabaseService) *UserService {
+	if userService == nil {
+		userService = NewUserService(db)
+	}
+	return userService
+}
+
+// GetUserService returns the global user service instance
+func GetUserService() *UserService {
+	if userService == nil {
+		// Return a basic instance for activity log service calls
+		// This should ideally be initialized in main.go first
+		return nil
+	}
+	return userService
 }

@@ -54,13 +54,18 @@ func InitMinIOService() (*MinIOService, error) {
 
 	useSSL := os.Getenv("MINIO_USE_SSL") == "true"
 
-	publicURL := os.Getenv("MINIO_PUBLIC_URL")
+	// Use UPLOAD_BASE_URL for file URLs (served through nginx)
+	publicURL := os.Getenv("UPLOAD_BASE_URL")
 	if publicURL == "" {
-		protocol := "http"
-		if useSSL {
-			protocol = "https"
+		// Fallback to MINIO_PUBLIC_URL for backward compatibility
+		publicURL = os.Getenv("MINIO_PUBLIC_URL")
+		if publicURL == "" {
+			protocol := "http"
+			if useSSL {
+				protocol = "https"
+			}
+			publicURL = fmt.Sprintf("%s://%s", protocol, endpoint)
 		}
-		publicURL = fmt.Sprintf("%s://%s", protocol, endpoint)
 	}
 
 	// Initialize MinIO client
@@ -159,7 +164,7 @@ func (s *MinIOService) UploadAvatar(ctx context.Context, userID string, reader i
 
 	log.Printf("✅ Avatar uploaded successfully: %s (size: %d bytes)", info.Key, info.Size)
 
-	// Return the public URL
+	// Return the public URL through nginx /files/ path
 	avatarURL := fmt.Sprintf("%s/%s/%s", s.publicURL, s.bucketName, objectKey)
 	return avatarURL, nil
 }
@@ -224,10 +229,17 @@ func (s *MinIOService) extractObjectKeyFromURL(avatarURL string) (string, error)
 		return "", fmt.Errorf("invalid avatar URL: %w", err)
 	}
 
-	// Remove the bucket name from the path
-	path := strings.TrimPrefix(parsedURL.Path, "/"+s.bucketName+"/")
+	// For URLs like http://localhost/files/avatars/user123.jpg
+	// Remove the /files/ prefix to get the object key
+	path := strings.TrimPrefix(parsedURL.Path, "/files/")
 	path = strings.TrimPrefix(path, "/")
-	
+
+	// If the URL doesn't contain /files/, try the old format with bucket name
+	if path == strings.TrimPrefix(parsedURL.Path, "/") {
+		path = strings.TrimPrefix(parsedURL.Path, "/"+s.bucketName+"/")
+		path = strings.TrimPrefix(path, "/")
+	}
+
 	if path == "" || path == avatarURL {
 		return "", fmt.Errorf("could not extract object key from URL")
 	}

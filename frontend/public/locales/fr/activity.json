@@ -1,0 +1,133 @@
+{
+  "title": "Journaux d'Activité",
+  "myActivity": "Mon Activité",
+  "allActivity": "Toute l'Activité",
+  "userActivity": "Activité de l'Utilisateur",
+  "subtitle": "Surveillez l'activité du système et les actions des utilisateurs",
+  "mySubtitle": "Suivez l'activité de votre compte et vos actions",
+  "filters": {
+    "title": "Filtres",
+    "clearAll": "Effacer tout",
+    "dateFrom": "Date de début",
+    "dateTo": "Date de fin",
+    "category": "Catégorie",
+    "selectCategory": "Sélectionner une catégorie",
+    "allCategories": "Toutes les catégories",
+    "level": "Niveau",
+    "selectLevel": "Sélectionner un niveau",
+    "allLevels": "Tous les niveaux",
+    "status": "Statut",
+    "selectStatus": "Sélectionner un statut",
+    "allStatus": "Tous les statuts",
+    "success": "Succès",
+    "failed": "Échec",
+    "userId": "ID Utilisateur",
+    "userIdPlaceholder": "Entrer l'ID utilisateur",
+    "ipAddress": "Adresse IP",
+    "ipAddressPlaceholder": "Entrer l'adresse IP",
+    "active": "{{count}} actif"
+  },
+  "summary": {
+    "title": "Résumé d'Activité",
+    "lastDays": "{{days}} derniers jours",
+    "totalActivities": "Activités Totales",
+    "successRate": "Taux de Réussite",
+    "failed": "Échec",
+    "failed24h": "Échec (24h)",
+    "last24h": "Dernières 24h",
+    "successVsFailed": "Succès vs Échec",
+    "byCategory": "Activité par Catégorie",
+    "noData": "Aucune donnée d'activité disponible"
+  },
+  "list": {
+    "noLogs": "Aucun journal d'activité trouvé",
+    "noLogsDescription": "Il n'y a aucun journal d'activité à afficher pour les filtres sélectionnés.",
+    "loading": "Chargement des journaux d'activité...",
+    "groupByDate": "Grouper par Date",
+    "simpleList": "Liste Simple",
+    "searchPlaceholder": "Rechercher des activités...",
+    "exportCsv": "Exporter CSV",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "target": "Cible",
+    "duration": "Durée",
+    "justNow": "À l'instant",
+    "minuteAgo": "il y a {{count}} minute",
+    "minutesAgo": "il y a {{count}} minutes",
+    "hourAgo": "il y a {{count}} heure",
+    "hoursAgo": "il y a {{count}} heures",
+    "dayAgo": "il y a {{count}} jour",
+    "daysAgo": "il y a {{count}} jours"
+  },
+  "categories": {
+    "authentication": "Authentification",
+    "user_management": "Gestion des Utilisateurs",
+    "department_management": "Gestion des Départements",
+    "job_position_management": "Gestion des Postes",
+    "document_management": "Gestion des Documents",
+    "process_management": "Gestion des Processus",
+    "system": "Système",
+    "security": "Sécurité"
+  },
+  "levels": {
+    "info": "Info",
+    "warning": "Avertissement",
+    "error": "Erreur",
+    "critical": "Critique",
+    "audit": "Audit"
+  },
+  "actions": {
+    "user_login": "Connexion Utilisateur",
+    "user_logout": "Déconnexion Utilisateur",
+    "login_failed": "Échec de Connexion",
+    "otp_requested": "OTP Demandé",
+    "otp_verified": "OTP Vérifié",
+    "token_refreshed": "Token Actualisé",
+    "user_registered": "Utilisateur Inscrit",
+    "user_approved": "Utilisateur Approuvé",
+    "user_rejected": "Utilisateur Rejeté",
+    "user_updated": "Utilisateur Mis à Jour",
+    "user_role_changed": "Rôle Utilisateur Modifié",
+    "user_activated": "Utilisateur Activé",
+    "user_deactivated": "Utilisateur Désactivé",
+    "user_deleted": "Utilisateur Supprimé",
+    "user_avatar_uploaded": "Avatar Téléchargé",
+    "department_created": "Département Créé",
+    "department_updated": "Département Mis à Jour",
+    "department_deleted": "Département Supprimé",
+    "job_position_created": "Poste Créé",
+    "job_position_updated": "Poste Mis à Jour",
+    "job_position_deleted": "Poste Supprimé",
+    "system_maintenance": "Maintenance Système",
+    "system_backup": "Sauvegarde Système",
+    "config_updated": "Configuration Mise à Jour"
+  },
+  "error": {
+    "title": "Erreur de Chargement des Journaux d'Activité",
+    "tryAgain": "Réessayer",
+    "exportFailed": "Échec de l'export des journaux d'activité"
+  },
+  "title": {
+    "userLogs": "Journaux d'Activité Utilisateur",
+    "allLogs": "Tous les Journaux d'Activité",
+    "myLogs": "Mes Journaux d'Activité"
+  },
+  "subtitle": {
+    "userLogs": "Voir les journaux d'activité pour un utilisateur spécifique",
+    "allLogs": "Surveiller l'activité à l'échelle du système et les actions des utilisateurs",
+    "myLogs": "Suivre l'activité de votre compte et vos actions"
+  },
+  "actions": {
+    "exportCsv": "Exporter CSV"
+  },
+  "search": {
+    "placeholder": "Rechercher des activités..."
+  },
+  "views": {
+    "groupedByDate": "Grouper par Date",
+    "simpleList": "Liste Simple"
+  },
+  "pagination": {
+    "perPage": "{{count}} / page"
+  }
+}

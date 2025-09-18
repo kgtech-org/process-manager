@@ -1,0 +1,127 @@
+{
+  "auth": {
+    "login": {
+      "success": "Connexion réussie",
+      "failed": "Échec de la connexion",
+      "invalid_credentials": "Identifiants invalides",
+      "otp_sent": "Code OTP envoyé à %s",
+      "otp_invalid": "Code OTP invalide ou expiré",
+      "otp_verified": "Code OTP vérifié avec succès"
+    },
+    "register": {
+      "success": "Inscription réussie",
+      "failed": "Échec de l'inscription",
+      "email_exists": "Cet email est déjà utilisé",
+      "step1_complete": "Email vérifié, veuillez entrer le code OTP",
+      "step2_complete": "OTP vérifié, veuillez compléter votre profil",
+      "step3_complete": "Inscription terminée avec succès"
+    },
+    "logout": {
+      "success": "Déconnexion réussie"
+    },
+    "token": {
+      "invalid": "Token invalide",
+      "expired": "Token expiré",
+      "refreshed": "Token actualisé avec succès"
+    },
+    "unauthorized": "Non autorisé",
+    "forbidden": "Accès interdit"
+  },
+  "user": {
+    "created": "Utilisateur créé avec succès",
+    "updated": "Utilisateur mis à jour avec succès",
+    "deleted": "Utilisateur supprimé avec succès",
+    "not_found": "Utilisateur non trouvé",
+    "approved": "Utilisateur approuvé avec succès",
+    "rejected": "Utilisateur rejeté avec succès",
+    "activated": "Utilisateur activé avec succès",
+    "deactivated": "Utilisateur désactivé avec succès",
+    "avatar_uploaded": "Avatar téléchargé avec succès",
+    "avatar_deleted": "Avatar supprimé avec succès",
+    "profile_updated": "Profil mis à jour avec succès",
+    "role_updated": "Rôle utilisateur mis à jour avec succès"
+  },
+  "department": {
+    "created": "Département créé avec succès",
+    "updated": "Département mis à jour avec succès",
+    "deleted": "Département supprimé avec succès",
+    "not_found": "Département non trouvé",
+    "activated": "Département activé avec succès",
+    "deactivated": "Département désactivé avec succès"
+  },
+  "job_position": {
+    "created": "Poste créé avec succès",
+    "updated": "Poste mis à jour avec succès",
+    "deleted": "Poste supprimé avec succès",
+    "not_found": "Poste non trouvé",
+    "activated": "Poste activé avec succès",
+    "deactivated": "Poste désactivé avec succès"
+  },
+  "activity_log": {
+    "retrieved": "Journaux d'activité récupérés avec succès",
+    "created": "Journal d'activité créé avec succès",
+    "cleaned": "Journaux d'activité nettoyés avec succès",
+    "not_found": "Journal d'activité non trouvé",
+    "stats_retrieved": "Statistiques récupérées avec succès",
+    "summary_retrieved": "Résumé récupéré avec succès"
+  },
+  "validation": {
+    "required": "Le champ %s est requis",
+    "email": "Email invalide",
+    "min_length": "Le champ %s doit contenir au moins %d caractères",
+    "max_length": "Le champ %s ne peut pas dépasser %d caractères",
+    "invalid_format": "Format invalide pour %s",
+    "invalid_id": "ID invalide",
+    "invalid_status": "Statut invalide",
+    "invalid_role": "Rôle invalide"
+  },
+  "error": {
+    "internal": "Erreur interne du serveur",
+    "bad_request": "Requête invalide",
+    "not_found": "Ressource non trouvée",
+    "database": "Erreur de base de données",
+    "file_upload": "Erreur lors du téléchargement du fichier",
+    "file_too_large": "Le fichier est trop volumineux",
+    "invalid_file_type": "Type de fichier invalide"
+  },
+  "success": {
+    "operation": "Opération réussie",
+    "created": "Créé avec succès",
+    "updated": "Mis à jour avec succès",
+    "deleted": "Supprimé avec succès"
+  },
+  "common": {
+    "welcome": "Bienvenue",
+    "yes": "Oui",
+    "no": "Non",
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "import": "Importer",
+    "download": "Télécharger",
+    "upload": "Télécharger",
+    "actions": "Actions",
+    "status": "Statut",
+    "date": "Date",
+    "time": "Heure",
+    "from": "De",
+    "to": "À",
+    "all": "Tout",
+    "none": "Aucun",
+    "select": "Sélectionner",
+    "selected": "Sélectionné(s)",
+    "page": "Page",
+    "of": "de",
+    "items": "éléments",
+    "per_page": "par page",
+    "total": "Total",
+    "showing": "Affichage",
+    "results": "résultats"
+  }
+}

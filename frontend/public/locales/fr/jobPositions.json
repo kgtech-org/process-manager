@@ -1,0 +1,99 @@
+{
+  "title": "Gestion des Postes",
+  "subtitle": "Gérer les postes et les descriptions de poste",
+  "addJobPosition": "Ajouter un poste",
+  "editJobPosition": "Modifier le poste",
+  "deleteJobPosition": "Supprimer le poste",
+  "jobPositionDetails": "Détails du poste",
+  "fields": {
+    "title": "Titre",
+    "code": "Code",
+    "description": "Description",
+    "department": "Département",
+    "level": "Niveau",
+    "requiredSkills": "Compétences requises",
+    "status": "Statut",
+    "employeeCount": "Nombre d'employés",
+    "createdAt": "Créé le",
+    "updatedAt": "Mis à jour le"
+  },
+  "placeholders": {
+    "searchJobPositions": "Rechercher des postes...",
+    "enterTitle": "Entrer le titre du poste",
+    "enterCode": "Entrer le code du poste",
+    "enterDescription": "Entrer la description du poste",
+    "selectDepartment": "Sélectionner un département",
+    "selectLevel": "Sélectionner un niveau",
+    "enterSkills": "Entrer les compétences (séparées par des virgules)"
+  },
+  "levels": {
+    "junior": "Junior",
+    "mid": "Intermédiaire",
+    "senior": "Senior",
+    "lead": "Lead",
+    "principal": "Principal",
+    "director": "Directeur"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "actions": {
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "viewEmployees": "Voir les employés",
+    "copyPosition": "Copier le poste",
+    "exportDescription": "Exporter la description",
+    "create": "Créer",
+    "edit": "Modifier",
+    "delete": "Supprimer"
+  },
+  "filters": {
+    "title": "Filtres",
+    "allPositions": "Tous les postes",
+    "activePositions": "Postes actifs",
+    "inactivePositions": "Postes inactifs",
+    "allLevels": "Tous les niveaux",
+    "allDepartments": "Tous les départements",
+    "withEmployees": "Avec employés",
+    "withoutEmployees": "Sans employés"
+  },
+  "messages": {
+    "positionCreated": "Poste créé avec succès",
+    "positionUpdated": "Poste mis à jour avec succès",
+    "positionDeleted": "Poste supprimé avec succès",
+    "positionActivated": "Poste activé avec succès",
+    "positionDeactivated": "Poste désactivé avec succès",
+    "positionCopied": "Poste copié avec succès",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce poste ?",
+    "confirmDeactivate": "Êtes-vous sûr de vouloir désactiver ce poste ?",
+    "noPositions": "Aucun poste trouvé",
+    "noPositionsDescription": "Il n'y a aucun poste correspondant aux critères sélectionnés.",
+    "hasEmployees": "Ce poste est assigné à {{count}} employé(s). Veuillez d'abord les réassigner.",
+    "codeExists": "Ce code de poste existe déjà",
+    "skillsHelp": "Entrez les compétences séparées par des virgules (ex: JavaScript, React, Node.js)"
+  },
+  "stats": {
+    "totalPositions": "Total des postes",
+    "activePositions": "Postes actifs",
+    "totalEmployees": "Total des employés",
+    "averageEmployees": "Moyenne par poste"
+  },
+  "requirements": {
+    "title": "Exigences",
+    "skills": "Compétences",
+    "experience": "Expérience",
+    "education": "Formation",
+    "certifications": "Certifications",
+    "languages": "Langues"
+  },
+  "search": {
+    "placeholder": "Rechercher des postes..."
+  },
+  "list": {
+    "title": "Liste des Postes"
+  },
+  "details": {
+    "created": "Créé"
+  }
+}

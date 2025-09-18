@@ -1,0 +1,127 @@
+{
+  "auth": {
+    "login": {
+      "success": "Login successful",
+      "failed": "Login failed",
+      "invalid_credentials": "Invalid credentials",
+      "otp_sent": "OTP code sent to %s",
+      "otp_invalid": "Invalid or expired OTP code",
+      "otp_verified": "OTP code verified successfully"
+    },
+    "register": {
+      "success": "Registration successful",
+      "failed": "Registration failed",
+      "email_exists": "This email is already in use",
+      "step1_complete": "Email verified, please enter OTP code",
+      "step2_complete": "OTP verified, please complete your profile",
+      "step3_complete": "Registration completed successfully"
+    },
+    "logout": {
+      "success": "Logout successful"
+    },
+    "token": {
+      "invalid": "Invalid token",
+      "expired": "Token expired",
+      "refreshed": "Token refreshed successfully"
+    },
+    "unauthorized": "Unauthorized",
+    "forbidden": "Access forbidden"
+  },
+  "user": {
+    "created": "User created successfully",
+    "updated": "User updated successfully",
+    "deleted": "User deleted successfully",
+    "not_found": "User not found",
+    "approved": "User approved successfully",
+    "rejected": "User rejected successfully",
+    "activated": "User activated successfully",
+    "deactivated": "User deactivated successfully",
+    "avatar_uploaded": "Avatar uploaded successfully",
+    "avatar_deleted": "Avatar deleted successfully",
+    "profile_updated": "Profile updated successfully",
+    "role_updated": "User role updated successfully"
+  },
+  "department": {
+    "created": "Department created successfully",
+    "updated": "Department updated successfully",
+    "deleted": "Department deleted successfully",
+    "not_found": "Department not found",
+    "activated": "Department activated successfully",
+    "deactivated": "Department deactivated successfully"
+  },
+  "job_position": {
+    "created": "Job position created successfully",
+    "updated": "Job position updated successfully",
+    "deleted": "Job position deleted successfully",
+    "not_found": "Job position not found",
+    "activated": "Job position activated successfully",
+    "deactivated": "Job position deactivated successfully"
+  },
+  "activity_log": {
+    "retrieved": "Activity logs retrieved successfully",
+    "created": "Activity log created successfully",
+    "cleaned": "Activity logs cleaned successfully",
+    "not_found": "Activity log not found",
+    "stats_retrieved": "Statistics retrieved successfully",
+    "summary_retrieved": "Summary retrieved successfully"
+  },
+  "validation": {
+    "required": "The %s field is required",
+    "email": "Invalid email",
+    "min_length": "The %s field must be at least %d characters",
+    "max_length": "The %s field cannot exceed %d characters",
+    "invalid_format": "Invalid format for %s",
+    "invalid_id": "Invalid ID",
+    "invalid_status": "Invalid status",
+    "invalid_role": "Invalid role"
+  },
+  "error": {
+    "internal": "Internal server error",
+    "bad_request": "Bad request",
+    "not_found": "Resource not found",
+    "database": "Database error",
+    "file_upload": "File upload error",
+    "file_too_large": "File is too large",
+    "invalid_file_type": "Invalid file type"
+  },
+  "success": {
+    "operation": "Operation successful",
+    "created": "Created successfully",
+    "updated": "Updated successfully",
+    "deleted": "Deleted successfully"
+  },
+  "common": {
+    "welcome": "Welcome",
+    "yes": "Yes",
+    "no": "No",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "download": "Download",
+    "upload": "Upload",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "time": "Time",
+    "from": "From",
+    "to": "To",
+    "all": "All",
+    "none": "None",
+    "select": "Select",
+    "selected": "Selected",
+    "page": "Page",
+    "of": "of",
+    "items": "items",
+    "per_page": "per page",
+    "total": "Total",
+    "showing": "Showing",
+    "results": "results"
+  }
+}

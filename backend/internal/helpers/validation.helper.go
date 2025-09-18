@@ -37,7 +37,7 @@ func BindAndValidate(c *gin.Context, req interface{}) error {
 	}
 
 	if errors := ValidateRequest(req); errors != nil {
-		SendValidationError(c, errors)
+		SendValidationError(c, "Validation failed", fmt.Errorf("validation errors: %v", errors))
 		return fmt.Errorf("validation failed")
 	}
 
@@ -62,7 +62,7 @@ func ValidateQueryParams(c *gin.Context, params interface{}) error {
 	}
 
 	if errors := ValidateRequest(params); errors != nil {
-		SendValidationError(c, errors)
+		SendValidationError(c, "Invalid query parameters", fmt.Errorf("validation errors: %v", errors))
 		return fmt.Errorf("invalid query parameters")
 	}
 
@@ -136,33 +136,3 @@ func formatValidationMessage(err validator.FieldError) string {
 	}
 }
 
-// PaginationParams represents pagination query parameters
-type PaginationParams struct {
-	Page  int `form:"page,default=1" validate:"min=1"`
-	Limit int `form:"limit,default=20" validate:"min=1,max=100"`
-}
-
-// GetPaginationParams extracts and validates pagination parameters
-func GetPaginationParams(c *gin.Context) (int, int) {
-	var params PaginationParams
-
-	// Set defaults
-	params.Page = 1
-	params.Limit = 20
-
-	// Bind query params (ignore errors for defaults)
-	_ = c.ShouldBindQuery(&params)
-
-	// Enforce limits
-	if params.Page < 1 {
-		params.Page = 1
-	}
-	if params.Limit < 1 {
-		params.Limit = 20
-	}
-	if params.Limit > 100 {
-		params.Limit = 100
-	}
-
-	return params.Page, params.Limit
-}

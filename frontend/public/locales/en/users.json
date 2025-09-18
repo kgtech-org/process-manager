@@ -1,0 +1,109 @@
+{
+  "title": "User Management",
+  "subtitle": "Manage user accounts and permissions",
+  "addUser": "Add User",
+  "editUser": "Edit User",
+  "deleteUser": "Delete User",
+  "userDetails": "User Details",
+  "userProfile": "User Profile",
+  "personalInfo": "Personal Information",
+  "professionalInfo": "Professional Information",
+  "accountInfo": "Account Information",
+  "permissions": "Permissions",
+  "roles": "Roles",
+  "fields": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "department": "Department",
+    "jobPosition": "Job Position",
+    "role": "Role",
+    "status": "Status",
+    "avatar": "Avatar",
+    "memberSince": "Member Since",
+    "lastLogin": "Last Login",
+    "emailVerified": "Email Verified",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At"
+  },
+  "placeholders": {
+    "searchUsers": "Search users...",
+    "selectDepartment": "Select department",
+    "selectJobPosition": "Select job position",
+    "selectRole": "Select role",
+    "selectStatus": "Select status",
+    "enterName": "Enter name",
+    "enterEmail": "Enter email",
+    "enterPhone": "Enter phone"
+  },
+  "status": {
+    "pending": "Pending",
+    "active": "Active",
+    "inactive": "Inactive",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "manager": "Manager",
+    "user": "User"
+  },
+  "actions": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "changeRole": "Change Role",
+    "resetPassword": "Reset Password",
+    "sendInvitation": "Send Invitation",
+    "viewProfile": "View Profile",
+    "editProfile": "Edit Profile",
+    "uploadAvatar": "Upload Avatar",
+    "deleteAvatar": "Delete Avatar",
+    "viewDetails": "View Details"
+  },
+  "filters": {
+    "title": "Filters",
+    "allUsers": "All Users",
+    "allRoles": "All Roles",
+    "allStatuses": "All Statuses",
+    "allDepartments": "All Departments",
+    "status": {
+      "all": "All Statuses"
+    }
+  },
+  "messages": {
+    "userCreated": "User created successfully",
+    "userUpdated": "User updated successfully",
+    "userDeleted": "User deleted successfully",
+    "userApproved": "User approved successfully",
+    "userRejected": "User rejected successfully",
+    "userActivated": "User activated successfully",
+    "userDeactivated": "User deactivated successfully",
+    "avatarUploaded": "Avatar uploaded successfully",
+    "avatarDeleted": "Avatar deleted successfully",
+    "confirmDelete": "Are you sure you want to delete this user?",
+    "confirmApprove": "Are you sure you want to approve this user?",
+    "confirmReject": "Are you sure you want to reject this user?",
+    "noUsers": "No users found",
+    "noUsersDescription": "There are no users matching the selected criteria."
+  },
+  "stats": {
+    "totalUsers": "Total Users",
+    "activeUsers": "Active Users",
+    "pendingUsers": "Pending Users",
+    "newThisMonth": "New This Month"
+  },
+  "search": {
+    "placeholder": "Search users..."
+  },
+  "list": {
+    "title": "User List"
+  },
+  "pagination": {
+    "perPage": "{{count}} per page"
+  },
+  "details": {
+    "joined": "Joined"
+  }
+}

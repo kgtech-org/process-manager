@@ -2,7 +2,7 @@
 # Use with REST Client extension in VS Code or any REST client
 # All endpoints require admin authentication
 
-@baseUrl = http://localhost:8080
+@baseUrl = http://localhost
 @apiUrl = {{baseUrl}}/api
 
 # Variables (will be set from responses)
@@ -102,7 +102,7 @@ Content-Type: application/json
 # =========================
 
 ### Get specific user by ID
-GET {{apiUrl}}/users/REPLACE_WITH_USER_ID
+GET {{apiUrl}}/users/68c15b0aba912a0c2ef43c47
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 

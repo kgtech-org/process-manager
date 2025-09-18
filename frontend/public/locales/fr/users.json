@@ -1,0 +1,109 @@
+{
+  "title": "Gestion des Utilisateurs",
+  "subtitle": "Gérer les comptes utilisateurs et les permissions",
+  "addUser": "Ajouter un utilisateur",
+  "editUser": "Modifier l'utilisateur",
+  "deleteUser": "Supprimer l'utilisateur",
+  "userDetails": "Détails de l'utilisateur",
+  "userProfile": "Profil utilisateur",
+  "personalInfo": "Informations personnelles",
+  "professionalInfo": "Informations professionnelles",
+  "accountInfo": "Informations du compte",
+  "permissions": "Permissions",
+  "roles": "Rôles",
+  "fields": {
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "department": "Département",
+    "jobPosition": "Poste",
+    "role": "Rôle",
+    "status": "Statut",
+    "avatar": "Avatar",
+    "memberSince": "Membre depuis",
+    "lastLogin": "Dernière connexion",
+    "emailVerified": "Email vérifié",
+    "createdAt": "Créé le",
+    "updatedAt": "Mis à jour le"
+  },
+  "placeholders": {
+    "searchUsers": "Rechercher des utilisateurs...",
+    "selectDepartment": "Sélectionner un département",
+    "selectJobPosition": "Sélectionner un poste",
+    "selectRole": "Sélectionner un rôle",
+    "selectStatus": "Sélectionner un statut",
+    "enterName": "Entrer le nom",
+    "enterEmail": "Entrer l'email",
+    "enterPhone": "Entrer le téléphone"
+  },
+  "status": {
+    "pending": "En attente",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "approved": "Approuvé",
+    "rejected": "Rejeté"
+  },
+  "roles": {
+    "admin": "Administrateur",
+    "manager": "Manager",
+    "user": "Utilisateur"
+  },
+  "actions": {
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "changeRole": "Changer le rôle",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "sendInvitation": "Envoyer une invitation",
+    "viewProfile": "Voir le profil",
+    "editProfile": "Modifier le profil",
+    "uploadAvatar": "Télécharger un avatar",
+    "deleteAvatar": "Supprimer l'avatar",
+    "viewDetails": "Voir les détails"
+  },
+  "filters": {
+    "title": "Filtres",
+    "allUsers": "Tous les utilisateurs",
+    "allRoles": "Tous les rôles",
+    "allStatuses": "Tous les statuts",
+    "allDepartments": "Tous les départements",
+    "status": {
+      "all": "Tous les statuts"
+    }
+  },
+  "messages": {
+    "userCreated": "Utilisateur créé avec succès",
+    "userUpdated": "Utilisateur mis à jour avec succès",
+    "userDeleted": "Utilisateur supprimé avec succès",
+    "userApproved": "Utilisateur approuvé avec succès",
+    "userRejected": "Utilisateur rejeté avec succès",
+    "userActivated": "Utilisateur activé avec succès",
+    "userDeactivated": "Utilisateur désactivé avec succès",
+    "avatarUploaded": "Avatar téléchargé avec succès",
+    "avatarDeleted": "Avatar supprimé avec succès",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet utilisateur ?",
+    "confirmApprove": "Êtes-vous sûr de vouloir approuver cet utilisateur ?",
+    "confirmReject": "Êtes-vous sûr de vouloir rejeter cet utilisateur ?",
+    "noUsers": "Aucun utilisateur trouvé",
+    "noUsersDescription": "Il n'y a aucun utilisateur correspondant aux critères sélectionnés."
+  },
+  "stats": {
+    "totalUsers": "Total des utilisateurs",
+    "activeUsers": "Utilisateurs actifs",
+    "pendingUsers": "Utilisateurs en attente",
+    "newThisMonth": "Nouveaux ce mois"
+  },
+  "search": {
+    "placeholder": "Rechercher des utilisateurs..."
+  },
+  "list": {
+    "title": "Liste des Utilisateurs"
+  },
+  "pagination": {
+    "perPage": "{{count}} par page"
+  },
+  "details": {
+    "joined": "Rejoint"
+  }
+}

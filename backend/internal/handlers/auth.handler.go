@@ -247,7 +247,17 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 		return
 	}
 
-	helpers.SendSuccess(c, "User information retrieved successfully", user.ToResponse())
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Get user response with populated details
+	userResponse, err := h.userService.ToResponseWithDetails(ctx, user)
+	if err != nil {
+		// Fallback to basic response if population fails
+		userResponse = user.ToResponse()
+	}
+
+	helpers.SendSuccess(c, "User information retrieved successfully", userResponse)
 }
 
 // UpdateProfile handles profile updates
@@ -274,7 +284,14 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	helpers.SendSuccess(c, "Profile updated successfully", updatedUser.ToResponse())
+	// Get user response with populated details
+	userResponse, err := h.userService.ToResponseWithDetails(ctx, updatedUser)
+	if err != nil {
+		// Fallback to basic response if population fails
+		userResponse = updatedUser.ToResponse()
+	}
+
+	helpers.SendSuccess(c, "Profile updated successfully", userResponse)
 }
 
 // RevokeAllTokens revokes all refresh tokens for current user
@@ -552,9 +569,9 @@ func (h *AuthHandler) UploadAvatar(c *gin.Context) {
 
 	// Return success response
 	response := gin.H{
-		"user_id":    updatedUser.ID.Hex(),
-		"avatar_url": avatarURL,
-		"message":    "Profile picture uploaded successfully",
+		"userId": updatedUser.ID.Hex(),
+		"avatar": avatarURL,
+		"message": "Profile picture uploaded successfully",
 	}
 
 	helpers.SendSuccess(c, "Profile picture uploaded successfully", response)
