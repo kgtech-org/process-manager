@@ -46,11 +46,11 @@ type EmailData struct {
 func NewEmailService() *EmailService {
 	smtpHost := os.Getenv("SMTP_HOST")
 	if smtpHost == "" {
-		smtpHost = "localhost"
+		smtpHost = "smtp.hostinger.com"
 	}
 
 	smtpPortStr := os.Getenv("SMTP_PORT")
-	smtpPort := 587
+	smtpPort := 465
 	if smtpPortStr != "" {
 		if port, err := strconv.Atoi(smtpPortStr); err == nil {
 			smtpPort = port
@@ -755,6 +755,69 @@ This email was sent to {{.UserEmail}}. For support, contact us at {{.SupportEmai
 }
 
 // getRegistrationOTPTemplate returns the registration OTP email template
+// SendCustomEmail sends a custom email to a user
+func (e *EmailService) SendCustomEmail(toEmail, toName, subject, body string) error {
+	data := EmailData{
+		UserName:     toName,
+		UserEmail:    toEmail,
+		AppName:      "Process Manager",
+		AppURL:       e.appURL,
+		SupportEmail: "support@process-manager.com",
+		CompanyName:  "Process Manager Team",
+	}
+
+	template := e.getCustomEmailTemplate(subject, body)
+	return e.sendEmail(toEmail, toName, template, data)
+}
+
+// getCustomEmailTemplate creates a template for custom emails
+func (e *EmailService) getCustomEmailTemplate(subject, body string) EmailTemplate {
+	return EmailTemplate{
+		Subject: subject,
+		HTMLBody: fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>%s</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #f4f4f4; padding: 20px; border-radius: 10px;">
+        <h1 style="color: #2c3e50; text-align: center;">{{.AppName}}</h1>
+
+        <p>Dear {{.UserName}},</p>
+
+        %s
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{.AppURL}}" style="background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Go to {{.AppName}}</a>
+        </div>
+
+        <p>Best regards,<br>{{.CompanyName}}</p>
+
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        <p style="font-size: 12px; color: #666; text-align: center;">
+            This email was sent to {{.UserEmail}}. For support, contact us at <a href="mailto:{{.SupportEmail}}">{{.SupportEmail}}</a>.
+        </p>
+    </div>
+</body>
+</html>`, subject, body),
+		TextBody: fmt.Sprintf(`%s
+
+Dear {{.UserName}},
+
+%s
+
+Go to {{.AppName}}: {{.AppURL}}
+
+Best regards,
+{{.CompanyName}}
+
+---
+This email was sent to {{.UserEmail}}. For support, contact us at {{.SupportEmail}}.`, subject, body),
+	}
+}
+
 func (e *EmailService) getRegistrationOTPTemplate() EmailTemplate {
 	return EmailTemplate{
 		Subject: "Complete Your Registration - Verification Code",

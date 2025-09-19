@@ -1,0 +1,204 @@
+### Email Service API Tests (SMTP)
+@baseUrl = http://localhost/api
+@accessToken = {{adminLogin.response.body.data.accessToken}}
+@userEmail = aroamadou1@gmail.com
+
+
+### Admin Login (OTP Flow)
+# @name adminRequestOtp
+POST {{baseUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "admin@process-manager.local"
+}
+###
+
+# @name adminLogin
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+X-Temp-Token: {{adminRequestOtp.response.body.data.temporaryToken}}
+
+{
+  "otp": "{{adminRequestOtp.response.body.data.otp}}"
+}
+
+
+### ====================================
+### Test Email Service
+### ====================================
+
+### Test Email - Send to current user
+POST {{baseUrl}}/emails/test
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "email": ""
+}
+
+### Test Email - Send to specific email
+POST {{baseUrl}}/emails/test
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "email": "{{userEmail}}"
+}
+
+### ====================================
+### Admin Email Endpoints
+### ====================================
+
+### Send Email to Specific User
+POST {{baseUrl}}/emails/send-to-user
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "userId": "6780ad8b96bb1a4b22f8e45e",
+  "subject": "Important Update - Process Manager",
+  "body": "Dear User,\n\nWe have an important update regarding your account. Please log in to check your profile.\n\nBest regards,\nAdmin Team",
+  "isHtml": false
+}
+
+### Send HTML Email to Specific User
+POST {{baseUrl}}/emails/send-to-user
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "userId": "6780ad8b96bb1a4b22f8e45e",
+  "subject": "Welcome to Process Manager!",
+  "body": "<h2>Welcome!</h2><p>We're excited to have you on board.</p><ul><li>Complete your profile</li><li>Explore the dashboard</li><li>Start creating processes</li></ul><p>If you need help, contact support.</p>",
+  "isHtml": true
+}
+
+### Send Email to Group of Users
+POST {{baseUrl}}/emails/send-to-group
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "userIds": [
+    "6780ad8b96bb1a4b22f8e45e",
+    "6780ad8b96bb1a4b22f8e45f",
+    "6780ad8b96bb1a4b22f8e460"
+  ],
+  "subject": "Team Meeting Reminder",
+  "body": "Don't forget about tomorrow's team meeting at 10 AM.\n\nAgenda:\n- Q1 Review\n- New features discussion\n- Team updates",
+  "isHtml": false
+}
+
+### Broadcast Email to All Active Users
+POST {{baseUrl}}/emails/broadcast
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "subject": "System Maintenance Notice",
+  "body": "Dear Users,\n\nWe will be performing system maintenance on Sunday, January 20th from 2 AM to 4 AM EST.\n\nDuring this time, the system may be temporarily unavailable.\n\nWe apologize for any inconvenience.",
+  "isHtml": false
+}
+
+### Broadcast to Specific Roles (Admin and Manager only)
+POST {{baseUrl}}/emails/broadcast
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "subject": "Management Update",
+  "body": "<h3>Management Team Update</h3><p>This message is for administrators and managers only.</p><p>Please review the new management guidelines in the admin portal.</p>",
+  "isHtml": true,
+  "roles": ["admin", "manager"],
+  "status": "active"
+}
+
+### Broadcast to Users with Specific Status
+POST {{baseUrl}}/emails/broadcast
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "subject": "Pending Account Reminder",
+  "body": "Your account registration is still pending approval. An administrator will review your request soon.",
+  "isHtml": false,
+  "status": "pending"
+}
+
+### ====================================
+### Future Notification Endpoints (To be implemented)
+### ====================================
+
+### Get User Notifications (Future)
+# GET {{baseUrl}}
+# Authorization: Bearer {{accessToken}}
+
+### Mark Notification as Read (Future)
+# POST {{baseUrl}}/mark-read
+# Content-Type: application/json
+# Authorization: Bearer {{accessToken}}
+#
+# {
+#   "notificationIds": ["notification_id_1", "notification_id_2"]
+# }
+
+### Get Notification Preferences (Future)
+# GET {{baseUrl}}/preferences
+# Authorization: Bearer {{accessToken}}
+
+### Update Notification Preferences (Future)
+# PUT {{baseUrl}}/preferences
+# Content-Type: application/json
+# Authorization: Bearer {{accessToken}}
+#
+# {
+#   "emailEnabled": true,
+#   "pushEnabled": true,
+#   "inAppEnabled": true,
+#   "categories": ["login", "activity", "system", "reminders"]
+# }
+
+### ====================================
+### Device Management (Future)
+### ====================================
+
+### Register Device for Push Notifications (Future)
+# POST {{baseUrl}}/devices/register
+# Content-Type: application/json
+# Authorization: Bearer {{accessToken}}
+#
+# {
+#   "deviceUuid": "unique-device-uuid-here",
+#   "fcmToken": "firebase-fcm-token-here",
+#   "deviceType": "web",
+#   "deviceName": "Chrome on Windows",
+#   "platform": "Windows 10"
+# }
+
+### Update FCM Token (Future)
+# PUT {{baseUrl}}/devices/unique-device-uuid-here/token
+# Content-Type: application/json
+# Authorization: Bearer {{accessToken}}
+#
+# {
+#   "fcmToken": "new-firebase-fcm-token-here"
+# }
+
+### Get User's Registered Devices (Future)
+# GET {{baseUrl}}/devices
+# Authorization: Bearer {{accessToken}}
+
+### Deregister Device (Future)
+# DELETE {{baseUrl}}/devices/unique-device-uuid-here
+# Authorization: Bearer {{accessToken}}
+
+### Update Device Notification Preferences (Future)
+# PUT {{baseUrl}}/devices/unique-device-uuid-here/preferences
+# Content-Type: application/json
+# Authorization: Bearer {{accessToken}}
+#
+# {
+#   "pushEnabled": true,
+#   "categories": ["login", "system"]
+# }

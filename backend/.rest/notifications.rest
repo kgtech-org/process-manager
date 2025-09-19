@@ -1,0 +1,218 @@
+### Push Notification Service API Tests (Firebase FCM)
+@baseUrl = http://localhost:8080/api/notifications
+@accessToken = {{$dotenv ACCESS_TOKEN}}
+
+### ====================================
+### User Notifications
+### ====================================
+
+### Get User Notifications
+GET {{baseUrl}}
+Authorization: Bearer {{accessToken}}
+
+### Get User Notifications with Pagination
+GET {{baseUrl}}?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+
+### Get User Notifications with Status Filter
+GET {{baseUrl}}?status=unread&page=1&limit=10
+Authorization: Bearer {{accessToken}}
+
+### Get Notification Statistics
+GET {{baseUrl}}/stats
+Authorization: Bearer {{accessToken}}
+
+### Mark Notifications as Read
+POST {{baseUrl}}/mark-read
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "notificationIds": ["notification_id_1", "notification_id_2"]
+}
+
+### ====================================
+### Notification Preferences
+### ====================================
+
+### Get Notification Preferences
+GET {{baseUrl}}/preferences
+Authorization: Bearer {{accessToken}}
+
+### Update Notification Preferences
+PUT {{baseUrl}}/preferences
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "emailEnabled": true,
+  "pushEnabled": true,
+  "inAppEnabled": true,
+  "categories": ["login", "activity", "system", "reminders"]
+}
+
+### ====================================
+### Device Management
+### ====================================
+
+### Register Device for Push Notifications
+POST {{baseUrl}}/devices/register
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "deviceUuid": "unique-device-uuid-here",
+  "fcmToken": "firebase-fcm-token-here",
+  "deviceType": "web",
+  "deviceName": "Chrome on Windows",
+  "browser": "Chrome",
+  "platform": "Windows 10"
+}
+
+### Register Mobile Device
+POST {{baseUrl}}/devices/register
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "deviceUuid": "mobile-device-uuid-here",
+  "fcmToken": "mobile-firebase-fcm-token-here",
+  "deviceType": "android",
+  "deviceName": "Samsung Galaxy S23",
+  "platform": "Android 14"
+}
+
+### Get User's Registered Devices
+GET {{baseUrl}}/devices
+Authorization: Bearer {{accessToken}}
+
+### Update FCM Token
+PUT {{baseUrl}}/devices/unique-device-uuid-here/token
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "fcmToken": "new-firebase-fcm-token-here"
+}
+
+### Deregister Device
+DELETE {{baseUrl}}/devices/unique-device-uuid-here
+Authorization: Bearer {{accessToken}}
+
+### ====================================
+### Test Notifications
+### ====================================
+
+### Test Push Notification to Current User
+POST {{baseUrl}}/test
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "title": "Test Notification",
+  "body": "This is a test push notification"
+}
+
+### ====================================
+### Admin Push Notifications
+### ====================================
+
+### Send Push Notification to Specific Users
+POST {{baseUrl}}/admin/send
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "userIds": ["6780ad8b96bb1a4b22f8e45e"],
+  "title": "Important Update",
+  "body": "Please check your dashboard for new updates.",
+  "data": {
+    "type": "update",
+    "url": "/dashboard"
+  },
+  "sound": "default",
+  "badge": 1,
+  "clickAction": "https://your-app.com/dashboard"
+}
+
+### Send Push Notification to Specific Devices
+POST {{baseUrl}}/admin/send
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "deviceIds": ["device-uuid-1", "device-uuid-2"],
+  "title": "System Maintenance",
+  "body": "Scheduled maintenance will begin in 30 minutes.",
+  "data": {
+    "type": "maintenance",
+    "startTime": "2025-01-20T02:00:00Z"
+  }
+}
+
+### Broadcast Push Notification to All Users
+POST {{baseUrl}}/admin/send
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "title": "New Feature Available",
+  "body": "Check out the new dashboard redesign!",
+  "data": {
+    "type": "feature",
+    "feature": "dashboard_v2"
+  },
+  "sound": "default",
+  "clickAction": "https://your-app.com/dashboard"
+}
+
+### Broadcast to Specific Roles
+POST {{baseUrl}}/admin/send
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "roles": ["admin", "manager"],
+  "title": "Management Alert",
+  "body": "Quarterly review meeting scheduled for next week.",
+  "data": {
+    "type": "meeting",
+    "date": "2025-01-27"
+  }
+}
+
+### Broadcast to Users with Specific Status
+POST {{baseUrl}}/admin/send
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "status": "active",
+  "title": "Weekly Newsletter",
+  "body": "Your weekly summary is ready to view.",
+  "data": {
+    "type": "newsletter",
+    "week": "2025-W03"
+  }
+}
+
+### Custom Notification with Rich Data
+POST {{baseUrl}}/admin/send
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "userIds": ["6780ad8b96bb1a4b22f8e45e"],
+  "title": "Process Approval Required",
+  "body": "Process 'Network Maintenance SOP' requires your approval.",
+  "data": {
+    "type": "approval",
+    "processId": "process_123",
+    "processName": "Network Maintenance SOP",
+    "requester": "John Doe",
+    "priority": "high"
+  },
+  "sound": "urgent",
+  "badge": 1,
+  "clickAction": "https://your-app.com/processes/process_123"
+}

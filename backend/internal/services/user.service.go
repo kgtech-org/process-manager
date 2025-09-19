@@ -444,6 +444,46 @@ func (s *UserService) GetPendingUsers(ctx context.Context, skip, limit int64) ([
 	return s.ListUsers(ctx, skip, limit, filter)
 }
 
+// GetAllUsersForNotification returns users for notification purposes
+func (s *UserService) GetAllUsersForNotification(roles []string, status string) ([]*models.User, error) {
+	ctx := context.Background()
+	filter := bson.M{}
+
+	// Filter by roles if provided
+	if len(roles) > 0 {
+		validRoles := []models.UserRole{}
+		for _, role := range roles {
+			if models.IsValidRole(models.UserRole(role)) {
+				validRoles = append(validRoles, models.UserRole(role))
+			}
+		}
+		if len(validRoles) > 0 {
+			filter["role"] = bson.M{"$in": validRoles}
+		}
+	}
+
+	// Filter by status if provided
+	if status != "" && models.IsValidStatus(models.UserStatus(status)) {
+		filter["status"] = models.UserStatus(status)
+	} else if status == "" {
+		// Default to active users only
+		filter["status"] = models.StatusActive
+	}
+
+	cursor, err := s.userCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find users: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var users []*models.User
+	if err = cursor.All(ctx, &users); err != nil {
+		return nil, fmt.Errorf("failed to decode users: %w", err)
+	}
+
+	return users, nil
+}
+
 // GetUsersWithFilters returns users with advanced filtering options
 func (s *UserService) GetUsersWithFilters(ctx context.Context, opts *models.UserFilterOptions) ([]*models.User, int64, error) {
 	// Build filter
