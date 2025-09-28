@@ -106,12 +106,13 @@ services:
       - CORS_ORIGINS=http://localhost
       - SMTP_HOST=smtp.hostinger.com
       - SMTP_PORT=465
-      - SMTP_USER=admin@k-jstore
+      - SMTP_USERNAME=admin@k-j.store
       - SMTP_PASSWORD=0n3@L1f3@
-      - EMAIL_FROM=Process Manager <admin@k-j.store>
+      - FROM_EMAIL=Process Manager <admin@k-j.store>
       - FRONTEND_URL=http://localhost
       - LOG_LEVEL=info
       - DEVELOPMENT_MODE=true
+      - FIREBASE_SERVICE_ACCOUNT_PATH=/app/serviceAccountKey.json
     depends_on:
       mongodb:
         condition: service_healthy
@@ -121,6 +122,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/templates:/app/templates:ro
+      - ./backend/serviceAccountKey.json:/app/serviceAccountKey.json:ro
     networks:
       - process-manager
     healthcheck:

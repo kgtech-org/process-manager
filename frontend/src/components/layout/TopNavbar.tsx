@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TokenStatus } from '@/components/auth/TokenStatus';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -138,6 +139,9 @@ export const TopNavbar: React.FC = () => {
               <div className="hidden sm:block">
                 <LanguageSwitcher />
               </div>
+
+              {/* Notification Bell */}
+              <NotificationBell />
 
               {/* User Menu */}
               <DropdownMenu>
