@@ -112,6 +112,7 @@ services:
       - FRONTEND_URL=http://localhost
       - LOG_LEVEL=info
       - DEVELOPMENT_MODE=true
+      - FIREBASE_SERVICE_ACCOUNT_PATH=/app/serviceAccountKey.json
     depends_on:
       mongodb:
         condition: service_healthy
@@ -121,6 +122,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/templates:/app/templates:ro
+      - ./backend/serviceAccountKey.json:/app/serviceAccountKey.json:ro
     networks:
       - process-manager
     healthcheck:
