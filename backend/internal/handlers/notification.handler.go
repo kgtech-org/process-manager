@@ -109,7 +109,7 @@ func (h *NotificationHandler) GetUserDevices(c *gin.Context) {
 	}
 
 	// Convert to response format (without sensitive data)
-	var deviceResponses []models.DeviceResponse
+	deviceResponses := make([]models.DeviceResponse, 0)
 	for _, device := range devices {
 		deviceResponses = append(deviceResponses, device.ToResponse())
 	}
