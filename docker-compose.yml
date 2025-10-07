@@ -138,6 +138,7 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://localhost/api
+        - NEXT_PUBLIC_FIREBASE_VAPID_KEY=${FIREBASE_VAPID_KEY:-}
     container_name: process-manager-frontend
     restart: always
     ports:
@@ -145,6 +146,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost/api
       - NEXT_PUBLIC_APP_NAME=Process Manager
+      - NEXT_PUBLIC_FIREBASE_VAPID_KEY=${FIREBASE_VAPID_KEY:-}
       - NEXTAUTH_URL=http://localhost
       - NEXTAUTH_SECRET=your-supersec
     depends_on:

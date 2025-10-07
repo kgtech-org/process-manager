@@ -175,7 +175,13 @@ class NotificationService {
 
       // Get FCM token with VAPID key
       // To get this: Firebase Console -> Project Settings -> Cloud Messaging -> Web Push certificates
-      const vapidKey = 'BKagOny0KF_2pCJQ3m-kfBABRVZjj_Lj1gGmc5NY4v8bR8hV7Jp1fP7_U5Ln2JNc-c0lH1vvLqnGVWBGfCZ5Ks4'; // Replace with your actual VAPID key
+      const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+
+      if (!vapidKey) {
+        console.error('Firebase VAPID key not configured. Please set NEXT_PUBLIC_FIREBASE_VAPID_KEY environment variable.');
+        throw new Error('Firebase VAPID key not configured');
+      }
+
       const token = await getToken(this.messaging, { vapidKey });
 
       if (token) {
