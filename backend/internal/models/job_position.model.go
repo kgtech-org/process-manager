@@ -30,7 +30,7 @@ type JobPositionResponse struct {
 	Description    string    `json:"description,omitempty"`
 	DepartmentID   string    `json:"departmentId"`
 	Level          string    `json:"level,omitempty"`
-	RequiredSkills []string  `json:"requiredSkills,omitempty"`
+	RequiredSkills []string  `json:"requiredSkills"` // Remove omitempty to always include even if empty
 	Active         bool      `json:"active"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
@@ -38,6 +38,12 @@ type JobPositionResponse struct {
 
 // ToResponse converts JobPosition to JobPositionResponse
 func (j *JobPosition) ToResponse() JobPositionResponse {
+	// Ensure RequiredSkills is always an array, never null
+	skills := j.RequiredSkills
+	if skills == nil {
+		skills = []string{}
+	}
+
 	return JobPositionResponse{
 		ID:             j.ID.Hex(),
 		Title:          j.Title,
@@ -45,7 +51,7 @@ func (j *JobPosition) ToResponse() JobPositionResponse {
 		Description:    j.Description,
 		DepartmentID:   j.DepartmentID.Hex(),
 		Level:          j.Level,
-		RequiredSkills: j.RequiredSkills,
+		RequiredSkills: skills,
 		Active:         j.Active,
 		CreatedAt:      j.CreatedAt,
 		UpdatedAt:      j.UpdatedAt,

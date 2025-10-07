@@ -23,18 +23,32 @@ db.createCollection('users', {
           pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
         },
         name: { bsonType: 'string' },
-        title: { bsonType: 'string' },
-        department: { bsonType: 'string' },
+        phone: { bsonType: 'string' },
         role: {
           bsonType: 'string',
-          enum: ['admin', 'manager', 'technician', 'viewer']
+          enum: ['admin', 'manager', 'user']
+        },
+        status: {
+          bsonType: 'string',
+          enum: ['pending', 'active', 'inactive', 'rejected']
         },
         active: { bsonType: 'bool' },
+        verified: { bsonType: 'bool' },
+        avatar: { bsonType: 'string' },
+        department_id: { bsonType: 'objectId' },
+        job_position_id: { bsonType: 'objectId' },
         created_at: { bsonType: 'date' },
-        last_login_at: { bsonType: ['date', 'null'] }
+        updated_at: { bsonType: 'date' },
+        last_login: { bsonType: ['date', 'null'] },
+        validated_at: { bsonType: ['date', 'null'] },
+        validated_by: { bsonType: 'objectId' },
+        rejected_at: { bsonType: ['date', 'null'] },
+        rejected_by: { bsonType: 'objectId' },
+        rejection_reason: { bsonType: 'string' }
       }
     }
-  }
+  },
+  validationLevel: 'moderate'
 });
 
 // Documents collection
@@ -165,12 +179,14 @@ print('Creating default admin user...');
 db.users.insertOne({
   email: 'admin@togocom.tg',
   name: 'System Administrator',
-  title: 'System Administrator',
-  department: 'IT',
   role: 'admin',
+  status: 'active',
   active: true,
+  verified: true,
   created_at: new Date(),
-  last_login_at: null
+  updated_at: new Date(),
+  last_login: null,
+  validated_at: new Date()
 });
 
 print('=== Process Manager MongoDB Initialization Complete ===');

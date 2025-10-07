@@ -28,7 +28,10 @@ export const JobPositionSelector: React.FC<JobPositionSelectorProps> = ({
 
   // Group by level for better organization
   const positionsByLevel = filteredPositions.reduce((groups, position) => {
-    const level = position.level || 'Other';
+    // Capitalize first letter to match level order
+    const level = position.level
+      ? position.level.charAt(0).toUpperCase() + position.level.slice(1).toLowerCase()
+      : 'Other';
     if (!groups[level]) {
       groups[level] = [];
     }
@@ -62,7 +65,7 @@ export const JobPositionSelector: React.FC<JobPositionSelectorProps> = ({
                         {position.description}
                       </span>
                     )}
-                    {position.requiredSkills.length > 0 && (
+                    {position.requiredSkills && position.requiredSkills.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {position.requiredSkills.slice(0, 3).map((skill) => (
                           <span

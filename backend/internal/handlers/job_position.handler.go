@@ -42,11 +42,15 @@ func (h *JobPositionHandler) GetJobPositions(c *gin.Context) {
 		}
 	}
 
-	// Filter by department
-	if departmentID := c.Query("department_id"); departmentID != "" {
+	// Filter by department (support both camelCase and snake_case)
+	departmentID := c.Query("departmentId")
+	if departmentID == "" {
+		departmentID = c.Query("department_id")
+	}
+	if departmentID != "" {
 		objID, err := primitive.ObjectIDFromHex(departmentID)
 		if err != nil {
-			helpers.SendBadRequest(c, "Invalid department_id format")
+			helpers.SendBadRequest(c, "Invalid departmentId format")
 			return
 		}
 		filter["department_id"] = objID
