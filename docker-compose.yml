@@ -146,7 +146,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost/api
       - NEXT_PUBLIC_APP_NAME=Process Manager
-      - NEXT_PUBLIC_FIREBASE_VAPID_KEY=${FIREBASE_VAPID_KEY:-}
+      - NEXT_PUBLIC_FIREBASE_VAPID_KEY=BPetR4BfDxx1lg-Q6i4ohMve1BZXUPNHeJIclY2oBnMfRJ3J_BtQmdlgGtb4a_0NBPOiz4IA5-UZr-nLWJys98k
       - NEXTAUTH_URL=http://localhost
       - NEXTAUTH_SECRET=your-supersec
     depends_on:
