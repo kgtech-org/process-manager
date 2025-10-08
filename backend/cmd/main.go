@@ -107,6 +107,9 @@ func main() {
 	emailHandler := handlers.NewEmailHandler(emailService, userService)
 	notificationHandler := handlers.NewNotificationHandler(userService, notificationService, deviceService)
 	documentHandler := handlers.NewDocumentHandler(documentService)
+	invitationHandler := handlers.NewInvitationHandler(db.Database, emailService)
+	permissionHandler := handlers.NewPermissionHandler(db.Database)
+	signatureHandler := handlers.NewSignatureHandler(db.Database)
 
 	// Initialize Gin router
 	r := gin.Default()
@@ -173,7 +176,8 @@ func main() {
 		routes.SetupActivityLogRoutes(api, activityLogHandler, authMiddleware)
 		routes.SetupEmailRoutes(api, emailHandler, authMiddleware)
 		routes.SetupNotificationRoutes(api, notificationHandler, authMiddleware)
-		routes.SetupDocumentRoutes(api, documentHandler, authMiddleware)
+		routes.SetupDocumentRoutes(api, documentHandler, permissionHandler, signatureHandler, authMiddleware)
+		routes.RegisterInvitationRoutes(api, invitationHandler, authMiddleware)
 	}
 
 	// Get port from environment or default to 8080

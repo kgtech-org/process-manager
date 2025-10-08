@@ -41,6 +41,13 @@ type EmailData struct {
 	SupportEmail    string
 	CompanyName     string
 	UnsubscribeURL  string
+	// Invitation-specific fields
+	InviterName     string
+	DocumentTitle   string
+	DocumentRef     string
+	InvitationURL   string
+	RoleName        string
+	TeamName        string
 }
 
 func NewEmailService() *EmailService {
@@ -194,6 +201,29 @@ func (e *EmailService) SendAccountRejectedEmail(userEmail, userName, reason stri
 	}
 
 	template := e.getAccountRejectedTemplate()
+	return e.sendEmail(userEmail, userName, template, data)
+}
+
+// SendInvitationEmail sends a collaboration invitation email
+func (e *EmailService) SendInvitationEmail(userEmail, userName, inviterName, documentTitle, documentRef, teamName, invitationToken string) error {
+	invitationURL := fmt.Sprintf("%s/invitations/accept?token=%s", e.appURL, invitationToken)
+
+	data := EmailData{
+		UserName:      userName,
+		UserEmail:     userEmail,
+		AppName:       "Process Manager",
+		AppURL:        e.appURL,
+		InviterName:   inviterName,
+		DocumentTitle: documentTitle,
+		DocumentRef:   documentRef,
+		InvitationURL: invitationURL,
+		TeamName:      teamName,
+		Token:         invitationToken,
+		SupportEmail:  "support@process-manager.com",
+		CompanyName:   "Process Manager Team",
+	}
+
+	template := e.getInvitationTemplate()
 	return e.sendEmail(userEmail, userName, template, data)
 }
 
@@ -834,28 +864,28 @@ func (e *EmailService) getRegistrationOTPTemplate() EmailTemplate {
             <h1 style="color: #2c3e50; margin: 0;">{{.AppName}}</h1>
             <h2 style="color: #27ae60; margin: 10px 0;">Complete Your Registration</h2>
         </div>
-        
+
         <p>Hello,</p>
-        
+
         <p>Thank you for starting your registration with {{.AppName}}! To complete the process, please use the following verification code:</p>
-        
+
         <div style="text-align: center; margin: 30px 0;">
             <div style="background-color: #27ae60; color: white; padding: 20px; border-radius: 10px; font-size: 32px; font-weight: bold; letter-spacing: 5px; display: inline-block;">
                 {{.OTP}}
             </div>
         </div>
-        
+
         <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 12px; border-radius: 4px; margin: 20px 0;">
             <strong>⚠️ Important:</strong> This verification code will expire in {{.OTPExpiry}} for security reasons.
         </div>
-        
+
         <p><strong>Next Steps:</strong></p>
         <ol>
             <li>Enter this verification code on the registration page</li>
             <li>Complete your profile information</li>
             <li>Wait for admin approval of your account</li>
         </ol>
-        
+
         <p><strong>Security Guidelines:</strong></p>
         <ul>
             <li>Never share this code with anyone</li>
@@ -863,15 +893,15 @@ func (e *EmailService) getRegistrationOTPTemplate() EmailTemplate {
             <li>This code can only be used once</li>
             <li>If you didn't request this registration, please ignore this email</li>
         </ul>
-        
+
         <p>If you're having trouble with the registration process, please contact our support team.</p>
-        
+
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{.AppURL}}" style="background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Continue Registration</a>
         </div>
-        
+
         <p>Best regards,<br>{{.CompanyName}}</p>
-        
+
         <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
         <p style="font-size: 12px; color: #666; text-align: center;">
             This email was sent to {{.UserEmail}}. For support, contact us at <a href="mailto:{{.SupportEmail}}">{{.SupportEmail}}</a>.
@@ -909,5 +939,91 @@ Best regards,
 
 ---
 This email was sent to {{.UserEmail}}. For support, contact us at {{.SupportEmail}}.`,
+	}
+}
+
+func (e *EmailService) getInvitationTemplate() EmailTemplate {
+	return EmailTemplate{
+		Subject: "You're invited to collaborate on a document",
+		HTMLBody: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Document Collaboration Invitation - {{.AppName}}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #f4f4f4; padding: 20px; border-radius: 10px;">
+        <h1 style="color: #3498db; text-align: center;">📄 Document Collaboration Invitation</h1>
+
+        <p>Dear {{.UserName}},</p>
+
+        <p><strong>{{.InviterName}}</strong> has invited you to collaborate on a document in {{.AppName}}.</p>
+
+        <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Document:</strong> {{.DocumentTitle}}</p>
+            <p style="margin: 5px 0;"><strong>Reference:</strong> {{.DocumentRef}}</p>
+            <p style="margin: 5px 0;"><strong>Role:</strong> {{.TeamName}}</p>
+        </div>
+
+        <p><strong>What this means:</strong></p>
+        <ul>
+            <li>You'll be able to collaborate on the document as part of the {{.TeamName}} team</li>
+            <li>You can review, edit, and contribute to the document based on your role</li>
+            <li>You'll receive notifications about document updates</li>
+        </ul>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{.InvitationURL}}" style="background-color: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Accept Invitation</a>
+        </div>
+
+        <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-left: 4px solid #27ae60;">{{.InvitationURL}}</p>
+
+        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 12px; border-radius: 4px; margin: 20px 0;">
+            <strong>⏳ Note:</strong> This invitation will expire in 7 days for security reasons.
+        </div>
+
+        <p>If you don't want to collaborate on this document, you can safely ignore this email.</p>
+
+        <p>If you have any questions, please contact our support team at <a href="mailto:{{.SupportEmail}}">{{.SupportEmail}}</a>.</p>
+
+        <p>Best regards,<br>{{.CompanyName}}</p>
+
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        <p style="font-size: 12px; color: #666; text-align: center;">
+            This email was sent to {{.UserEmail}}. If you didn't expect this invitation, please contact <a href="mailto:{{.SupportEmail}}">{{.SupportEmail}}</a>.
+        </p>
+    </div>
+</body>
+</html>`,
+		TextBody: `Document Collaboration Invitation - {{.AppName}}
+
+Dear {{.UserName}},
+
+{{.InviterName}} has invited you to collaborate on a document in {{.AppName}}.
+
+Document Details:
+• Document: {{.DocumentTitle}}
+• Reference: {{.DocumentRef}}
+• Role: {{.TeamName}}
+
+What this means:
+• You'll be able to collaborate on the document as part of the {{.TeamName}} team
+• You can review, edit, and contribute to the document based on your role
+• You'll receive notifications about document updates
+
+Accept Invitation: {{.InvitationURL}}
+
+⏳ Note: This invitation will expire in 7 days for security reasons.
+
+If you don't want to collaborate on this document, you can safely ignore this email.
+
+If you have any questions, please contact our support team at {{.SupportEmail}}.
+
+Best regards,
+{{.CompanyName}}
+
+---
+This email was sent to {{.UserEmail}}. If you didn't expect this invitation, please contact {{.SupportEmail}}.`,
 	}
 }
