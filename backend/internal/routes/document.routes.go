@@ -7,7 +7,13 @@ import (
 )
 
 // SetupDocumentRoutes configures document routes
-func SetupDocumentRoutes(router *gin.RouterGroup, documentHandler *handlers.DocumentHandler, authMiddleware *middleware.AuthMiddleware) {
+func SetupDocumentRoutes(
+	router *gin.RouterGroup,
+	documentHandler *handlers.DocumentHandler,
+	permissionHandler *handlers.PermissionHandler,
+	signatureHandler *handlers.SignatureHandler,
+	authMiddleware *middleware.AuthMiddleware,
+) {
 	documents := router.Group("/documents")
 	documents.Use(authMiddleware.RequireAuth())
 	{
@@ -23,5 +29,15 @@ func SetupDocumentRoutes(router *gin.RouterGroup, documentHandler *handlers.Docu
 		// Document actions
 		documents.POST("/:id/duplicate", documentHandler.DuplicateDocument)
 		documents.GET("/:id/versions", documentHandler.GetDocumentVersions)
+
+		// Permissions
+		documents.GET("/:id/permissions", permissionHandler.GetDocumentPermissions)
+		documents.POST("/:id/permissions", permissionHandler.AddDocumentPermission)
+		documents.PUT("/:id/permissions/:userId", permissionHandler.UpdateDocumentPermission)
+		documents.DELETE("/:id/permissions/:userId", permissionHandler.DeleteDocumentPermission)
+
+		// Signatures
+		documents.GET("/:id/signatures", signatureHandler.GetDocumentSignatures)
+		documents.POST("/:id/signatures", signatureHandler.AddDocumentSignature)
 	}
 }
