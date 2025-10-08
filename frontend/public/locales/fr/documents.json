@@ -40,7 +40,29 @@
     "deleteSuccess": "Document supprimé avec succès",
     "deleteFailed": "Échec de la suppression du document",
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce document ?",
+    "createSuccess": "Document créé avec succès",
+    "createFailed": "Échec de la création du document",
     "error": "Une erreur s'est produite"
+  },
+  "form": {
+    "createTitle": "Créer un Nouveau Document",
+    "createSubtitle": "Saisissez les informations de base pour créer un nouveau document de procédure",
+    "basicInfo": "Informations de Base",
+    "basicInfoDescription": "Fournissez les détails essentiels pour votre document",
+    "reference": "Référence",
+    "referencePlaceholder": "ex: PROC-NET-001",
+    "referenceHint": "Identifiant unique pour le document (ex: PROC-NET-001)",
+    "title": "Titre",
+    "titlePlaceholder": "ex: Processus de Gestion des Incidents Réseau",
+    "version": "Version",
+    "versionHint": "Format de version: X.Y (ex: 1.0, 2.1)",
+    "create": "Créer le Document",
+    "errors": {
+      "referenceRequired": "La référence est requise",
+      "titleRequired": "Le titre est requis",
+      "versionRequired": "La version est requise",
+      "versionFormat": "La version doit être au format X.Y (ex: 1.0)"
+    }
   },
   "detail": {
     "backToDocuments": "Retour aux Documents",
