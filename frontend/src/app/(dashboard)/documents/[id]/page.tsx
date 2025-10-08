@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DocumentResource, type Document } from '@/lib/resources';
 import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
+import { InvitationModal, PermissionManager, SignaturePanel } from '@/components/collaboration';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   ArrowLeft,
   Calendar,
@@ -20,6 +22,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  UserPlus,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +35,7 @@ export default function DocumentDetailPage() {
 
   const [document, setDocument] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
+  const [invitationModalOpen, setInvitationModalOpen] = useState(false);
 
   useEffect(() => {
     loadDocument();
@@ -134,6 +138,10 @@ export default function DocumentDetailPage() {
       </div>
 
       <div className="flex gap-2">
+        <Button onClick={() => setInvitationModalOpen(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Invite Collaborator
+        </Button>
         <Button variant="outline" onClick={handleDuplicate}>
           <Copy className="h-4 w-4 mr-2" />
           Duplicate
@@ -208,6 +216,23 @@ export default function DocumentDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Collaboration Section */}
+      <Tabs defaultValue="signatures" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="signatures">Signatures</TabsTrigger>
+          <TabsTrigger value="permissions">Permissions</TabsTrigger>
+        </TabsList>
+        <TabsContent value="signatures">
+          <SignaturePanel
+            documentId={documentId}
+            onSignatureAdded={loadDocument}
+          />
+        </TabsContent>
+        <TabsContent value="permissions">
+          <PermissionManager documentId={documentId} />
+        </TabsContent>
+      </Tabs>
 
       <Card>
         <CardHeader>
@@ -326,6 +351,14 @@ export default function DocumentDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Invitation Modal */}
+      <InvitationModal
+        documentId={documentId}
+        open={invitationModalOpen}
+        onOpenChange={setInvitationModalOpen}
+        onSuccess={loadDocument}
+      />
     </div>
   );
 }

@@ -5,6 +5,9 @@ export * from './jobPosition';
 export * from './notification';
 export * from './device';
 export * from './document';
+export * from './invitation';
+export * from './permission';
+export * from './signature';
 
 // Re-export the main API client
 export { apiClient, TokenManager } from '../api';

@@ -1,0 +1,153 @@
+### Variables
+@baseUrl = http://localhost/api
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGU1N2RlNjhkMDM4ZGFhZjkyYjkyNWMiLCJlbWFpbCI6ImFkbWluQHRvZ29jb20udGciLCJyb2xlIjoiYWRtaW4iLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJpc3MiOiJwcm9jZXNzLW1hbmFnZXItYXBpIiwic3ViIjoiNjhlNTdkZTY4ZDAzOGRhYWY5MmI5MjVjIiwiZXhwIjoxNzU5ODc5MDg2LCJuYmYiOjE3NTk4NzgxODYsImlhdCI6MTc1OTg3ODE4Nn0.2YZW2X7pXm4a--g0OgAlYecNxZmc-xwTbuzk255wepQ
+@documentId =
+
+### ============================================
+### INVITATIONS API
+### ============================================
+
+### Send Invitation
+POST {{baseUrl}}/invitations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "documentId": "{{documentId}}",
+  "invitedEmail": "user@example.com",
+  "type": "collaborator",
+  "team": "authors",
+  "message": "Please collaborate on this important process document"
+}
+
+### List My Invitations
+GET {{baseUrl}}/invitations
+Authorization: Bearer {{token}}
+
+### List Invitations for Specific Document
+GET {{baseUrl}}/invitations?documentId={{documentId}}
+Authorization: Bearer {{token}}
+
+### List Pending Invitations
+GET {{baseUrl}}/invitations?status=pending
+Authorization: Bearer {{token}}
+
+### Accept Invitation
+PUT {{baseUrl}}/invitations/INVITATION_ID/accept
+Authorization: Bearer {{token}}
+
+### Decline Invitation
+PUT {{baseUrl}}/invitations/INVITATION_ID/decline
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "reason": "Not available to contribute at this time"
+}
+
+### ============================================
+### PERMISSIONS API
+### ============================================
+
+### Get Document Permissions
+GET {{baseUrl}}/documents/{{documentId}}/permissions
+Authorization: Bearer {{token}}
+
+### Add Permission
+POST {{baseUrl}}/documents/{{documentId}}/permissions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": "USER_ID_HERE",
+  "level": "read"
+}
+
+### Update Permission
+PUT {{baseUrl}}/documents/{{documentId}}/permissions/USER_ID_HERE
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "level": "write"
+}
+
+### Delete Permission
+DELETE {{baseUrl}}/documents/{{documentId}}/permissions/USER_ID_HERE
+Authorization: Bearer {{token}}
+
+### ============================================
+### SIGNATURES API
+### ============================================
+
+### Get Document Signatures
+GET {{baseUrl}}/documents/{{documentId}}/signatures
+Authorization: Bearer {{token}}
+
+### Add Signature (Author)
+POST {{baseUrl}}/documents/{{documentId}}/signatures
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "author",
+  "signatureData": "BASE64_ENCODED_SIGNATURE_IMAGE_OR_HASH",
+  "comments": "Reviewed and approved as author"
+}
+
+### Add Signature (Verifier)
+POST {{baseUrl}}/documents/{{documentId}}/signatures
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "verifier",
+  "signatureData": "BASE64_ENCODED_SIGNATURE_IMAGE_OR_HASH",
+  "comments": "Verified technical accuracy"
+}
+
+### Add Signature (Validator)
+POST {{baseUrl}}/documents/{{documentId}}/signatures
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "validator",
+  "signatureData": "BASE64_ENCODED_SIGNATURE_IMAGE_OR_HASH",
+  "comments": "Final validation and approval"
+}
+
+### ============================================
+### PERMISSION LEVELS
+### ============================================
+# read - Can view the document
+# write - Can view and edit the document
+# sign - Can view, edit, and sign the document
+# admin - Full access including permission management
+
+### ============================================
+### INVITATION TYPES
+### ============================================
+# collaborator - Regular collaborator on the document
+# reviewer - Reviewer/Verifier role
+
+### ============================================
+### CONTRIBUTOR TEAMS
+### ============================================
+# authors - Document authors (first to sign)
+# verifiers - Document verifiers (second to sign)
+# validators - Document validators (final approval)
+
+### ============================================
+### SIGNATURE TYPES
+### ============================================
+# author - Author signature
+# verifier - Verifier signature
+# validator - Validator signature
+
+### ============================================
+### DOCUMENT STATUS PROGRESSION
+### ============================================
+# draft -> author_review -> author_signed ->
+# verifier_review -> verifier_signed ->
+# validator_review -> approved -> archived
