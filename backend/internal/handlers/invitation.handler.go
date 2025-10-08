@@ -95,7 +95,7 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	var existingInvitation models.Invitation
 	err = h.invitationCollection.FindOne(ctx, bson.M{
 		"document_id":    documentID,
-		"invited_email":  req.InvitedEmail,
+		"invitee_email":  req.InvitedEmail,
 		"status":         models.InvitationStatusPending,
 	}).Decode(&existingInvitation)
 	if err == nil {
@@ -190,8 +190,8 @@ func (h *InvitationHandler) ListInvitations(c *gin.Context) {
 
 	// Only show invitations sent to or by the current user
 	filter["$or"] = []bson.M{
-		{"invited_email": user.Email},
-		{"invited_by": user.ID},
+		{"invitee_email": user.Email},
+		{"inviter_id": user.ID},
 	}
 
 	// Additional filters

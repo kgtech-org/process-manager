@@ -28,8 +28,8 @@ const (
 type Invitation struct {
 	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	DocumentID     primitive.ObjectID `bson:"document_id" json:"documentId"`
-	InvitedBy      primitive.ObjectID `bson:"invited_by" json:"invitedBy"`
-	InvitedEmail   string             `bson:"invited_email" json:"invitedEmail"`
+	InvitedBy      primitive.ObjectID `bson:"inviter_id" json:"invitedBy"`
+	InvitedEmail   string             `bson:"invitee_email" json:"invitedEmail"`
 	InvitedUserID  *primitive.ObjectID `bson:"invited_user_id,omitempty" json:"invitedUserId,omitempty"`
 	Token          string             `bson:"token" json:"-"` // Never expose token in JSON
 	Type           InvitationType     `bson:"type" json:"type"`
@@ -37,6 +37,7 @@ type Invitation struct {
 	Status         InvitationStatus   `bson:"status" json:"status"`
 	Message        string             `bson:"message,omitempty" json:"message,omitempty"`
 	ExpiresAt      time.Time          `bson:"expires_at" json:"expiresAt"`
+	SentAt         time.Time          `bson:"sent_at" json:"sentAt"`
 	AcceptedAt     *time.Time         `bson:"accepted_at,omitempty" json:"acceptedAt,omitempty"`
 	DeclinedAt     *time.Time         `bson:"declined_at,omitempty" json:"declinedAt,omitempty"`
 	DeclineReason  string             `bson:"decline_reason,omitempty" json:"declineReason,omitempty"`
@@ -162,6 +163,7 @@ func (i *Invitation) BeforeCreate() {
 	now := time.Now()
 	i.CreatedAt = now
 	i.UpdatedAt = now
+	i.SentAt = now
 	i.Status = InvitationStatusPending
 
 	// Set expiration to 7 days from now
