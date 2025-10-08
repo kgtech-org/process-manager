@@ -37,12 +37,12 @@ const statusConfig: Record<DocumentStatus, { variant: 'default' | 'secondary' | 
 };
 
 export function DocumentStatusBadge({ status, className }: DocumentStatusBadgeProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation('documents');
   const config = statusConfig[status];
 
   return (
     <Badge variant={config.variant} className={className}>
-      {t(`documents.status.${status}`)}
+      {t(`status.${status}`)}
     </Badge>
   );
 }

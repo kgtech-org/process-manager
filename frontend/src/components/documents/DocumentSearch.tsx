@@ -31,7 +31,7 @@ const statusOptions: DocumentStatus[] = [
 ];
 
 export function DocumentSearch({ onSearch, initialFilters = {} }: DocumentSearchProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation('documents');
   const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
   const [status, setStatus] = useState<DocumentStatus | 'all'>(initialFilters.status || 'all');
 
@@ -56,7 +56,7 @@ export function DocumentSearch({ onSearch, initialFilters = {} }: DocumentSearch
       <div className="flex-1 relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder={t('documents.searchPlaceholder')}
+          placeholder={t('searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -65,13 +65,13 @@ export function DocumentSearch({ onSearch, initialFilters = {} }: DocumentSearch
       </div>
       <Select value={status} onValueChange={(value) => setStatus(value as DocumentStatus | 'all')}>
         <SelectTrigger className="w-full sm:w-[200px]">
-          <SelectValue placeholder={t('documents.allStatuses')} />
+          <SelectValue placeholder={t('allStatuses')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">{t('documents.allStatuses')}</SelectItem>
+          <SelectItem value="all">{t('allStatuses')}</SelectItem>
           {statusOptions.map((option) => (
             <SelectItem key={option} value={option}>
-              {t(`documents.status.${option}`)}
+              {t(`status.${option}`)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -79,12 +79,12 @@ export function DocumentSearch({ onSearch, initialFilters = {} }: DocumentSearch
       <div className="flex gap-2">
         <Button onClick={handleSearch} className="flex-1 sm:flex-none">
           <Search className="h-4 w-4 mr-2" />
-          {t('documents.search')}
+          {t('search')}
         </Button>
         {hasActiveFilters && (
           <Button onClick={handleReset} variant="outline" className="flex-1 sm:flex-none">
             <X className="h-4 w-4 mr-2" />
-            {t('documents.reset')}
+            {t('reset')}
           </Button>
         )}
       </div>

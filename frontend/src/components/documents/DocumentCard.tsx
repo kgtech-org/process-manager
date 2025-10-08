@@ -21,7 +21,7 @@ interface DocumentCardProps {
 }
 
 export function DocumentCard({ document, onDuplicate, onDelete }: DocumentCardProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation('documents');
   const formattedDate = new Date(document.createdAt).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -57,11 +57,11 @@ export function DocumentCard({ document, onDuplicate, onDelete }: DocumentCardPr
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href={`/documents/${document.id}`}>{t('documents.viewDetails')}</Link>
+                  <Link href={`/documents/${document.id}`}>{t('viewDetails')}</Link>
                 </DropdownMenuItem>
                 {onDuplicate && (
                   <DropdownMenuItem onClick={() => onDuplicate(document.id)}>
-                    {t('documents.duplicate')}
+                    {t('duplicate')}
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
@@ -69,7 +69,7 @@ export function DocumentCard({ document, onDuplicate, onDelete }: DocumentCardPr
                     onClick={() => onDelete(document.id)}
                     className="text-destructive"
                   >
-                    {t('documents.delete')}
+                    {t('delete')}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -85,11 +85,11 @@ export function DocumentCard({ document, onDuplicate, onDelete }: DocumentCardPr
           </div>
           <div className="flex items-center gap-1">
             <User className="h-4 w-4" />
-            <span>{totalContributors} {totalContributors !== 1 ? t('documents.contributors') : t('documents.contributor')}</span>
+            <span>{totalContributors} {totalContributors !== 1 ? t('contributors') : t('contributor')}</span>
           </div>
           <div className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
-            <span>{document.processGroups.length} {document.processGroups.length !== 1 ? t('documents.groups') : t('documents.group')}</span>
+            <span>{document.processGroups.length} {document.processGroups.length !== 1 ? t('groups') : t('group')}</span>
           </div>
         </div>
         {document.metadata?.objectives && document.metadata.objectives.length > 0 && (

@@ -13,7 +13,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function NewDocumentPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation('documents');
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);

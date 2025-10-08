@@ -15,7 +15,7 @@ interface DocumentListProps {
 
 export function DocumentList({ initialFilters = {} }: DocumentListProps) {
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t } = useTranslation('documents');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<DocumentFilter>(initialFilters);
@@ -43,8 +43,8 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: t('documents.messages.loadFailed'),
-        description: error.message || t('documents.messages.loadError'),
+        title: t('messages.loadFailed'),
+        description: error.message || t('messages.loadError'),
       });
     } finally {
       setLoading(false);
@@ -60,32 +60,32 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
     try {
       await DocumentResource.duplicate(id);
       toast({
-        title: t('documents.messages.duplicateSuccess'),
+        title: t('messages.duplicateSuccess'),
       });
       loadDocuments();
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: t('documents.messages.duplicateFailed'),
-        description: error.message || t('documents.messages.error'),
+        title: t('messages.duplicateFailed'),
+        description: error.message || t('messages.error'),
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('documents.messages.deleteConfirm'))) return;
+    if (!confirm(t('messages.deleteConfirm'))) return;
 
     try {
       await DocumentResource.delete(id);
       toast({
-        title: t('documents.messages.deleteSuccess'),
+        title: t('messages.deleteSuccess'),
       });
       loadDocuments();
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: t('documents.messages.deleteFailed'),
-        description: error.message || t('documents.messages.error'),
+        title: t('messages.deleteFailed'),
+        description: error.message || t('messages.error'),
       });
     }
   };
@@ -117,11 +117,11 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
       {documents.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">{t('documents.noDocuments')}</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('noDocuments')}</h3>
           <p className="text-muted-foreground">
             {filters.search || filters.status
-              ? t('documents.noDocumentsDescription')
-              : t('documents.noDocumentsEmpty')}
+              ? t('noDocumentsDescription')
+              : t('noDocumentsEmpty')}
           </p>
         </div>
       ) : (
@@ -140,7 +140,7 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-4">
               <div className="text-sm text-muted-foreground">
-                {t('documents.showing')} {(currentPage - 1) * limit + 1} {t('documents.to')} {Math.min(currentPage * limit, total)} {t('documents.of')} {total} {t('documents.documents')}
+                {t('showing')} {(currentPage - 1) * limit + 1} {t('to')} {Math.min(currentPage * limit, total)} {t('of')} {total} {t('documents')}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -150,7 +150,7 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
                   disabled={currentPage === 1 || loading}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  {t('documents.previous')}
+                  {t('previous')}
                 </Button>
                 <Button
                   variant="outline"
@@ -158,7 +158,7 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages || loading}
                 >
-                  {t('documents.next')}
+                  {t('next')}
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
