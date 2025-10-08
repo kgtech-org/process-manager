@@ -189,8 +189,20 @@ db.users.insertOne({
   validated_at: new Date()
 });
 
+// Create indexes for documents collection
+db.documents.createIndex({ reference: 1 }, { unique: true });
+db.documents.createIndex({ created_by: 1 });
+db.documents.createIndex({ status: 1 });
+db.documents.createIndex({ title: 'text', reference: 'text' });
+db.documents.createIndex({ created_at: -1 });
+db.documents.createIndex({ updated_at: -1 });
+
+// Create indexes for document_versions collection
+db.document_versions.createIndex({ document_id: 1, created_at: -1 });
+db.document_versions.createIndex({ version: 1 });
+
 print('=== Process Manager MongoDB Initialization Complete ===');
 print('Database: process_manager');
-print('Collections created: users, documents, document_permissions, invitations, activity_logs, signatures, monthly_bilans, pdf_exports, file_attachments');
+print('Collections created: users, documents, document_permissions, invitations, activity_logs, signatures, monthly_bilans, pdf_exports, file_attachments, document_versions');
 print('Default admin user created: admin@togocom.tg');
 print('All indexes created successfully');
