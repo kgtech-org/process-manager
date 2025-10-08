@@ -1,6 +1,9 @@
+'use client';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DocumentStatusBadge } from './DocumentStatusBadge';
+import { useTranslation } from '@/lib/i18n';
 import type { Document } from '@/lib/resources';
 import { Calendar, User, FileText, MoreVertical } from 'lucide-react';
 import {
@@ -18,6 +21,7 @@ interface DocumentCardProps {
 }
 
 export function DocumentCard({ document, onDuplicate, onDelete }: DocumentCardProps) {
+  const { t } = useTranslation();
   const formattedDate = new Date(document.createdAt).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -53,11 +57,11 @@ export function DocumentCard({ document, onDuplicate, onDelete }: DocumentCardPr
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href={`/documents/${document.id}`}>View Details</Link>
+                  <Link href={`/documents/${document.id}`}>{t('documents.viewDetails')}</Link>
                 </DropdownMenuItem>
                 {onDuplicate && (
                   <DropdownMenuItem onClick={() => onDuplicate(document.id)}>
-                    Duplicate
+                    {t('documents.duplicate')}
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
@@ -65,7 +69,7 @@ export function DocumentCard({ document, onDuplicate, onDelete }: DocumentCardPr
                     onClick={() => onDelete(document.id)}
                     className="text-destructive"
                   >
-                    Delete
+                    {t('documents.delete')}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -81,11 +85,11 @@ export function DocumentCard({ document, onDuplicate, onDelete }: DocumentCardPr
           </div>
           <div className="flex items-center gap-1">
             <User className="h-4 w-4" />
-            <span>{totalContributors} contributor{totalContributors !== 1 ? 's' : ''}</span>
+            <span>{totalContributors} {totalContributors !== 1 ? t('documents.contributors') : t('documents.contributor')}</span>
           </div>
           <div className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
-            <span>{document.processGroups.length} group{document.processGroups.length !== 1 ? 's' : ''}</span>
+            <span>{document.processGroups.length} {document.processGroups.length !== 1 ? t('documents.groups') : t('documents.group')}</span>
           </div>
         </div>
         {document.metadata?.objectives && document.metadata.objectives.length > 0 && (

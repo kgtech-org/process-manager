@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { DocumentResource, type Document, type DocumentFilter } from '@/lib/resources';
 import { ChevronLeft, ChevronRight, Loader2, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/lib/i18n';
 
 interface DocumentListProps {
   initialFilters?: DocumentFilter;
@@ -14,6 +15,7 @@ interface DocumentListProps {
 
 export function DocumentList({ initialFilters = {} }: DocumentListProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<DocumentFilter>(initialFilters);
@@ -41,8 +43,8 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Failed to load documents',
-        description: error.message || 'An error occurred while loading documents',
+        title: t('documents.messages.loadFailed'),
+        description: error.message || t('documents.messages.loadError'),
       });
     } finally {
       setLoading(false);
@@ -58,32 +60,32 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
     try {
       await DocumentResource.duplicate(id);
       toast({
-        title: 'Document duplicated successfully',
+        title: t('documents.messages.duplicateSuccess'),
       });
       loadDocuments();
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Failed to duplicate document',
-        description: error.message || 'An error occurred',
+        title: t('documents.messages.duplicateFailed'),
+        description: error.message || t('documents.messages.error'),
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
+    if (!confirm(t('documents.messages.deleteConfirm'))) return;
 
     try {
       await DocumentResource.delete(id);
       toast({
-        title: 'Document deleted successfully',
+        title: t('documents.messages.deleteSuccess'),
       });
       loadDocuments();
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Failed to delete document',
-        description: error.message || 'An error occurred',
+        title: t('documents.messages.deleteFailed'),
+        description: error.message || t('documents.messages.error'),
       });
     }
   };
@@ -115,11 +117,11 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
       {documents.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No documents found</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('documents.noDocuments')}</h3>
           <p className="text-muted-foreground">
             {filters.search || filters.status
-              ? 'Try adjusting your search filters'
-              : 'Create your first document to get started'}
+              ? t('documents.noDocumentsDescription')
+              : t('documents.noDocumentsEmpty')}
           </p>
         </div>
       ) : (
@@ -138,7 +140,7 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(currentPage - 1) * limit + 1} to {Math.min(currentPage * limit, total)} of {total} documents
+                {t('documents.showing')} {(currentPage - 1) * limit + 1} {t('documents.to')} {Math.min(currentPage * limit, total)} {t('documents.of')} {total} {t('documents.documents')}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -148,7 +150,7 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
                   disabled={currentPage === 1 || loading}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
+                  {t('documents.previous')}
                 </Button>
                 <Button
                   variant="outline"
@@ -156,7 +158,7 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages || loading}
                 >
-                  Next
+                  {t('documents.next')}
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
