@@ -183,10 +183,13 @@ export class NotificationResource {
   }
 
   /**
-   * Get unread notifications
+   * Get unread notifications (all statuses except 'read')
    */
   static async getUnread(limit?: number): Promise<Notification[]> {
-    return this.getAll({ status: 'delivered', limit });
+    // Backend filters unread as status != 'read', so we don't specify status filter
+    // to get all notifications, then filter client-side, OR we can fetch all and filter
+    const allNotifications = await this.getAll({ limit: limit || 100 });
+    return allNotifications.filter(n => n.status !== 'read').slice(0, limit || 100);
   }
 
   /**
