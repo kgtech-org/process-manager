@@ -177,7 +177,7 @@ func (s *NotificationService) GetUserNotifications(ctx context.Context, userID p
 	}
 	defer cursor.Close(ctx)
 
-	var notifications []*models.Notification
+	notifications := make([]*models.Notification, 0)
 	if err = cursor.All(ctx, &notifications); err != nil {
 		return nil, fmt.Errorf("failed to decode notifications: %w", err)
 	}

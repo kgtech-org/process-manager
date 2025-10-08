@@ -160,7 +160,7 @@ func (s *DeviceService) GetUserDevices(ctx context.Context, userID primitive.Obj
 	}
 	defer cursor.Close(ctx)
 
-	var devices []*models.Device
+	devices := make([]*models.Device, 0)
 	if err = cursor.All(ctx, &devices); err != nil {
 		return nil, fmt.Errorf("failed to decode devices: %w", err)
 	}

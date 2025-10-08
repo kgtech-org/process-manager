@@ -13,13 +13,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import notificationService, { NotificationStats } from '@/services/notification.service';
+import { NotificationResource, DeviceResource, type NotificationStats, type Notification } from '@/lib/resources';
+import firebaseMessaging from '@/services/firebase-messaging.service';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 export const NotificationBell: React.FC = () => {
   const [stats, setStats] = useState<NotificationStats | null>(null);
-  const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
+  const [recentNotifications, setRecentNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -31,22 +32,22 @@ export const NotificationBell: React.FC = () => {
     initializeNotifications();
 
     // Set up real-time listener
-    notificationService.addMessageListener(handleNewNotification);
+    firebaseMessaging.addMessageListener(handleNewNotification);
 
     return () => {
-      notificationService.removeMessageListener(handleNewNotification);
+      firebaseMessaging.removeMessageListener(handleNewNotification);
     };
   }, []);
 
   const initializeNotifications = async () => {
     try {
-      await notificationService.initialize();
+      await firebaseMessaging.initialize();
 
       // Check if device is registered
-      const devices = await notificationService.getUserDevices();
+      const devices = await DeviceResource.getAll();
       if (devices.length === 0) {
         // Auto-register device if no devices are registered
-        await notificationService.registerDevice();
+        await firebaseMessaging.registerDevice();
       }
     } catch (error) {
       console.error('Failed to initialize notifications:', error);
@@ -55,12 +56,12 @@ export const NotificationBell: React.FC = () => {
 
   const loadNotificationStats = async () => {
     try {
-      const statsData = await notificationService.getStats();
+      const statsData = await NotificationResource.getStats();
       setStats(statsData);
 
       // Load recent unread notifications
       if (statsData && statsData.unread > 0) {
-        const { notifications } = await notificationService.getNotifications(1, 5, 'unread');
+        const notifications = await NotificationResource.getUnread(5);
         setRecentNotifications(notifications);
       }
     } catch (error) {
@@ -81,7 +82,7 @@ export const NotificationBell: React.FC = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      await notificationService.markAsRead([notificationId]);
+      await NotificationResource.markAsRead([notificationId]);
       // Reload stats
       await loadNotificationStats();
     } catch (error) {
@@ -94,7 +95,7 @@ export const NotificationBell: React.FC = () => {
 
     try {
       const ids = recentNotifications.map(n => n.id);
-      await notificationService.markAsRead(ids);
+      await NotificationResource.markAsRead(ids);
 
       // Clear recent notifications and reload stats
       setRecentNotifications([]);

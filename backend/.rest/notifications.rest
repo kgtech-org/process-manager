@@ -1,6 +1,33 @@
 ### Push Notification Service API Tests (Firebase FCM)
-@baseUrl = http://localhost:8080/api/notifications
-@accessToken = {{$dotenv ACCESS_TOKEN}}
+@baseUrl = http://localhost/api/notifications
+@apiUrl = http://localhost/api
+@accessToken = {{adminLogin.response.body.data.accessToken}}
+
+### Admin Login (OTP Flow)
+# @name requestOtp
+POST {{apiUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "aroamadou1@gmail.com"
+}
+
+# Extract temporary token and OTP from response:
+# @adminTempToken = {{adminRequestOtp.response.body.data.temporary_token}}
+# @adminOtp = {{adminRequestOtp.response.body.data.otp}}
+
+### Verify admin OTP and get token
+# @name adminLogin
+POST {{apiUrl}}/auth/verify-otp
+Content-Type: application/json
+X-Temp-Token: {{requestOtp.response.body.data.temporaryToken}}
+
+{
+  "otp": "{{requestOtp.response.body.data.otp}}"
+}
+
+# Extract admin token: @adminToken = {{adminLogin.response.body.data.access_token}}
+
 
 ### ====================================
 ### User Notifications

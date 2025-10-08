@@ -11,7 +11,15 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import notificationService, { Notification, Device, NotificationPreferences, NotificationStats } from '@/services/notification.service';
+import {
+  NotificationResource,
+  DeviceResource,
+  type Notification,
+  type Device,
+  type NotificationPreferences,
+  type NotificationStats
+} from '@/lib/resources';
+import firebaseMessaging from '@/services/firebase-messaging.service';
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
@@ -43,25 +51,25 @@ export default function NotificationsPage() {
 
     return () => {
       // Cleanup listeners
-      notificationService.clearMessageListeners();
+      firebaseMessaging.clearMessageListeners();
     };
   }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      // Initialize notification service
-      await notificationService.initialize();
+      // Initialize Firebase messaging
+      await firebaseMessaging.initialize();
 
       // Load all data in parallel
       const [notificationsData, devicesData, prefsData, statsData] = await Promise.all([
-        notificationService.getNotifications(),
-        notificationService.getUserDevices(),
-        notificationService.getPreferences(),
-        notificationService.getStats()
+        NotificationResource.getAll(),
+        DeviceResource.getAll(),
+        NotificationResource.getPreferences(),
+        NotificationResource.getStats()
       ]);
 
-      setNotifications(notificationsData.notifications);
+      setNotifications(notificationsData);
       setDevices(devicesData);
       setPreferences(prefsData);
       setStats(statsData);
@@ -79,7 +87,7 @@ export default function NotificationsPage() {
 
   // Setup real-time notification listener
   const setupNotificationListener = () => {
-    notificationService.addMessageListener((message) => {
+    firebaseMessaging.addMessageListener((message) => {
       console.log('New notification received:', message);
 
       // Reload notifications
@@ -95,11 +103,11 @@ export default function NotificationsPage() {
 
   const loadNotifications = async () => {
     try {
-      const data = await notificationService.getNotifications();
-      setNotifications(data.notifications);
+      const notificationsData = await NotificationResource.getAll();
+      setNotifications(notificationsData);
 
       // Update stats
-      const statsData = await notificationService.getStats();
+      const statsData = await NotificationResource.getStats();
       setStats(statsData);
     } catch (error) {
       console.error('Failed to load notifications:', error);
@@ -110,19 +118,15 @@ export default function NotificationsPage() {
   const handleRegisterDevice = async () => {
     setRegistering(true);
     try {
-      const device = await notificationService.registerDevice();
-      if (device) {
-        toast({
-          title: 'Success',
-          description: 'Device registered for push notifications',
-        });
+      const device = await firebaseMessaging.registerDevice();
+      toast({
+        title: 'Success',
+        description: 'Device registered for push notifications',
+      });
 
-        // Reload devices
-        const devicesData = await notificationService.getUserDevices();
-        setDevices(devicesData);
-      } else {
-        throw new Error('Registration failed');
-      }
+      // Reload devices
+      const devicesData = await DeviceResource.getAll();
+      setDevices(devicesData);
     } catch (error) {
       toast({
         title: 'Error',
@@ -137,17 +141,15 @@ export default function NotificationsPage() {
   // Deregister device
   const handleDeregisterDevice = async (deviceUuid: string) => {
     try {
-      const success = await notificationService.deregisterDevice();
-      if (success) {
-        toast({
-          title: 'Success',
-          description: 'Device unregistered successfully',
-        });
+      await firebaseMessaging.deregisterDevice();
+      toast({
+        title: 'Success',
+        description: 'Device unregistered successfully',
+      });
 
-        // Reload devices
-        const devicesData = await notificationService.getUserDevices();
-        setDevices(devicesData);
-      }
+      // Reload devices
+      const devicesData = await DeviceResource.getAll();
+      setDevices(devicesData);
     } catch (error) {
       toast({
         title: 'Error',
@@ -163,17 +165,15 @@ export default function NotificationsPage() {
     if (selectedNotifications.size === 0) return;
 
     try {
-      const success = await notificationService.markAsRead(Array.from(selectedNotifications));
-      if (success) {
-        toast({
-          title: 'Success',
-          description: `Marked ${selectedNotifications.size} notification(s) as read`,
-        });
+      await NotificationResource.markAsRead(Array.from(selectedNotifications));
+      toast({
+        title: 'Success',
+        description: `Marked ${selectedNotifications.size} notification(s) as read`,
+      });
 
-        // Reload notifications
-        await loadNotifications();
-        setSelectedNotifications(new Set());
-      }
+      // Reload notifications
+      await loadNotifications();
+      setSelectedNotifications(new Set());
     } catch (error) {
       toast({
         title: 'Error',
@@ -186,13 +186,11 @@ export default function NotificationsPage() {
   // Send test notification
   const handleSendTestNotification = async () => {
     try {
-      const success = await notificationService.sendTestNotification();
-      if (success) {
-        toast({
-          title: 'Success',
-          description: 'Test notification sent. You should receive it shortly.',
-        });
-      }
+      await NotificationResource.sendTest();
+      toast({
+        title: 'Success',
+        description: 'Test notification sent. You should receive it shortly.',
+      });
     } catch (error) {
       toast({
         title: 'Error',
@@ -207,17 +205,15 @@ export default function NotificationsPage() {
     if (!preferences) return;
 
     try {
-      const updatedPrefs = await notificationService.updatePreferences({
+      const updatedPrefs = await NotificationResource.updatePreferences({
         [key]: value
       });
 
-      if (updatedPrefs) {
-        setPreferences(updatedPrefs);
-        toast({
-          title: 'Success',
-          description: 'Preferences updated successfully',
-        });
-      }
+      setPreferences(updatedPrefs);
+      toast({
+        title: 'Success',
+        description: 'Preferences updated successfully',
+      });
     } catch (error) {
       toast({
         title: 'Error',
