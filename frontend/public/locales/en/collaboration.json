@@ -1,0 +1,95 @@
+{
+  "invitation": {
+    "title": "Send Invitation",
+    "description": "Invite someone to collaborate on this document",
+    "email": "Email Address",
+    "team": "Team/Role",
+    "type": "Invitation Type",
+    "message": "Personal Message",
+    "optional": "optional",
+    "messagePlaceholder": "Add a personal message to the invitation...",
+    "send": "Send Invitation",
+    "sending": "Sending...",
+    "cancel": "Cancel",
+    "success": "Invitation Sent",
+    "sentMessage": "Invitation sent successfully to {{email}}",
+    "error": "Invitation Error",
+    "sendFailed": "Failed to send invitation. Please try again.",
+    "errors": {
+      "emailRequired": "Email address is required",
+      "emailInvalid": "Please enter a valid email address"
+    },
+    "teams": {
+      "authors": "Authors",
+      "verifiers": "Verifiers",
+      "validators": "Validators"
+    },
+    "types": {
+      "collaborator": "Collaborator",
+      "reviewer": "Reviewer"
+    }
+  },
+  "permissions": {
+    "title": "Permissions",
+    "description": "Manage document access permissions",
+    "loading": "Loading permissions...",
+    "noPermissions": "No permissions have been granted yet",
+    "user": "User",
+    "email": "Email",
+    "level": "Permission Level",
+    "grantedBy": "Granted By",
+    "grantedAt": "Granted At",
+    "actions": "Actions",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirmDelete": "Remove Permission",
+    "confirmDeleteMessage": "Are you sure you want to remove permission for {{user}}? This action cannot be undone.",
+    "updateSuccess": "Permission Updated",
+    "permissionUpdated": "Permission level updated successfully",
+    "updateError": "Update Failed",
+    "updateFailed": "Failed to update permission. Please try again.",
+    "deleteSuccess": "Permission Removed",
+    "permissionDeleted": "Permission removed successfully",
+    "deleteError": "Delete Failed",
+    "deleteFailed": "Failed to remove permission. Please try again.",
+    "loadError": "Load Error",
+    "loadFailed": "Failed to load permissions. Please try again.",
+    "levels": {
+      "read": "Read",
+      "write": "Write",
+      "sign": "Sign",
+      "admin": "Admin"
+    }
+  },
+  "signatures": {
+    "title": "Digital Signatures",
+    "description": "View and add digital signatures",
+    "loading": "Loading signatures...",
+    "noSignatures": "No signatures yet",
+    "signDocument": "Sign Document",
+    "signDescription": "Add your digital signature to this document",
+    "signatureField": "Signature",
+    "signaturePlaceholder": "Enter your full name or digital signature",
+    "signatureHelp": "This will be your official signature on the document",
+    "comments": "Comments",
+    "optional": "optional",
+    "commentsPlaceholder": "Add any comments about your signature...",
+    "sign": "Sign",
+    "signing": "Signing...",
+    "cancel": "Cancel",
+    "success": "Signature Added",
+    "signatureAdded": "Your signature has been added successfully",
+    "error": "Signature Error",
+    "signFailed": "Failed to add signature. Please try again.",
+    "noPermission": "You don't have permission to sign this document",
+    "signatureRequired": "Signature is required",
+    "loadError": "Load Error",
+    "loadFailed": "Failed to load signatures. Please try again.",
+    "types": {
+      "author": "Author",
+      "verifier": "Verifier",
+      "validator": "Validator"
+    }
+  }
+}

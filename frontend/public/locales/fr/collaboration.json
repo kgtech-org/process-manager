@@ -1,0 +1,95 @@
+{
+  "invitation": {
+    "title": "Envoyer une invitation",
+    "description": "Inviter quelqu'un à collaborer sur ce document",
+    "email": "Adresse e-mail",
+    "team": "Équipe/Rôle",
+    "type": "Type d'invitation",
+    "message": "Message personnel",
+    "optional": "optionnel",
+    "messagePlaceholder": "Ajouter un message personnel à l'invitation...",
+    "send": "Envoyer l'invitation",
+    "sending": "Envoi en cours...",
+    "cancel": "Annuler",
+    "success": "Invitation envoyée",
+    "sentMessage": "Invitation envoyée avec succès à {{email}}",
+    "error": "Erreur d'invitation",
+    "sendFailed": "Échec de l'envoi de l'invitation. Veuillez réessayer.",
+    "errors": {
+      "emailRequired": "L'adresse e-mail est requise",
+      "emailInvalid": "Veuillez entrer une adresse e-mail valide"
+    },
+    "teams": {
+      "authors": "Auteurs",
+      "verifiers": "Vérificateurs",
+      "validators": "Validateurs"
+    },
+    "types": {
+      "collaborator": "Collaborateur",
+      "reviewer": "Réviseur"
+    }
+  },
+  "permissions": {
+    "title": "Permissions",
+    "description": "Gérer les permissions d'accès au document",
+    "loading": "Chargement des permissions...",
+    "noPermissions": "Aucune permission n'a encore été accordée",
+    "user": "Utilisateur",
+    "email": "E-mail",
+    "level": "Niveau de permission",
+    "grantedBy": "Accordée par",
+    "grantedAt": "Accordée le",
+    "actions": "Actions",
+    "remove": "Retirer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "confirmDelete": "Retirer la permission",
+    "confirmDeleteMessage": "Êtes-vous sûr de vouloir retirer la permission pour {{user}} ? Cette action est irréversible.",
+    "updateSuccess": "Permission mise à jour",
+    "permissionUpdated": "Niveau de permission mis à jour avec succès",
+    "updateError": "Mise à jour échouée",
+    "updateFailed": "Échec de la mise à jour de la permission. Veuillez réessayer.",
+    "deleteSuccess": "Permission retirée",
+    "permissionDeleted": "Permission retirée avec succès",
+    "deleteError": "Suppression échouée",
+    "deleteFailed": "Échec du retrait de la permission. Veuillez réessayer.",
+    "loadError": "Erreur de chargement",
+    "loadFailed": "Échec du chargement des permissions. Veuillez réessayer.",
+    "levels": {
+      "read": "Lecture",
+      "write": "Écriture",
+      "sign": "Signature",
+      "admin": "Admin"
+    }
+  },
+  "signatures": {
+    "title": "Signatures numériques",
+    "description": "Afficher et ajouter des signatures numériques",
+    "loading": "Chargement des signatures...",
+    "noSignatures": "Aucune signature pour le moment",
+    "signDocument": "Signer le document",
+    "signDescription": "Ajouter votre signature numérique à ce document",
+    "signatureField": "Signature",
+    "signaturePlaceholder": "Entrez votre nom complet ou signature numérique",
+    "signatureHelp": "Ce sera votre signature officielle sur le document",
+    "comments": "Commentaires",
+    "optional": "optionnel",
+    "commentsPlaceholder": "Ajouter des commentaires sur votre signature...",
+    "sign": "Signer",
+    "signing": "Signature en cours...",
+    "cancel": "Annuler",
+    "success": "Signature ajoutée",
+    "signatureAdded": "Votre signature a été ajoutée avec succès",
+    "error": "Erreur de signature",
+    "signFailed": "Échec de l'ajout de la signature. Veuillez réessayer.",
+    "noPermission": "Vous n'avez pas la permission de signer ce document",
+    "signatureRequired": "La signature est requise",
+    "loadError": "Erreur de chargement",
+    "loadFailed": "Échec du chargement des signatures. Veuillez réessayer.",
+    "types": {
+      "author": "Auteur",
+      "verifier": "Vérificateur",
+      "validator": "Validateur"
+    }
+  }
+}
