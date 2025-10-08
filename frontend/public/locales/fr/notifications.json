@@ -1,0 +1,100 @@
+{
+  "title": "Notifications",
+  "subtitle": "Gérer vos notifications et préférences",
+  "stats": {
+    "unread": "Non lues",
+    "today": "Aujourd'hui"
+  },
+  "tabs": {
+    "notifications": "Notifications",
+    "devices": "Appareils",
+    "preferences": "Préférences"
+  },
+  "actions": {
+    "markAsRead": "Marquer comme lu",
+    "refresh": "Actualiser",
+    "sendTest": "Envoyer une notification test",
+    "registerDevice": "Enregistrer cet appareil",
+    "registering": "Enregistrement..."
+  },
+  "list": {
+    "title": "Notifications récentes",
+    "description": "Vos dernières notifications et alertes",
+    "empty": "Aucune notification pour le moment",
+    "read": "Lu"
+  },
+  "devices": {
+    "title": "Appareils enregistrés",
+    "empty": "Aucun appareil enregistré pour les notifications push",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "registered": "Enregistré",
+    "removeTitle": "Supprimer l'appareil",
+    "removeDescription": "Êtes-vous sûr de vouloir supprimer cet appareil ? Vous ne recevrez plus de notifications push sur cet appareil.",
+    "remove": "Supprimer",
+    "cancel": "Annuler"
+  },
+  "preferences": {
+    "title": "Préférences de notification",
+    "description": "Configurer comment vous recevez les notifications",
+    "loading": "Chargement des préférences...",
+    "globalSettings": "Paramètres globaux",
+    "categories": "Catégories de notifications",
+    "quietHours": "Heures de silence",
+    "push": {
+      "title": "Notifications Push",
+      "description": "Recevoir des notifications push sur vos appareils"
+    },
+    "email": {
+      "title": "Notifications par email",
+      "description": "Recevoir des notifications par email"
+    },
+    "inApp": {
+      "title": "Notifications dans l'application",
+      "description": "Afficher les notifications dans l'application"
+    },
+    "sound": {
+      "title": "Son",
+      "description": "Jouer un son pour les notifications"
+    },
+    "badge": {
+      "title": "Badge",
+      "description": "Afficher le badge de compteur de notifications"
+    },
+    "quietHoursEnable": {
+      "title": "Activer les heures de silence",
+      "description": "Désactiver les notifications pendant les heures spécifiées"
+    },
+    "quietHoursTime": "Heures de silence"
+  },
+  "messages": {
+    "loadError": "Échec du chargement des données de notifications",
+    "newNotification": "Nouvelle notification",
+    "newNotificationBody": "Vous avez une nouvelle notification",
+    "deviceRegistered": "Appareil enregistré pour les notifications push",
+    "deviceRegisterFailed": "Échec de l'enregistrement de l'appareil. Veuillez vérifier les autorisations de notification.",
+    "deviceUnregistered": "Appareil désinscrit avec succès",
+    "deviceUnregisterFailed": "Échec de la désinscription de l'appareil",
+    "markedAsRead": "{{count}} notification(s) marquée(s) comme lue(s)",
+    "markAsReadFailed": "Échec du marquage des notifications comme lues",
+    "testSent": "Notification test envoyée. Vous devriez la recevoir sous peu.",
+    "testFailed": "Échec de l'envoi de la notification test",
+    "preferencesUpdated": "Préférences mises à jour avec succès",
+    "preferencesUpdateFailed": "Échec de la mise à jour des préférences",
+    "error": "Erreur",
+    "success": "Succès"
+  },
+  "priority": {
+    "urgent": "Urgent",
+    "high": "Élevé",
+    "normal": "Normal",
+    "low": "Faible"
+  },
+  "category": {
+    "login": "Connexion",
+    "activity": "Activité",
+    "system": "Système",
+    "alert": "Alerte",
+    "approval": "Approbation"
+  }
+}

@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/lib/i18n';
 import {
   NotificationResource,
   DeviceResource,
@@ -33,6 +34,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function NotificationsPage() {
+  const { t } = useTranslation('notifications');
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
@@ -76,8 +78,8 @@ export default function NotificationsPage() {
     } catch (error) {
       console.error('Failed to load data:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load notifications data',
+        title: t('messages.error'),
+        description: t('messages.loadError'),
         variant: 'destructive'
       });
     } finally {
@@ -95,8 +97,8 @@ export default function NotificationsPage() {
 
       // Show toast for new notification
       toast({
-        title: message.notification?.title || 'New Notification',
-        description: message.notification?.body || 'You have a new notification',
+        title: message.notification?.title || t('messages.newNotification'),
+        description: message.notification?.body || t('messages.newNotificationBody'),
       });
     });
   };
@@ -120,8 +122,8 @@ export default function NotificationsPage() {
     try {
       const device = await firebaseMessaging.registerDevice();
       toast({
-        title: 'Success',
-        description: 'Device registered for push notifications',
+        title: t('messages.success'),
+        description: t('messages.deviceRegistered'),
       });
 
       // Reload devices
@@ -129,8 +131,8 @@ export default function NotificationsPage() {
       setDevices(devicesData);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to register device. Please check notification permissions.',
+        title: t('messages.error'),
+        description: t('messages.deviceRegisterFailed'),
         variant: 'destructive'
       });
     } finally {
@@ -143,8 +145,8 @@ export default function NotificationsPage() {
     try {
       await firebaseMessaging.deregisterDevice();
       toast({
-        title: 'Success',
-        description: 'Device unregistered successfully',
+        title: t('messages.success'),
+        description: t('messages.deviceUnregistered'),
       });
 
       // Reload devices
@@ -152,8 +154,8 @@ export default function NotificationsPage() {
       setDevices(devicesData);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to unregister device',
+        title: t('messages.error'),
+        description: t('messages.deviceUnregisterFailed'),
         variant: 'destructive'
       });
     }
@@ -167,8 +169,8 @@ export default function NotificationsPage() {
     try {
       await NotificationResource.markAsRead(Array.from(selectedNotifications));
       toast({
-        title: 'Success',
-        description: `Marked ${selectedNotifications.size} notification(s) as read`,
+        title: t('messages.success'),
+        description: t('messages.markedAsRead', { count: selectedNotifications.size }),
       });
 
       // Reload notifications
@@ -176,8 +178,8 @@ export default function NotificationsPage() {
       setSelectedNotifications(new Set());
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to mark notifications as read',
+        title: t('messages.error'),
+        description: t('messages.markAsReadFailed'),
         variant: 'destructive'
       });
     }
@@ -188,13 +190,13 @@ export default function NotificationsPage() {
     try {
       await NotificationResource.sendTest();
       toast({
-        title: 'Success',
-        description: 'Test notification sent. You should receive it shortly.',
+        title: t('messages.success'),
+        description: t('messages.testSent'),
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to send test notification',
+        title: t('messages.error'),
+        description: t('messages.testFailed'),
         variant: 'destructive'
       });
     }
@@ -211,13 +213,13 @@ export default function NotificationsPage() {
 
       setPreferences(updatedPrefs);
       toast({
-        title: 'Success',
-        description: 'Preferences updated successfully',
+        title: t('messages.success'),
+        description: t('messages.preferencesUpdated'),
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to update preferences',
+        title: t('messages.error'),
+        description: t('messages.preferencesUpdateFailed'),
         variant: 'destructive'
       });
     }
@@ -262,8 +264,8 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Notifications</h1>
-          <p className="text-muted-foreground">Manage your notifications and preferences</p>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
 
         {/* Stats */}
@@ -272,13 +274,13 @@ export default function NotificationsPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">{stats.unread}</div>
-                <p className="text-xs text-muted-foreground">Unread</p>
+                <p className="text-xs text-muted-foreground">{t('stats.unread')}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">{stats.today}</div>
-                <p className="text-xs text-muted-foreground">Today</p>
+                <p className="text-xs text-muted-foreground">{t('stats.today')}</p>
               </CardContent>
             </Card>
           </div>

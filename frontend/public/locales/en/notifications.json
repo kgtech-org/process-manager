@@ -1,0 +1,100 @@
+{
+  "title": "Notifications",
+  "subtitle": "Manage your notifications and preferences",
+  "stats": {
+    "unread": "Unread",
+    "today": "Today"
+  },
+  "tabs": {
+    "notifications": "Notifications",
+    "devices": "Devices",
+    "preferences": "Preferences"
+  },
+  "actions": {
+    "markAsRead": "Mark as Read",
+    "refresh": "Refresh",
+    "sendTest": "Send Test Notification",
+    "registerDevice": "Register This Device",
+    "registering": "Registering..."
+  },
+  "list": {
+    "title": "Recent Notifications",
+    "description": "Your latest notifications and alerts",
+    "empty": "No notifications yet",
+    "read": "Read"
+  },
+  "devices": {
+    "title": "Registered Devices",
+    "empty": "No devices registered for push notifications",
+    "active": "Active",
+    "inactive": "Inactive",
+    "registered": "Registered",
+    "removeTitle": "Remove Device",
+    "removeDescription": "Are you sure you want to remove this device? You will no longer receive push notifications on this device.",
+    "remove": "Remove",
+    "cancel": "Cancel"
+  },
+  "preferences": {
+    "title": "Notification Preferences",
+    "description": "Configure how you receive notifications",
+    "loading": "Loading preferences...",
+    "globalSettings": "Global Settings",
+    "categories": "Notification Categories",
+    "quietHours": "Quiet Hours",
+    "push": {
+      "title": "Push Notifications",
+      "description": "Receive push notifications to your devices"
+    },
+    "email": {
+      "title": "Email Notifications",
+      "description": "Receive notifications via email"
+    },
+    "inApp": {
+      "title": "In-App Notifications",
+      "description": "Show notifications within the app"
+    },
+    "sound": {
+      "title": "Sound",
+      "description": "Play sound for notifications"
+    },
+    "badge": {
+      "title": "Badge",
+      "description": "Show notification count badge"
+    },
+    "quietHoursEnable": {
+      "title": "Enable Quiet Hours",
+      "description": "Mute notifications during specified hours"
+    },
+    "quietHoursTime": "Quiet hours"
+  },
+  "messages": {
+    "loadError": "Failed to load notifications data",
+    "newNotification": "New Notification",
+    "newNotificationBody": "You have a new notification",
+    "deviceRegistered": "Device registered for push notifications",
+    "deviceRegisterFailed": "Failed to register device. Please check notification permissions.",
+    "deviceUnregistered": "Device unregistered successfully",
+    "deviceUnregisterFailed": "Failed to unregister device",
+    "markedAsRead": "Marked {{count}} notification(s) as read",
+    "markAsReadFailed": "Failed to mark notifications as read",
+    "testSent": "Test notification sent. You should receive it shortly.",
+    "testFailed": "Failed to send test notification",
+    "preferencesUpdated": "Preferences updated successfully",
+    "preferencesUpdateFailed": "Failed to update preferences",
+    "error": "Error",
+    "success": "Success"
+  },
+  "priority": {
+    "urgent": "Urgent",
+    "high": "High",
+    "normal": "Normal",
+    "low": "Low"
+  },
+  "category": {
+    "login": "Login",
+    "activity": "Activity",
+    "system": "System",
+    "alert": "Alert",
+    "approval": "Approval"
+  }
+}
