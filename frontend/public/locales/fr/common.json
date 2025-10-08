@@ -1,6 +1,7 @@
 {
   "navigation": {
     "home": "Accueil",
+    "documents": "Documents",
     "myActivity": "Mon Activité",
     "profile": "Profil",
     "administration": "Administration",

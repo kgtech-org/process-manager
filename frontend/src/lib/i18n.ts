@@ -11,6 +11,8 @@ import dashboardFr from '../../public/locales/fr/dashboard.json';
 import usersFr from '../../public/locales/fr/users.json';
 import departmentsFr from '../../public/locales/fr/departments.json';
 import jobPositionsFr from '../../public/locales/fr/jobPositions.json';
+import documentsFr from '../../public/locales/fr/documents.json';
+import notificationsFr from '../../public/locales/fr/notifications.json';
 
 import commonEn from '../../public/locales/en/common.json';
 import authEn from '../../public/locales/en/auth.json';
@@ -19,6 +21,8 @@ import dashboardEn from '../../public/locales/en/dashboard.json';
 import usersEn from '../../public/locales/en/users.json';
 import departmentsEn from '../../public/locales/en/departments.json';
 import jobPositionsEn from '../../public/locales/en/jobPositions.json';
+import documentsEn from '../../public/locales/en/documents.json';
+import notificationsEn from '../../public/locales/en/notifications.json';
 
 const resources = {
   fr: {
@@ -29,6 +33,8 @@ const resources = {
     users: usersFr,
     departments: departmentsFr,
     jobPositions: jobPositionsFr,
+    documents: documentsFr,
+    notifications: notificationsFr,
   },
   en: {
     common: commonEn,
@@ -38,6 +44,8 @@ const resources = {
     users: usersEn,
     departments: departmentsEn,
     jobPositions: jobPositionsEn,
+    documents: documentsEn,
+    notifications: notificationsEn,
   },
 };
 
@@ -49,7 +57,7 @@ i18n
     resources,
     fallbackLng: 'fr',
     defaultNS: 'common',
-    ns: ['common', 'auth', 'activity', 'dashboard', 'users', 'departments', 'jobPositions'],
+    ns: ['common', 'auth', 'activity', 'dashboard', 'users', 'departments', 'jobPositions', 'documents', 'notifications'],
 
     interpolation: {
       escapeValue: false,
