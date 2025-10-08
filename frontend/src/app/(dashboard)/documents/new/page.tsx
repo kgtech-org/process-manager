@@ -14,6 +14,7 @@ import Link from 'next/link';
 
 export default function NewDocumentPage() {
   const { t } = useTranslation('documents');
+  const { t: tCommon } = useTranslation('common');
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -37,20 +38,20 @@ export default function NewDocumentPage() {
     let isValid = true;
 
     if (!formData.reference.trim()) {
-      newErrors.reference = t('documents.form.errors.referenceRequired');
+      newErrors.reference = t('form.errors.referenceRequired');
       isValid = false;
     }
 
     if (!formData.title.trim()) {
-      newErrors.title = t('documents.form.errors.titleRequired');
+      newErrors.title = t('form.errors.titleRequired');
       isValid = false;
     }
 
     if (!formData.version.trim()) {
-      newErrors.version = t('documents.form.errors.versionRequired');
+      newErrors.version = t('form.errors.versionRequired');
       isValid = false;
     } else if (!/^\d+\.\d+$/.test(formData.version)) {
-      newErrors.version = t('documents.form.errors.versionFormat');
+      newErrors.version = t('form.errors.versionFormat');
       isValid = false;
     }
 
@@ -87,15 +88,15 @@ export default function NewDocumentPage() {
       });
 
       toast({
-        title: t('documents.messages.createSuccess'),
+        title: t('messages.createSuccess'),
       });
 
       router.push(`/documents/${document.id}`);
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: t('documents.messages.createFailed'),
-        description: error.message || t('documents.messages.error'),
+        title: t('messages.createFailed'),
+        description: error.message || t('messages.error'),
       });
     } finally {
       setLoading(false);
@@ -119,25 +120,25 @@ export default function NewDocumentPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('documents.form.createTitle')}</h1>
-          <p className="text-muted-foreground">{t('documents.form.createSubtitle')}</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('form.createTitle')}</h1>
+          <p className="text-muted-foreground">{t('form.createSubtitle')}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('documents.form.basicInfo')}</CardTitle>
-          <CardDescription>{t('documents.form.basicInfoDescription')}</CardDescription>
+          <CardTitle>{t('form.basicInfo')}</CardTitle>
+          <CardDescription>{t('form.basicInfoDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reference">
-                {t('documents.form.reference')} <span className="text-destructive">*</span>
+                {t('form.reference')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="reference"
-                placeholder={t('documents.form.referencePlaceholder')}
+                placeholder={t('form.referencePlaceholder')}
                 value={formData.reference}
                 onChange={(e) => handleChange('reference', e.target.value)}
                 className={errors.reference ? 'border-destructive' : ''}
@@ -147,17 +148,17 @@ export default function NewDocumentPage() {
                 <p className="text-sm text-destructive">{errors.reference}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                {t('documents.form.referenceHint')}
+                {t('form.referenceHint')}
               </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="title">
-                {t('documents.form.title')} <span className="text-destructive">*</span>
+                {t('form.title')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="title"
-                placeholder={t('documents.form.titlePlaceholder')}
+                placeholder={t('form.titlePlaceholder')}
                 value={formData.title}
                 onChange={(e) => handleChange('title', e.target.value)}
                 className={errors.title ? 'border-destructive' : ''}
@@ -170,7 +171,7 @@ export default function NewDocumentPage() {
 
             <div className="space-y-2">
               <Label htmlFor="version">
-                {t('documents.form.version')} <span className="text-destructive">*</span>
+                {t('form.version')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="version"
@@ -184,14 +185,14 @@ export default function NewDocumentPage() {
                 <p className="text-sm text-destructive">{errors.version}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                {t('documents.form.versionHint')}
+                {t('form.versionHint')}
               </p>
             </div>
 
             <div className="flex gap-3 pt-4">
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t('documents.form.create')}
+                {t('form.create')}
               </Button>
               <Button
                 type="button"
@@ -199,7 +200,7 @@ export default function NewDocumentPage() {
                 onClick={() => router.push('/documents')}
                 disabled={loading}
               >
-                {t('common.cancel')}
+                {tCommon('common.cancel')}
               </Button>
             </div>
           </form>
