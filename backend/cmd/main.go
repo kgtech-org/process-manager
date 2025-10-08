@@ -84,6 +84,9 @@ func main() {
 	deviceService := services.NewDeviceService(db, firebaseService)
 	notificationService := services.NewNotificationService(db, firebaseService, deviceService, userService)
 
+	// Initialize document service
+	documentService := services.NewDocumentService(db.Database)
+
 	// Ensure default admin exists
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if err := userService.EnsureDefaultAdmin(ctx); err != nil {
@@ -103,6 +106,7 @@ func main() {
 	activityLogHandler := handlers.NewActivityLogHandler(activityLogService)
 	emailHandler := handlers.NewEmailHandler(emailService, userService)
 	notificationHandler := handlers.NewNotificationHandler(userService, notificationService, deviceService)
+	documentHandler := handlers.NewDocumentHandler(documentService)
 
 	// Initialize Gin router
 	r := gin.Default()
@@ -169,8 +173,7 @@ func main() {
 		routes.SetupActivityLogRoutes(api, activityLogHandler, authMiddleware)
 		routes.SetupEmailRoutes(api, emailHandler, authMiddleware)
 		routes.SetupNotificationRoutes(api, notificationHandler, authMiddleware)
-		routes.SetupDocumentRoutes(api, authMiddleware)
-		routes.SetupProcessRoutes(api, authMiddleware)
+		routes.SetupDocumentRoutes(api, documentHandler, authMiddleware)
 	}
 
 	// Get port from environment or default to 8080

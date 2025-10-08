@@ -1,0 +1,315 @@
+### Variables
+@baseUrl = http://localhost/api
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@documentId =
+
+### Get Auth Token
+# @name login
+POST {{baseUrl}}/auth/request-otp
+Content-Type: application/json
+
+{
+  "email": "admin@togocom.tg"
+}
+
+### Verify OTP
+# @name verifyOtp
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+X-Temp-Token: TEMP_TOKEN_HERE
+
+{
+  "email": "admin@togocom.tg",
+  "otp": "OTP_HERE"
+}
+
+### Create Document
+# @name createDocument
+POST {{baseUrl}}/documents
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "reference": "PROC-NET-001",
+  "title": "Network Incident Management Process",
+  "version": "1.0",
+  "contributors": {
+    "authors": [],
+    "verifiers": [],
+    "validators": []
+  },
+  "metadata": {
+    "objectives": [
+      "Quickly detect and classify network incidents",
+      "Minimize service disruption",
+      "Restore services within SLA timeframes"
+    ],
+    "implicatedActors": [
+      "NOC Team",
+      "Network Engineers",
+      "Service Desk",
+      "Management"
+    ],
+    "managementRules": [
+      "All P1 incidents must be escalated within 15 minutes",
+      "P2 incidents require 2-hour response time",
+      "Weekly incident review meetings mandatory"
+    ],
+    "terminology": [
+      "P1: Critical - Complete service outage",
+      "P2: High - Major service degradation",
+      "P3: Medium - Partial service impact",
+      "P4: Low - Minor issues"
+    ],
+    "changeHistory": []
+  },
+  "processGroups": [
+    {
+      "id": "I",
+      "title": "DETECTION",
+      "order": 1,
+      "processSteps": [
+        {
+          "id": "1",
+          "title": "Incident Detection",
+          "order": 1,
+          "outputs": ["Alert Generated", "Ticket Created", "Team Notified"],
+          "durations": ["T0+2min", "T0+5min", "T0+10min"],
+          "responsible": "NOC Team",
+          "descriptions": [
+            {
+              "title": "Automated Monitoring Detection",
+              "instructions": [
+                "Monitor alerts from network monitoring tools",
+                "Validate alert severity and impact",
+                "Create incident ticket in system",
+                "Notify relevant team members"
+              ],
+              "order": 1,
+              "outputIndex": 0,
+              "durationIndex": 0
+            },
+            {
+              "title": "Manual Report Detection",
+              "instructions": [
+                "Receive incident report from user/service desk",
+                "Assess initial impact and priority",
+                "Document incident details",
+                "Assign to appropriate team"
+              ],
+              "order": 2,
+              "outputIndex": 1,
+              "durationIndex": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "II",
+      "title": "MANAGEMENT",
+      "order": 2,
+      "processSteps": [
+        {
+          "id": "1",
+          "title": "Initial Assessment",
+          "order": 1,
+          "outputs": ["Impact Assessed", "Priority Set", "Team Assigned"],
+          "durations": ["T0+15min", "T0+30min"],
+          "responsible": "Network Engineer",
+          "descriptions": [
+            {
+              "title": "Impact Analysis",
+              "instructions": [
+                "Determine affected services and users",
+                "Classify incident priority (P1-P4)",
+                "Estimate initial resolution time",
+                "Escalate if necessary"
+              ],
+              "order": 1,
+              "outputIndex": 0,
+              "durationIndex": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "annexes": []
+}
+
+### List All Documents
+GET {{baseUrl}}/documents
+Authorization: Bearer {{token}}
+
+### List Documents with Filters
+GET {{baseUrl}}/documents?status=draft&page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Search Documents
+GET {{baseUrl}}/documents?search=network
+Authorization: Bearer {{token}}
+
+### Get Document by ID
+GET {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+
+### Update Document
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Network Incident Management Process - Updated",
+  "version": "1.1",
+  "metadata": {
+    "objectives": [
+      "Quickly detect and classify network incidents",
+      "Minimize service disruption",
+      "Restore services within SLA timeframes",
+      "Provide detailed incident reports"
+    ],
+    "implicatedActors": [
+      "NOC Team",
+      "Network Engineers",
+      "Service Desk",
+      "Management",
+      "Vendor Support"
+    ],
+    "managementRules": [
+      "All P1 incidents must be escalated within 15 minutes",
+      "P2 incidents require 2-hour response time",
+      "Weekly incident review meetings mandatory",
+      "Monthly SLA compliance reports required"
+    ],
+    "terminology": [
+      "P1: Critical - Complete service outage",
+      "P2: High - Major service degradation",
+      "P3: Medium - Partial service impact",
+      "P4: Low - Minor issues",
+      "SLA: Service Level Agreement"
+    ],
+    "changeHistory": [
+      {
+        "version": "1.1",
+        "date": "2025-10-08T00:00:00Z",
+        "author": "Admin User",
+        "description": "Added vendor support and SLA reporting requirements"
+      }
+    ]
+  }
+}
+
+### Update Document Status
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "author_review"
+}
+
+### Duplicate Document
+POST {{baseUrl}}/documents/{{documentId}}/duplicate
+Authorization: Bearer {{token}}
+
+### Get Document Versions
+GET {{baseUrl}}/documents/{{documentId}}/versions
+Authorization: Bearer {{token}}
+
+### Delete Document (Manager only)
+DELETE {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+
+###############################################
+# Test Workflow: Draft -> Review -> Approved
+###############################################
+
+### Create Test Document
+# @name createTestDoc
+POST {{baseUrl}}/documents
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "reference": "TEST-WORKFLOW-001",
+  "title": "Test Workflow Document",
+  "version": "1.0",
+  "contributors": {
+    "authors": [],
+    "verifiers": [],
+    "validators": []
+  },
+  "metadata": {
+    "objectives": ["Test document workflow"],
+    "implicatedActors": ["Test Team"],
+    "managementRules": [],
+    "terminology": [],
+    "changeHistory": []
+  },
+  "processGroups": [],
+  "annexes": []
+}
+
+### Move to Author Review
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "author_review"
+}
+
+### Author Signs - Move to Author Signed
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "author_signed"
+}
+
+### Move to Verifier Review
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "verifier_review"
+}
+
+### Verifier Signs - Move to Verifier Signed
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "verifier_signed"
+}
+
+### Move to Validator Review
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "validator_review"
+}
+
+### Validator Approves - Document Approved
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "approved"
+}
+
+### Archive Document
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "archived"
+}
