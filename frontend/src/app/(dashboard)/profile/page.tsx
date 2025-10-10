@@ -3,6 +3,7 @@
 import React from 'react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ProfileForm } from '@/components/auth/ProfileForm';
+import { SignatureManager } from '@/components/signatures';
 import { useTranslation } from '@/lib/i18n';
 
 export default function ProfilePage() {
@@ -16,8 +17,13 @@ export default function ProfilePage() {
           <p className="text-gray-600">{t('profile.subtitle', { defaultValue: 'Manage your account information and preferences.' })}</p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto space-y-8">
           <ProfileForm />
+
+          {/* Signature Management Section */}
+          <div className="mt-8">
+            <SignatureManager />
+          </div>
         </div>
       </div>
     </AuthGuard>

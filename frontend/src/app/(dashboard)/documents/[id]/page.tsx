@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { DocumentResource, type Document } from '@/lib/resources';
 import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
 import { InvitationModal, PermissionManager, SignaturePanel } from '@/components/collaboration';
+import { DocumentInvitationsList } from '@/components/invitations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -219,9 +220,10 @@ export default function DocumentDetailPage() {
 
       {/* Collaboration Section */}
       <Tabs defaultValue="signatures" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="signatures">Signatures</TabsTrigger>
           <TabsTrigger value="permissions">Permissions</TabsTrigger>
+          <TabsTrigger value="invitations">Invitations</TabsTrigger>
         </TabsList>
         <TabsContent value="signatures">
           <SignaturePanel
@@ -231,6 +233,9 @@ export default function DocumentDetailPage() {
         </TabsContent>
         <TabsContent value="permissions">
           <PermissionManager documentId={documentId} />
+        </TabsContent>
+        <TabsContent value="invitations">
+          <DocumentInvitationsList documentId={documentId} />
         </TabsContent>
       </Tabs>
 

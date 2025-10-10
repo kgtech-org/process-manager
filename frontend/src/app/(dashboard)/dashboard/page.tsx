@@ -10,6 +10,7 @@ import { dashboardApi } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import { ActivityLogResource } from '@/lib/resources/activity-log';
 import type { ActivityLog, ActivityAction, ActivityCategory } from '@/types/activity-log';
+import { PendingInvitationsWidget } from '@/components/invitations';
 
 interface DashboardStats {
   totalUsers: number;
@@ -351,6 +352,11 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Pending Invitations Widget */}
+      <div className="mb-8">
+        <PendingInvitationsWidget />
       </div>
 
       {/* Recent Activity */}
