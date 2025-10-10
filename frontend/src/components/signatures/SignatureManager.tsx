@@ -280,7 +280,7 @@ export function SignatureManager() {
       return (
         <img
           src={signature.data}
-          alt={signature.name}
+          alt="User signature"
           className="h-16 object-contain bg-white border rounded p-2"
         />
       );
@@ -321,98 +321,62 @@ export function SignatureManager() {
               <CardTitle>{t('manager.title')}</CardTitle>
               <CardDescription>{t('manager.description')}</CardDescription>
             </div>
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              {t('manager.create')}
-            </Button>
+            {!editMode && signature && (
+              <div className="flex gap-2">
+                <Button onClick={() => setEditMode(true)} variant="outline">
+                  <Pencil className="h-4 w-4 mr-2" />
+                  {t('manager.edit')}
+                </Button>
+                <Button onClick={handleDeleteClick} variant="destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t('manager.delete')}
+                </Button>
+              </div>
+            )}
+            {!editMode && !signature && (
+              <Button onClick={() => setEditMode(true)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                {t('manager.create')}
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
-          {signatures.length === 0 ? (
+          {!editMode && !signature ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <PenTool className="h-16 w-16 text-muted-foreground mb-4" />
-              <p className="text-lg font-medium mb-2">{t('manager.noSignatures')}</p>
+              <p className="text-lg font-medium mb-2">{t('manager.noSignature')}</p>
               <p className="text-sm text-muted-foreground mb-4">
-                {t('manager.noSignaturesMessage')}
+                {t('manager.noSignatureMessage')}
               </p>
-              <Button onClick={() => setCreateDialogOpen(true)}>
+              <Button onClick={() => setEditMode(true)}>
                 {t('manager.createFirst')}
               </Button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {signatures.map((signature) => (
-                <div
-                  key={signature.id}
-                  className="border rounded-lg p-4 space-y-3 hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium">{signature.name}</h4>
-                      {signature.isDefault && (
-                        <Badge variant="default">
-                          <Star className="h-3 w-3 mr-1" />
-                          {t('manager.default')}
-                        </Badge>
-                      )}
-                    </div>
-                    <Badge variant="outline">{t(`manager.types.${signature.type}`)}</Badge>
-                  </div>
-
-                  <div className="flex justify-center">{renderSignaturePreview(signature)}</div>
-
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
-                      {t('manager.used', { count: signature.usageCount })}
-                    </span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    {!signature.isDefault && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => handleSetDefault(signature)}
-                      >
-                        <Star className="h-4 w-4 mr-1" />
-                        {t('manager.setDefault')}
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteClick(signature)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+          ) : !editMode && signature ? (
+            <div className="border rounded-lg p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <Badge variant="outline">{t(`manager.types.${signature.type}`)}</Badge>
+                <span className="text-xs text-muted-foreground">
+                  {t('manager.used', { count: signature.usageCount })}
+                </span>
+              </div>
+              <div className="flex justify-center py-4">
+                {renderSignaturePreview(signature)}
+              </div>
             </div>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
-      {/* Create Signature Dialog */}
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>{t('manager.createTitle')}</DialogTitle>
-            <DialogDescription>{t('manager.createDescription')}</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">{t('manager.signatureName')}</Label>
-              <Input
-                id="name"
-                placeholder={t('manager.signatureNamePlaceholder')}
-                value={signatureName}
-                onChange={(e) => setSignatureName(e.target.value)}
-              />
-            </div>
-
+      {/* Edit/Create Signature Dialog */}
+      {editMode && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>{signature ? t('manager.editTitle') : t('manager.createTitle')}</CardTitle>
+            <CardDescription>{t('manager.createDescription')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <Tabs value={creationType} onValueChange={(value) => setCreationType(value as UserSignatureType)}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="drawn">
@@ -511,19 +475,19 @@ export function SignatureManager() {
                 )}
               </TabsContent>
             </Tabs>
-          </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-              {t('manager.cancel')}
-            </Button>
-            <Button onClick={handleCreate}>
-              <Check className="h-4 w-4 mr-2" />
-              {t('manager.save')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <div className="flex gap-2 justify-end pt-4">
+              <Button variant="outline" onClick={() => setEditMode(false)}>
+                {t('manager.cancel')}
+              </Button>
+              <Button onClick={handleSave}>
+                <Check className="h-4 w-4 mr-2" />
+                {t('manager.save')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -531,7 +495,7 @@ export function SignatureManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('manager.deleteConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('manager.deleteConfirmMessage', { name: selectedSignature?.name })}
+              {t('manager.deleteConfirmMessage')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
