@@ -189,10 +189,22 @@ func (h *InvitationHandler) ListInvitations(c *gin.Context) {
 	// Build filter
 	filter := bson.M{}
 
-	// Only show invitations sent to or by the current user
-	filter["$or"] = []bson.M{
-		{"invitee_email": user.Email},
-		{"inviter_id": user.ID},
+	// Check if filtering for invitations sent TO the current user only
+	forMe := c.Query("forMe") == "true"
+
+	if forMe {
+		// Only show invitations sent TO the current user
+		filter["$or"] = []bson.M{
+			{"invitee_email": user.Email},
+			{"invited_user_id": user.ID},
+		}
+	} else {
+		// Show invitations sent to or by the current user
+		filter["$or"] = []bson.M{
+			{"invitee_email": user.Email},
+			{"invited_user_id": user.ID},
+			{"inviter_id": user.ID},
+		}
 	}
 
 	// Additional filters

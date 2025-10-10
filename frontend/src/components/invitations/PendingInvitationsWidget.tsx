@@ -37,8 +37,8 @@ export function PendingInvitationsWidget() {
   const loadInvitations = async () => {
     try {
       setLoading(true);
-      const result = await InvitationResource.list({ status: 'pending', limit: 5 });
-      setInvitations(result.data);
+      const result = await InvitationResource.list({ status: 'pending', limit: 5, forMe: true });
+      setInvitations(result.data || []);
     } catch (error: any) {
       console.error('Failed to load invitations:', error);
     } finally {

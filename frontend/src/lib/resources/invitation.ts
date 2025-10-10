@@ -33,6 +33,7 @@ export interface InvitationFilter {
   invitedEmail?: string;
   status?: 'pending' | 'accepted' | 'declined' | 'expired';
   type?: 'collaborator' | 'reviewer';
+  forMe?: boolean;
   page?: number;
   limit?: number;
 }
@@ -66,6 +67,7 @@ export class InvitationResource {
     if (filters?.invitedEmail) params.append('invitedEmail', filters.invitedEmail);
     if (filters?.status) params.append('status', filters.status);
     if (filters?.type) params.append('type', filters.type);
+    if (filters?.forMe) params.append('forMe', 'true');
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
 
