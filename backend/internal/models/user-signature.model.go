@@ -15,15 +15,13 @@ const (
 	UserSignatureTypeTyped UserSignatureType = "typed"
 )
 
-// UserSignature represents a user's saved signature
+// UserSignature represents a user's saved signature (one per user)
 type UserSignature struct {
 	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	UserID     primitive.ObjectID `bson:"user_id" json:"userId"`
-	Name       string             `bson:"name" json:"name"`                       // "Formal", "Casual", etc.
 	Type       UserSignatureType  `bson:"type" json:"type"`                       // image, drawn, typed
 	Data       string             `bson:"data" json:"data"`                       // Base64 image or text
 	Font       string             `bson:"font,omitempty" json:"font,omitempty"`   // Font family for typed signatures
-	IsDefault  bool               `bson:"is_default" json:"isDefault"`
 	UsageCount int                `bson:"usage_count" json:"usageCount"`
 	CreatedAt  time.Time          `bson:"created_at" json:"createdAt"`
 	UpdatedAt  time.Time          `bson:"updated_at" json:"updatedAt"`
@@ -33,11 +31,9 @@ type UserSignature struct {
 type UserSignatureResponse struct {
 	ID         string            `json:"id"`
 	UserID     string            `json:"userId"`
-	Name       string            `json:"name"`
 	Type       UserSignatureType `json:"type"`
 	Data       string            `json:"data"`
 	Font       string            `json:"font,omitempty"`
-	IsDefault  bool              `json:"isDefault"`
 	UsageCount int               `json:"usageCount"`
 	CreatedAt  time.Time         `json:"createdAt"`
 	UpdatedAt  time.Time         `json:"updatedAt"`
@@ -45,7 +41,6 @@ type UserSignatureResponse struct {
 
 // CreateUserSignatureRequest represents the request to create a signature
 type CreateUserSignatureRequest struct {
-	Name string            `json:"name" binding:"required"`
 	Type UserSignatureType `json:"type" binding:"required"`
 	Data string            `json:"data" binding:"required"`
 	Font string            `json:"font"`
@@ -53,8 +48,9 @@ type CreateUserSignatureRequest struct {
 
 // UpdateUserSignatureRequest represents the request to update a signature
 type UpdateUserSignatureRequest struct {
-	Name      string `json:"name"`
-	IsDefault *bool  `json:"isDefault"`
+	Type UserSignatureType `json:"type"`
+	Data string            `json:"data"`
+	Font string            `json:"font"`
 }
 
 // BeforeCreate sets timestamps before creating a signature
@@ -75,11 +71,9 @@ func (s *UserSignature) ToResponse() UserSignatureResponse {
 	return UserSignatureResponse{
 		ID:         s.ID.Hex(),
 		UserID:     s.UserID.Hex(),
-		Name:       s.Name,
 		Type:       s.Type,
 		Data:       s.Data,
 		Font:       s.Font,
-		IsDefault:  s.IsDefault,
 		UsageCount: s.UsageCount,
 		CreatedAt:  s.CreatedAt,
 		UpdatedAt:  s.UpdatedAt,

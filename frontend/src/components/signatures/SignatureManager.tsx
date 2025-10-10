@@ -58,15 +58,13 @@ const FONT_OPTIONS = [
 export function SignatureManager() {
   const { t } = useTranslation('signatures');
   const { toast } = useToast();
-  const [signatures, setSignatures] = useState<UserSignature[]>([]);
+  const [signature, setSignature] = useState<UserSignature | null>(null);
   const [loading, setLoading] = useState(true);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedSignature, setSelectedSignature] = useState<UserSignature | null>(null);
   const [creationType, setCreationType] = useState<UserSignatureType>('drawn');
 
   // Form state
-  const [signatureName, setSignatureName] = useState('');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [typedText, setTypedText] = useState('');
   const [selectedFont, setSelectedFont] = useState('cursive');
@@ -76,20 +74,25 @@ export function SignatureManager() {
   const [isDrawing, setIsDrawing] = useState(false);
 
   useEffect(() => {
-    loadSignatures();
+    loadSignature();
   }, []);
 
-  const loadSignatures = async () => {
+  const loadSignature = async () => {
     try {
       setLoading(true);
-      const data = await UserSignatureResource.list();
-      setSignatures(data);
+      const data = await UserSignatureResource.get();
+      setSignature(data);
+      if (data) {
+        setCreationType(data.type);
+        if (data.type === 'typed') {
+          setTypedText(data.data);
+          setSelectedFont(data.font || 'cursive');
+        } else if (data.type === 'image') {
+          setUploadedImage(data.data);
+        }
+      }
     } catch (error: any) {
-      toast({
-        title: t('manager.loadError'),
-        description: error.response?.data?.message || t('manager.actionFailed'),
-        variant: 'destructive',
-      });
+      console.error('Failed to load signature:', error);
     } finally {
       setLoading(false);
     }
@@ -188,21 +191,12 @@ export function SignatureManager() {
   };
 
   useEffect(() => {
-    if (createDialogOpen && creationType === 'drawn') {
+    if (editMode && creationType === 'drawn') {
       initializeCanvas();
     }
-  }, [createDialogOpen, creationType]);
+  }, [editMode, creationType]);
 
-  const handleCreate = async () => {
-    if (!signatureName.trim()) {
-      toast({
-        title: t('manager.nameRequired'),
-        description: t('manager.nameRequiredMessage'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const handleSave = async () => {
     let signatureData = '';
 
     try {
@@ -232,73 +226,46 @@ export function SignatureManager() {
         signatureData = typedText;
       }
 
-      await UserSignatureResource.create({
-        name: signatureName,
+      await UserSignatureResource.save({
         type: creationType,
         data: signatureData,
         font: creationType === 'typed' ? selectedFont : undefined,
       });
 
       toast({
-        title: t('manager.createSuccess'),
-        description: t('manager.createSuccessMessage'),
+        title: t('manager.saveSuccess'),
+        description: t('manager.saveSuccessMessage'),
       });
 
-      // Reset form
-      setSignatureName('');
-      setUploadedImage(null);
-      setTypedText('');
-      setSelectedFont('cursive');
-      setCreateDialogOpen(false);
-
-      loadSignatures();
+      setEditMode(false);
+      loadSignature();
     } catch (error: any) {
       toast({
-        title: t('manager.createError'),
+        title: t('manager.saveError'),
         description: error.response?.data?.message || t('manager.actionFailed'),
         variant: 'destructive',
       });
     }
   };
 
-  const handleSetDefault = async (signature: UserSignature) => {
-    try {
-      await UserSignatureResource.update(signature.id, { isDefault: true });
-
-      toast({
-        title: t('manager.defaultSuccess'),
-        description: t('manager.defaultSuccessMessage'),
-      });
-
-      loadSignatures();
-    } catch (error: any) {
-      toast({
-        title: t('manager.defaultError'),
-        description: error.response?.data?.message || t('manager.actionFailed'),
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDeleteClick = (signature: UserSignature) => {
-    setSelectedSignature(signature);
+  const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!selectedSignature) return;
-
     try {
-      await UserSignatureResource.delete(selectedSignature.id);
+      await UserSignatureResource.delete();
 
       toast({
         title: t('manager.deleteSuccess'),
         description: t('manager.deleteSuccessMessage'),
       });
 
-      loadSignatures();
+      setSignature(null);
       setDeleteDialogOpen(false);
-      setSelectedSignature(null);
+      setUploadedImage(null);
+      setTypedText('');
+      setCreationType('drawn');
     } catch (error: any) {
       toast({
         title: t('manager.deleteError'),

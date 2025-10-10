@@ -5,73 +5,50 @@ export type UserSignatureType = 'image' | 'drawn' | 'typed';
 export interface UserSignature {
   id: string;
   userId: string;
-  name: string;
   type: UserSignatureType;
   data: string; // Base64 or text
   font?: string;
-  isDefault: boolean;
   usageCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateUserSignatureRequest {
-  name: string;
   type: UserSignatureType;
   data: string;
   font?: string;
 }
 
-export interface UpdateUserSignatureRequest {
-  name?: string;
-  isDefault?: boolean;
-}
-
 export class UserSignatureResource {
-  static async create(data: CreateUserSignatureRequest): Promise<UserSignature> {
-    const response = await apiClient.post<{ data: UserSignature }>(
-      '/users/me/signatures',
-      data
-    );
-    return response.data?.data as UserSignature;
-  }
-
-  static async list(): Promise<UserSignature[]> {
-    const response = await apiClient.get<{ data: UserSignature[] }>('/users/me/signatures');
-    return response.data?.data || [];
-  }
-
-  static async getDefault(): Promise<UserSignature | null> {
+  /**
+   * Get the user's signature (only one per user)
+   */
+  static async get(): Promise<UserSignature | null> {
     try {
-      const response = await apiClient.get<{ data: UserSignature }>(
-        '/users/me/signatures/default'
+      const response = await apiClient.get<{ data: UserSignature | null }>(
+        '/users/me/signature'
       );
-      return response.data?.data as UserSignature;
+      return response.data?.data as UserSignature | null;
     } catch (error) {
       return null;
     }
   }
 
-  static async update(
-    signatureId: string,
-    data: UpdateUserSignatureRequest
-  ): Promise<UserSignature> {
-    const response = await apiClient.put<{ data: UserSignature }>(
-      `/users/me/signatures/${signatureId}`,
+  /**
+   * Create or update the user's signature (only one allowed)
+   */
+  static async save(data: CreateUserSignatureRequest): Promise<UserSignature> {
+    const response = await apiClient.post<{ data: UserSignature }>(
+      '/users/me/signature',
       data
     );
     return response.data?.data as UserSignature;
   }
 
-  static async delete(signatureId: string): Promise<void> {
-    await apiClient.delete(`/users/me/signatures/${signatureId}`);
-  }
-
-  static async resendInvitation(invitationId: string): Promise<void> {
-    await apiClient.post(`/invitations/${invitationId}/resend`);
-  }
-
-  static async cancelInvitation(invitationId: string): Promise<void> {
-    await apiClient.delete(`/invitations/${invitationId}/cancel`);
+  /**
+   * Delete the user's signature
+   */
+  static async delete(): Promise<void> {
+    await apiClient.delete('/users/me/signature');
   }
 }

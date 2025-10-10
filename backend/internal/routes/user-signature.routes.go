@@ -11,13 +11,11 @@ func SetupUserSignatureRoutes(
 	signatureHandler *handlers.UserSignatureHandler,
 	authMiddleware *middleware.AuthMiddleware,
 ) {
-	signatures := router.Group("/users/me/signatures")
-	signatures.Use(authMiddleware.RequireAuth())
+	signature := router.Group("/users/me/signature")
+	signature.Use(authMiddleware.RequireAuth())
 	{
-		signatures.POST("", signatureHandler.CreateSignature)
-		signatures.GET("", signatureHandler.ListSignatures)
-		signatures.GET("/default", signatureHandler.GetDefaultSignature)
-		signatures.PUT("/:id", signatureHandler.UpdateSignature)
-		signatures.DELETE("/:id", signatureHandler.DeleteSignature)
+		signature.GET("", signatureHandler.GetSignature)
+		signature.POST("", signatureHandler.CreateOrUpdateSignature)
+		signature.DELETE("", signatureHandler.DeleteSignature)
 	}
 }
