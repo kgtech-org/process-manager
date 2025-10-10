@@ -40,8 +40,8 @@ func NewJWTService() *JWTService {
 		issuer = "process-manager-api"
 	}
 
-	// Access token expires in 15 minutes
-	accessExpiry := 15 * time.Minute
+	// Access token expires in 24 hours
+	accessExpiry := 24 * time.Hour
 	if exp := os.Getenv("JWT_ACCESS_EXPIRY"); exp != "" {
 		if duration, err := time.ParseDuration(exp); err == nil {
 			accessExpiry = duration
