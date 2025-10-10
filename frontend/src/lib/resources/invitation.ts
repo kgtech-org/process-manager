@@ -92,4 +92,18 @@ export class InvitationResource {
   static async decline(invitationId: string, reason?: string): Promise<void> {
     await apiClient.put(`/invitations/${invitationId}/decline`, { reason });
   }
+
+  /**
+   * Resend an invitation
+   */
+  static async resend(invitationId: string): Promise<void> {
+    await apiClient.post(`/invitations/${invitationId}/resend`);
+  }
+
+  /**
+   * Cancel an invitation
+   */
+  static async cancel(invitationId: string): Promise<void> {
+    await apiClient.delete(`/invitations/${invitationId}/cancel`);
+  }
 }

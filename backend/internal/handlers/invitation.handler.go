@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kodesonik/process-manager/internal/helpers"
@@ -434,4 +435,164 @@ func (h *InvitationHandler) DeclineInvitation(c *gin.Context) {
 	}
 
 	helpers.SendSuccess(c, "Invitation declined successfully", nil)
+}
+
+// ResendInvitation resends an invitation email
+// POST /api/invitations/:id/resend
+func (h *InvitationHandler) ResendInvitation(c *gin.Context) {
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid invitation ID format")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	// Get invitation
+	var invitation models.Invitation
+	err = h.invitationCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&invitation)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			helpers.SendNotFound(c, "Invitation not found")
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Only the inviter can resend
+	if invitation.InvitedBy != user.ID {
+		helpers.SendForbidden(c, "Only the inviter can resend this invitation", "FORBIDDEN")
+		return
+	}
+
+	// Only resend pending invitations
+	if invitation.Status != models.InvitationStatusPending {
+		helpers.SendBadRequest(c, "Can only resend pending invitations")
+		return
+	}
+
+	// Get document details
+	var document models.Document
+	err = h.documentCollection.FindOne(ctx, bson.M{"_id": invitation.DocumentID}).Decode(&document)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Generate new token
+	token, err := generateInvitationToken()
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Update invitation with new token and sent date
+	now := time.Now()
+	_, err = h.invitationCollection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{
+		"$set": bson.M{
+			"token":      token,
+			"sent_at":    now,
+			"expires_at": now.Add(7 * 24 * time.Hour),
+			"updated_at": now,
+		},
+	})
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Resend email
+	invitedUserName := invitation.InvitedEmail
+	if invitation.InvitedUserID != nil {
+		var invitedUser models.User
+		err = h.userCollection.FindOne(ctx, bson.M{"_id": invitation.InvitedUserID}).Decode(&invitedUser)
+		if err == nil {
+			invitedUserName = invitedUser.Name
+		}
+	}
+
+	teamName := string(invitation.Team)
+	if invitation.Team == models.ContributorTeamAuthors {
+		teamName = "Authors"
+	} else if invitation.Team == models.ContributorTeamVerifiers {
+		teamName = "Verifiers"
+	} else if invitation.Team == models.ContributorTeamValidators {
+		teamName = "Validators"
+	}
+
+	err = h.emailService.SendInvitationEmail(
+		invitation.InvitedEmail,
+		invitedUserName,
+		user.Name,
+		document.Title,
+		document.Reference,
+		teamName,
+		token,
+	)
+	if err != nil {
+		fmt.Printf("Failed to resend invitation email: %v\n", err)
+		// Don't fail the request if email fails
+	}
+
+	helpers.SendSuccess(c, "Invitation resent successfully", nil)
+}
+
+// CancelInvitation cancels a pending invitation
+// DELETE /api/invitations/:id/cancel
+func (h *InvitationHandler) CancelInvitation(c *gin.Context) {
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid invitation ID format")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	// Get invitation
+	var invitation models.Invitation
+	err = h.invitationCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&invitation)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			helpers.SendNotFound(c, "Invitation not found")
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Only the inviter can cancel
+	if invitation.InvitedBy != user.ID {
+		helpers.SendForbidden(c, "Only the inviter can cancel this invitation", "FORBIDDEN")
+		return
+	}
+
+	// Only cancel pending invitations
+	if invitation.Status != models.InvitationStatusPending {
+		helpers.SendBadRequest(c, "Can only cancel pending invitations")
+		return
+	}
+
+	// Delete the invitation
+	_, err = h.invitationCollection.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	helpers.SendSuccess(c, "Invitation cancelled successfully", nil)
 }

@@ -14,5 +14,7 @@ func RegisterInvitationRoutes(router *gin.RouterGroup, invitationHandler *handle
 		invitations.GET("", invitationHandler.ListInvitations)
 		invitations.PUT("/:id/accept", invitationHandler.AcceptInvitation)
 		invitations.PUT("/:id/decline", invitationHandler.DeclineInvitation)
+		invitations.POST("/:id/resend", invitationHandler.ResendInvitation)
+		invitations.DELETE("/:id/cancel", invitationHandler.CancelInvitation)
 	}
 }

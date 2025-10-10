@@ -8,6 +8,7 @@ export * from './document';
 export * from './invitation';
 export * from './permission';
 export * from './signature';
+export * from './user-signature';
 
 // Re-export the main API client
-export { apiClient, TokenManager } from '../api';
+export { apiClient, TokenManager} from '../api';
