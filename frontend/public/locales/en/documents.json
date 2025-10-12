@@ -93,6 +93,8 @@
     "deleteStepConfirm": "Are you sure you want to delete this process step?",
     "groupTitle": "Group Title",
     "stepTitle": "Step Title",
+    "groupOrder": "Group #",
+    "stepOrder": "Step #",
     "responsible": "Responsible",
     "responsiblePlaceholder": "Enter responsible person/department",
     "outputs": "Outputs",

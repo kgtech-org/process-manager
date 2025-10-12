@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { DocumentResource, type Document } from '@/lib/resources';
 import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
 import { ProcessFlowEditor } from '@/components/documents/ProcessFlowEditor';
+import { ProcessFlowTableView } from '@/components/documents/ProcessFlowTableView';
 import { InvitationModal, SignaturePanel } from '@/components/collaboration';
 import { DocumentInvitationsList } from '@/components/invitations';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,8 @@ import {
   Loader2,
   UserPlus,
   Send,
+  FileText as FileTextIcon,
+  Table as TableIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +39,7 @@ export default function DocumentDetailPage() {
   const [document, setDocument] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
   const [invitationModalOpen, setInvitationModalOpen] = useState(false);
+  const [processFlowView, setProcessFlowView] = useState<'document' | 'table'>('document');
 
   useEffect(() => {
     loadDocument();
@@ -248,12 +252,39 @@ export default function DocumentDetailPage() {
 
         {/* Process Flow Tab */}
         <TabsContent value="process-flow" className="space-y-4">
-          <ProcessFlowEditor
-            processGroups={document.processGroups}
-            documentId={documentId}
-            onUpdate={handleProcessFlowUpdate}
-            readOnly={document.status !== 'draft'}
-          />
+          {/* View Toggle */}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant={processFlowView === 'document' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setProcessFlowView('document')}
+            >
+              <FileTextIcon className="h-4 w-4 mr-2" />
+              Document View
+            </Button>
+            <Button
+              variant={processFlowView === 'table' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setProcessFlowView('table')}
+            >
+              <TableIcon className="h-4 w-4 mr-2" />
+              Table View
+            </Button>
+          </div>
+
+          {/* Conditional View Rendering */}
+          {processFlowView === 'document' ? (
+            <ProcessFlowEditor
+              processGroups={document.processGroups}
+              documentId={documentId}
+              onUpdate={handleProcessFlowUpdate}
+              readOnly={document.status !== 'draft'}
+            />
+          ) : (
+            <ProcessFlowTableView
+              processGroups={document.processGroups}
+            />
+          )}
         </TabsContent>
 
         {/* Metadata Tab */}
