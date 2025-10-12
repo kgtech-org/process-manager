@@ -22,17 +22,20 @@ type InvitationHandler struct {
 	documentCollection   *mongo.Collection
 	userCollection       *mongo.Collection
 	emailService         *services.EmailService
+	notificationService  *services.NotificationService
 }
 
 func NewInvitationHandler(
 	db *mongo.Database,
 	emailService *services.EmailService,
+	notificationService *services.NotificationService,
 ) *InvitationHandler {
 	return &InvitationHandler{
 		invitationCollection: db.Collection("invitations"),
 		documentCollection:   db.Collection("documents"),
 		userCollection:       db.Collection("users"),
 		emailService:         emailService,
+		notificationService:  notificationService,
 	}
 }
 
@@ -120,6 +123,14 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	}
 
 	// Create invitation
+	fmt.Printf("📬 [INVITATION] Creating new invitation:\n")
+	fmt.Printf("   - Document: %s (%s)\n", document.Title, document.Reference)
+	fmt.Printf("   - Invited Email: %s\n", req.InvitedEmail)
+	fmt.Printf("   - Invited By: %s %s (%s)\n", user.FirstName, user.LastName, user.ID.Hex())
+	fmt.Printf("   - Team: %s\n", req.Team)
+	fmt.Printf("   - Type: %s\n", req.Type)
+	fmt.Printf("   - User Exists: %v\n", invitedUserID != nil)
+
 	invitation := &models.Invitation{
 		DocumentID:    documentID,
 		InvitedBy:     user.ID,
@@ -134,10 +145,12 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 
 	result, err := h.invitationCollection.InsertOne(ctx, invitation)
 	if err != nil {
+		fmt.Printf("❌ [INVITATION] Failed to create invitation in database: %v\n", err)
 		helpers.SendInternalError(c, err)
 		return
 	}
 	invitation.ID = result.InsertedID.(primitive.ObjectID)
+	fmt.Printf("✅ [INVITATION] Invitation created in database - ID: %s\n", invitation.ID.Hex())
 
 	// Send invitation email
 	invitedUserName := req.InvitedEmail
@@ -154,6 +167,13 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		teamName = "Validators"
 	}
 
+	fmt.Printf("📧 [INVITATION] Attempting to send invitation email:\n")
+	fmt.Printf("   - To: %s (%s)\n", req.InvitedEmail, invitedUserName)
+	fmt.Printf("   - From: %s %s\n", user.FirstName, user.LastName)
+	fmt.Printf("   - Document: %s (%s)\n", document.Title, document.Reference)
+	fmt.Printf("   - Team: %s\n", teamName)
+	fmt.Printf("   - Token: %s...\n", token[:10])
+
 	err = h.emailService.SendInvitationEmail(
 		req.InvitedEmail,
 		invitedUserName,
@@ -164,8 +184,39 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		token,
 	)
 	if err != nil {
-		fmt.Printf("Failed to send invitation email: %v\n", err)
+		fmt.Printf("❌ [INVITATION] Failed to send invitation email: %v\n", err)
 		// Don't fail the request if email fails
+	} else {
+		fmt.Printf("✅ [INVITATION] Invitation email sent successfully to %s\n", req.InvitedEmail)
+	}
+
+	// Send push notification if user exists
+	if invitedUserID != nil {
+		fmt.Printf("📱 [INVITATION] Sending push notification to existing user %s\n", invitedUserID.Hex())
+		notifTitle := fmt.Sprintf("Document Invitation from %s %s", user.FirstName, user.LastName)
+		notifBody := fmt.Sprintf("You have been invited to collaborate on '%s' as a %s", document.Title, teamName)
+
+		notifReq := &models.SendNotificationRequest{
+			UserIDs:  []string{invitedUserID.Hex()},
+			Title:    notifTitle,
+			Body:     notifBody,
+			Category: models.NotificationCategorySystem,
+			Priority: models.NotificationPriorityHigh,
+			Data: map[string]interface{}{
+				"type":       "invitation",
+				"documentId": documentID.Hex(),
+				"team":       string(req.Team),
+			},
+		}
+
+		_, notifErr := h.notificationService.SendNotification(ctx, notifReq, user.ID)
+		if notifErr != nil {
+			fmt.Printf("❌ [INVITATION] Failed to send push notification: %v\n", notifErr)
+		} else {
+			fmt.Printf("✅ [INVITATION] Push notification sent successfully\n")
+		}
+	} else {
+		fmt.Printf("ℹ️  [INVITATION] Skipping push notification - user does not exist in system yet\n")
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -540,6 +591,13 @@ func (h *InvitationHandler) ResendInvitation(c *gin.Context) {
 		teamName = "Validators"
 	}
 
+	fmt.Printf("📧 [INVITATION RESEND] Attempting to resend invitation email:\n")
+	fmt.Printf("   - To: %s (%s)\n", invitation.InvitedEmail, invitedUserName)
+	fmt.Printf("   - From: %s %s\n", user.FirstName, user.LastName)
+	fmt.Printf("   - Document: %s (%s)\n", document.Title, document.Reference)
+	fmt.Printf("   - Team: %s\n", teamName)
+	fmt.Printf("   - New Token: %s...\n", token[:10])
+
 	err = h.emailService.SendInvitationEmail(
 		invitation.InvitedEmail,
 		invitedUserName,
@@ -550,8 +608,10 @@ func (h *InvitationHandler) ResendInvitation(c *gin.Context) {
 		token,
 	)
 	if err != nil {
-		fmt.Printf("Failed to resend invitation email: %v\n", err)
+		fmt.Printf("❌ [INVITATION RESEND] Failed to resend invitation email: %v\n", err)
 		// Don't fail the request if email fails
+	} else {
+		fmt.Printf("✅ [INVITATION RESEND] Invitation email resent successfully to %s\n", invitation.InvitedEmail)
 	}
 
 	helpers.SendSuccess(c, "Invitation resent successfully", nil)

@@ -206,7 +206,16 @@ func (e *EmailService) SendAccountRejectedEmail(userEmail, userName, reason stri
 
 // SendInvitationEmail sends a collaboration invitation email
 func (e *EmailService) SendInvitationEmail(userEmail, userName, inviterName, documentTitle, documentRef, teamName, invitationToken string) error {
+	fmt.Printf("📧 [EMAIL SERVICE] SendInvitationEmail called:\n")
+	fmt.Printf("   - User Email: %s\n", userEmail)
+	fmt.Printf("   - User Name: %s\n", userName)
+	fmt.Printf("   - Inviter: %s\n", inviterName)
+	fmt.Printf("   - Document: %s (%s)\n", documentTitle, documentRef)
+	fmt.Printf("   - Team: %s\n", teamName)
+	fmt.Printf("   - App URL: %s\n", e.appURL)
+
 	invitationURL := fmt.Sprintf("%s/invitations/accept?token=%s", e.appURL, invitationToken)
+	fmt.Printf("   - Invitation URL: %s\n", invitationURL)
 
 	data := EmailData{
 		UserName:      userName,
@@ -224,19 +233,34 @@ func (e *EmailService) SendInvitationEmail(userEmail, userName, inviterName, doc
 	}
 
 	template := e.getInvitationTemplate()
-	return e.sendEmail(userEmail, userName, template, data)
+	fmt.Printf("   - Template Subject: %s\n", template.Subject)
+
+	err := e.sendEmail(userEmail, userName, template, data)
+	if err != nil {
+		fmt.Printf("❌ [EMAIL SERVICE] sendEmail returned error: %v\n", err)
+	} else {
+		fmt.Printf("✅ [EMAIL SERVICE] sendEmail completed successfully\n")
+	}
+	return err
 }
 
 func (e *EmailService) sendEmail(toEmail, toName string, emailTemplate EmailTemplate, data EmailData) error {
+	fmt.Printf("📧 [SEND EMAIL] Starting email send process\n")
+	fmt.Printf("   - To: %s (%s)\n", toEmail, toName)
+	fmt.Printf("   - Subject: %s\n", emailTemplate.Subject)
+	fmt.Printf("   - SMTP Configured: %v\n", e.smtpUsername != "" && e.smtpPassword != "")
+
 	// Skip sending email if SMTP is not configured
 	if e.smtpUsername == "" || e.smtpPassword == "" {
 		fmt.Printf("⚠️ Email not sent (SMTP not configured): %s to %s\n", emailTemplate.Subject, toEmail)
 		return nil
 	}
 
+	fmt.Printf("   - Parsing templates...\n")
 	// Parse and execute template
 	htmlTemplate, err := template.New("html").Parse(emailTemplate.HTMLBody)
 	if err != nil {
+		fmt.Printf("❌ [SEND EMAIL] Failed to parse HTML template: %v\n", err)
 		return fmt.Errorf("failed to parse HTML template: %w", err)
 	}
 

@@ -39,8 +39,16 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
+
+	fmt.Printf("📄 [DOCUMENT] Creating new document:\n")
+	fmt.Printf("   - Reference: %s\n", req.Reference)
+	fmt.Printf("   - Title: %s\n", req.Title)
+	fmt.Printf("   - Version: %s\n", req.Version)
+	fmt.Printf("   - Created By: %s %s (%s)\n", user.FirstName, user.LastName, user.ID.Hex())
+
 	document, err := h.documentService.Create(ctx, &req, user.ID)
 	if err != nil {
+		fmt.Printf("❌ [DOCUMENT] Failed to create document: %v\n", err)
 		if err.Error() == "document reference already exists" {
 			helpers.SendBadRequest(c, err.Error())
 			return
@@ -48,6 +56,8 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 		helpers.SendInternalError(c, err)
 		return
 	}
+
+	fmt.Printf("✅ [DOCUMENT] Document created successfully - ID: %s\n", document.ID.Hex())
 
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
