@@ -242,7 +242,6 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
       processSteps: [],
     };
     const updated = [...groups, newGroup];
-    setGroups(updated);
     setExpandedGroups(new Set([...expandedGroups, newGroup.id]));
     autoSave(updated);
   };
@@ -251,14 +250,12 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     const updated = groups.map((g) =>
       g.id === groupId ? { ...g, title: newTitle } : g
     );
-    setGroups(updated);
     await autoSave(updated);
   };
 
   const deleteGroup = (groupId: string) => {
     if (confirm(t('processFlow.deleteGroupConfirm'))) {
       const updated = groups.filter((g) => g.id !== groupId);
-      setGroups(updated);
       autoSave(updated);
     }
   };
@@ -283,7 +280,6 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         ? { ...g, processSteps: [...g.processSteps, newStep] }
         : g
     );
-    setGroups(updated);
     setExpandedSteps(new Set([...expandedSteps, newStep.id]));
     autoSave(updated);
   };
@@ -303,7 +299,6 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         ),
       };
     });
-    setGroups(updated);
     await autoSave(updated);
   };
 
@@ -314,7 +309,6 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
           ? { ...g, processSteps: g.processSteps.filter((s) => s.id !== stepId) }
           : g
       );
-      setGroups(updated);
       autoSave(updated);
     }
   };
@@ -332,7 +326,6 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         ),
       };
     });
-    setGroups(updated);
     await autoSave(updated);
   };
 
@@ -348,7 +341,6 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         ),
       };
     });
-    setGroups(updated);
     await autoSave(updated);
   };
 
@@ -365,7 +357,6 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         order: idx + 1,
       }));
 
-      setGroups(reordered);
       autoSave(reordered);
     }
   };
@@ -388,7 +379,6 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         return { ...g, processSteps: reordered };
       });
 
-      setGroups(updated);
       autoSave(updated);
     }
   };
