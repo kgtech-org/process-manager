@@ -32,6 +32,7 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const onSaveRef = useRef(onSave);
+  const lastSavedValueRef = useRef(value);
 
   // Keep onSaveRef updated
   useEffect(() => {
@@ -71,14 +72,18 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
   }, [isEditing, autoSave, localValue, value, isSaving]);
 
   const handleSave = async () => {
-    if (localValue.trim() === value.trim()) {
+    const trimmedValue = localValue.trim();
+
+    // Skip save if value hasn't changed
+    if (trimmedValue === value.trim() || trimmedValue === lastSavedValueRef.current) {
       setIsEditing(false);
       return;
     }
 
     setIsSaving(true);
     try {
-      await onSave(localValue.trim());
+      await onSave(trimmedValue);
+      lastSavedValueRef.current = trimmedValue;
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to save:', error);
@@ -94,6 +99,12 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Explicitly allow spacebar and other typing characters
+    if (e.key === ' ') {
+      // Don't prevent default - allow normal space character input
+      return;
+    }
+
     if (e.key === 'Enter' && !multiline) {
       e.preventDefault();
       if (autoSave) {
@@ -109,7 +120,12 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
     }
   };
 
-  const handleBlur = () => {
+  const handleBlur = (e: React.FocusEvent) => {
+    // Don't save if focus is still within the component (e.g., clicking buttons)
+    if (e.currentTarget.contains(e.relatedTarget as Node)) {
+      return;
+    }
+
     if (autoSave && !isSaving) {
       handleSave();
     }
