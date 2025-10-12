@@ -48,11 +48,28 @@ export default function DocumentDetailPage() {
       const data = await DocumentResource.getById(documentId);
       setDocument(data);
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to load document',
-        description: error.message || 'An error occurred',
-      });
+      const status = error.response?.status;
+      const errorCode = error.response?.data?.code;
+
+      if (status === 403 || errorCode === 'FORBIDDEN') {
+        toast({
+          variant: 'destructive',
+          title: 'Access Denied',
+          description: 'You do not have permission to access this document. Please request an invitation from the document owner.',
+        });
+      } else if (status === 404) {
+        toast({
+          variant: 'destructive',
+          title: 'Document Not Found',
+          description: 'The requested document does not exist.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to load document',
+          description: error.response?.data?.message || error.message || 'An error occurred',
+        });
+      }
       router.push('/documents');
     } finally {
       setLoading(false);

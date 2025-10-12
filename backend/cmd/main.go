@@ -97,6 +97,7 @@ func main() {
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtService, userService)
 	activityLogMiddleware := middleware.NewActivityLogMiddleware(activityLogService)
+	documentMiddleware := middleware.NewDocumentMiddleware(db.Database)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService, minioService)
@@ -177,7 +178,7 @@ func main() {
 		routes.SetupActivityLogRoutes(api, activityLogHandler, authMiddleware)
 		routes.SetupEmailRoutes(api, emailHandler, authMiddleware)
 		routes.SetupNotificationRoutes(api, notificationHandler, authMiddleware)
-		routes.SetupDocumentRoutes(api, documentHandler, permissionHandler, signatureHandler, authMiddleware)
+		routes.SetupDocumentRoutes(api, documentHandler, permissionHandler, signatureHandler, authMiddleware, documentMiddleware)
 		routes.RegisterInvitationRoutes(api, invitationHandler, authMiddleware)
 		routes.SetupUserSignatureRoutes(api, userSignatureHandler, authMiddleware)
 	}
