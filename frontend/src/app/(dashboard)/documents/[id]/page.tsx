@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DocumentResource, type Document } from '@/lib/resources';
 import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
@@ -127,6 +127,11 @@ export default function DocumentDetailPage() {
       });
     }
   };
+
+  const handleProcessFlowUpdate = useCallback(async (processGroups: any) => {
+    await DocumentResource.update(documentId, { processGroups, isAutosave: true });
+    // Don't update local state - ProcessFlowEditor manages its own state
+  }, [documentId]);
 
   if (loading) {
     return (
@@ -274,11 +279,7 @@ export default function DocumentDetailPage() {
       <ProcessFlowEditor
         processGroups={document.processGroups}
         documentId={documentId}
-        onUpdate={async (processGroups) => {
-          await DocumentResource.update(documentId, { processGroups, isAutosave: true });
-          // Update local state without reloading
-          setDocument((prev) => prev ? { ...prev, processGroups } : null);
-        }}
+        onUpdate={handleProcessFlowUpdate}
         readOnly={document.status !== 'draft'}
       />
 
