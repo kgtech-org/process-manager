@@ -271,7 +271,15 @@ export default function DocumentDetailPage() {
       </Tabs>
 
       {/* Process Flow Visualization */}
-      <ProcessFlowVisualization processGroups={document.processGroups} />
+      <ProcessFlowVisualization
+        processGroups={document.processGroups}
+        documentId={documentId}
+        canEdit={document.status === 'draft'}
+        onUpdate={async (processGroups) => {
+          await DocumentResource.update(documentId, { processGroups });
+          await loadDocument();
+        }}
+      />
 
       {/* Invitation Modal */}
       <InvitationModal

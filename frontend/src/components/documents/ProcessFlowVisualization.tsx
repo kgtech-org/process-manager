@@ -13,18 +13,31 @@ import {
   User,
   ArrowRight,
   List,
+  Edit,
+  Plus,
+  Trash2,
+  Save,
+  X,
 } from 'lucide-react';
 import type { ProcessGroup, ProcessStep, ProcessDescription } from '@/types/document';
 
 interface ProcessFlowVisualizationProps {
   processGroups: ProcessGroup[];
+  documentId?: string;
+  canEdit?: boolean;
+  onUpdate?: (processGroups: ProcessGroup[]) => Promise<void>;
 }
 
 export const ProcessFlowVisualization: React.FC<ProcessFlowVisualizationProps> = ({
   processGroups,
+  documentId,
+  canEdit = false,
+  onUpdate,
 }) => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+  const [editMode, setEditMode] = useState(false);
+  const [localGroups, setLocalGroups] = useState<ProcessGroup[]>(processGroups);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => {
@@ -64,13 +77,54 @@ export const ProcessFlowVisualization: React.FC<ProcessFlowVisualizationProps> =
     setExpandedSteps(new Set());
   };
 
-  if (!processGroups || processGroups.length === 0) {
+  const handleAddGroup = () => {
+    const newGroup: ProcessGroup = {
+      id: `group-${Date.now()}`,
+      title: 'New Process Group',
+      order: localGroups.length + 1,
+      processSteps: [],
+    };
+    setLocalGroups([...localGroups, newGroup]);
+    setExpandedGroups(new Set([...expandedGroups, newGroup.id]));
+  };
+
+  const handleDeleteGroup = (groupId: string) => {
+    if (confirm('Are you sure you want to delete this process group?')) {
+      setLocalGroups(localGroups.filter((g) => g.id !== groupId));
+    }
+  };
+
+  const handleSave = async () => {
+    if (onUpdate) {
+      try {
+        await onUpdate(localGroups);
+        setEditMode(false);
+      } catch (error) {
+        console.error('Failed to save process groups:', error);
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    setLocalGroups(processGroups);
+    setEditMode(false);
+  };
+
+  const displayGroups = editMode ? localGroups : processGroups;
+
+  if (!displayGroups || displayGroups.length === 0) {
     return (
       <Card>
         <CardContent className="py-8">
           <div className="text-center text-muted-foreground">
             <List className="h-12 w-12 mx-auto mb-2 opacity-20" />
-            <p>No process groups defined yet</p>
+            <p className="mb-4">No process groups defined yet</p>
+            {canEdit && (
+              <Button onClick={() => { setEditMode(true); handleAddGroup(); }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add First Process Group
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -83,51 +137,107 @@ export const ProcessFlowVisualization: React.FC<ProcessFlowVisualizationProps> =
         <div className="flex items-center justify-between">
           <CardTitle>Process Flow</CardTitle>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={expandAll}
-            >
-              Expand All
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={collapseAll}
-            >
-              Collapse All
-            </Button>
+            {editMode ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddGroup}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Group
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleSave}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancel}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
+                {canEdit && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditMode(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={expandAll}
+                >
+                  Expand All
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={collapseAll}
+                >
+                  Collapse All
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {processGroups.map((group, groupIndex) => {
+        {displayGroups.map((group, groupIndex) => {
           const isGroupExpanded = expandedGroups.has(group.id);
 
           return (
             <div key={group.id} className="space-y-3">
               {/* Process Group Header */}
-              <button
-                onClick={() => toggleGroup(group.id)}
-                className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors text-left"
-              >
-                {isGroupExpanded ? (
-                  <ChevronDown className="h-5 w-5 text-primary flex-shrink-0" />
-                ) : (
-                  <ChevronRight className="h-5 w-5 text-primary flex-shrink-0" />
-                )}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="default" className="font-mono">
-                      {group.order}
-                    </Badge>
-                    <h3 className="font-semibold text-lg">{group.title}</h3>
+              <div className="relative">
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors text-left"
+                >
+                  {isGroupExpanded ? (
+                    <ChevronDown className="h-5 w-5 text-primary flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 text-primary flex-shrink-0" />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default" className="font-mono">
+                        {group.order}
+                      </Badge>
+                      <h3 className="font-semibold text-lg">{group.title}</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {group.processSteps.length} step{group.processSteps.length !== 1 ? 's' : ''}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {group.processSteps.length} step{group.processSteps.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </button>
+                </button>
+                {editMode && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteGroup(group.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
 
               {/* Process Steps */}
               {isGroupExpanded && (
@@ -252,7 +362,7 @@ export const ProcessFlowVisualization: React.FC<ProcessFlowVisualizationProps> =
               )}
 
               {/* Separator between groups */}
-              {groupIndex < processGroups.length - 1 && (
+              {groupIndex < displayGroups.length - 1 && (
                 <Separator className="my-4" />
               )}
             </div>
