@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/lib/i18n';
@@ -199,8 +200,14 @@ export const Navigation: React.FC = () => {
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-gray-200">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">PM</span>
+              <div className="w-10 h-10 relative">
+                <Image
+                  src="/logo.png"
+                  alt="YAS Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
               <span className="text-xl font-bold text-gray-900">Process Manager</span>
             </div>
