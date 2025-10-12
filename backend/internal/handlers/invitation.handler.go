@@ -126,14 +126,6 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	}
 
 	// Create invitation
-	fmt.Printf("📬 [INVITATION] Creating new invitation:\n")
-	fmt.Printf("   - Document: %s (%s)\n", document.Title, document.Reference)
-	fmt.Printf("   - Invited Email: %s\n", req.InvitedEmail)
-	fmt.Printf("   - Invited By: %s %s (%s)\n", user.FirstName, user.LastName, user.ID.Hex())
-	fmt.Printf("   - Team: %s\n", req.Team)
-	fmt.Printf("   - Type: %s\n", req.Type)
-	fmt.Printf("   - User Exists: %v\n", invitedUserID != nil)
-
 	invitation := &models.Invitation{
 		DocumentID:    documentID,
 		InvitedBy:     user.ID,
@@ -148,12 +140,10 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 
 	result, err := h.invitationCollection.InsertOne(ctx, invitation)
 	if err != nil {
-		fmt.Printf("❌ [INVITATION] Failed to create invitation in database: %v\n", err)
 		helpers.SendInternalError(c, err)
 		return
 	}
 	invitation.ID = result.InsertedID.(primitive.ObjectID)
-	fmt.Printf("✅ [INVITATION] Invitation created in database - ID: %s\n", invitation.ID.Hex())
 
 	// Send invitation email
 	invitedUserName := req.InvitedEmail
@@ -186,7 +176,6 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 
 	// Send push notification if user exists
 	if invitedUserID != nil {
-		fmt.Printf("📱 [INVITATION] Sending push notification to existing user %s\n", invitedUserID.Hex())
 		notifTitle := fmt.Sprintf("Document Invitation from %s %s", user.FirstName, user.LastName)
 		notifBody := fmt.Sprintf("You have been invited to collaborate on '%s' as a %s", document.Title, teamName)
 
@@ -205,12 +194,8 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 
 		_, notifErr := h.notificationService.SendNotification(ctx, notifReq, user.ID)
 		if notifErr != nil {
-			fmt.Printf("❌ [INVITATION] Failed to send push notification: %v\n", notifErr)
-		} else {
-			fmt.Printf("✅ [INVITATION] Push notification sent successfully\n")
+			fmt.Printf("Failed to send push notification: %v\n", notifErr)
 		}
-	} else {
-		fmt.Printf("ℹ️  [INVITATION] Skipping push notification - user does not exist in system yet\n")
 	}
 
 	// Log activity
@@ -235,7 +220,7 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	}
 	logErr := h.activityLogService.LogActivity(ctx, activityReq, c)
 	if logErr != nil {
-		fmt.Printf("⚠️  [INVITATION] Failed to log activity: %v\n", logErr)
+		fmt.Printf("Failed to log activity: %v\n", logErr)
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
