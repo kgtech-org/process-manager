@@ -458,7 +458,10 @@ const (
 
 **Note**: All services run in containers. No need to install Go, Node.js, MongoDB, Redis, or MinIO locally.
 
-### Quick Start (Development)
+### Quick Start (Development Mode with Hot-Reload)
+
+For development with automatic code reloading:
+
 ```bash
 # Clone the repository
 git clone https://github.com/kodesonik/process-manager.git
@@ -467,15 +470,39 @@ cd process-manager
 # Copy environment file
 cp .env.example .env
 
-# Start all services in development mode
+# Start all services in development mode with hot-reload
+docker-compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f backend frontend
+
+# Access the application
+# Frontend: http://localhost:3000 (Next.js dev server with Fast Refresh)
+# Backend API: http://localhost:8080 (Go with Air hot-reload)
+# MinIO Console: http://localhost:9001
+# MongoDB Admin: http://localhost:8081
+```
+
+**Development Features:**
+- ✅ **Backend Hot-Reload**: Go code changes trigger automatic rebuild via Air
+- ✅ **Frontend Hot-Reload**: React/Next.js Fast Refresh for instant updates
+- ✅ **Volume Mounts**: Source code mounted for real-time changes
+- ✅ **Debug Mode**: Enhanced logging and error reporting
+
+### Quick Start (Production Mode)
+
+For production-like environment:
+
+```bash
+# Start all services in production mode
 docker-compose up -d
 
 # View logs
 docker-compose logs -f backend frontend
 
 # Access the application
-# Frontend: http://localhost:3000
-# Backend API: http://localhost:8080
+# Frontend: http://localhost
+# Backend API: http://localhost/api
 # MinIO Console: http://localhost:9001
 ```
 
