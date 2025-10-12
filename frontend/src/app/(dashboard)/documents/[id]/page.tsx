@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { DocumentResource, type Document } from '@/lib/resources';
 import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
 import { ProcessFlowEditor } from '@/components/documents/ProcessFlowEditor';
-import { InvitationModal, PermissionManager, SignaturePanel } from '@/components/collaboration';
+import { InvitationModal, SignaturePanel } from '@/components/collaboration';
 import { DocumentInvitationsList } from '@/components/invitations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -243,7 +243,7 @@ export default function DocumentDetailPage() {
           <TabsTrigger value="process-flow">Process Flow</TabsTrigger>
           <TabsTrigger value="metadata">Metadata</TabsTrigger>
           <TabsTrigger value="annexes">Annexes</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsTrigger value="activity">Signatures & Contributors</TabsTrigger>
         </TabsList>
 
         {/* Process Flow Tab */}
@@ -359,28 +359,17 @@ export default function DocumentDetailPage() {
           </Card>
         </TabsContent>
 
-        {/* Activity Tab */}
+        {/* Signatures & Contributors Tab */}
         <TabsContent value="activity" className="space-y-4">
-          <Tabs defaultValue="signatures" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="signatures">Signatures & Contributors</TabsTrigger>
-              <TabsTrigger value="permissions">Permissions</TabsTrigger>
-              <TabsTrigger value="invitations">Invitations</TabsTrigger>
-            </TabsList>
-            <TabsContent value="signatures">
-              <SignaturePanel
-                documentId={documentId}
-                document={document}
-                onSignatureAdded={loadDocument}
-              />
-            </TabsContent>
-            <TabsContent value="permissions">
-              <PermissionManager documentId={documentId} />
-            </TabsContent>
-            <TabsContent value="invitations">
-              <DocumentInvitationsList documentId={documentId} />
-            </TabsContent>
-          </Tabs>
+          {/* Signatures & Contributors */}
+          <SignaturePanel
+            documentId={documentId}
+            document={document}
+            onSignatureAdded={loadDocument}
+          />
+
+          {/* Invitations */}
+          <DocumentInvitationsList documentId={documentId} />
         </TabsContent>
       </Tabs>
 
