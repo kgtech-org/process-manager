@@ -194,40 +194,41 @@ export const ProfileForm: React.FC = () => {
                 />
               </div>
 
-              {/* Phone Number */}
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('profile.phone')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="tel"
-                        placeholder="+228 90 12 34 56"
-                        {...field}
-                        disabled={isUpdating}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Email and Phone in same column */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormItem>
+                  <FormLabel>{t('profile.email')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      value={user.email}
+                      disabled
+                      className="bg-gray-50"
+                    />
+                  </FormControl>
+                  <p className="text-xs text-gray-500">
+                    Email address cannot be changed. Contact admin for changes.
+                  </p>
+                </FormItem>
 
-              {/* Email (Read-only) */}
-              <FormItem>
-                <FormLabel>{t('profile.email')}</FormLabel>
-                <FormControl>
-                  <Input 
-                    value={user.email} 
-                    disabled 
-                    className="bg-gray-50"
-                  />
-                </FormControl>
-                <p className="text-xs text-gray-500">
-                  Email address cannot be changed. Contact admin for changes.
-                </p>
-              </FormItem>
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('profile.phone')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          placeholder="+228 90 12 34 56"
+                          {...field}
+                          disabled={isUpdating}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {/* Organizational Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

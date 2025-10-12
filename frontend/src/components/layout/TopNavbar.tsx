@@ -7,7 +7,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { TokenStatus } from '@/components/auth/TokenStatus';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import {
@@ -137,13 +136,8 @@ export const TopNavbar: React.FC = () => {
               })}
             </div>
 
-            {/* Right side - Language Switcher, Token Status, and User Menu */}
+            {/* Right side - Language Switcher and User Menu */}
             <div className="flex items-center space-x-4">
-              {/* Token Status */}
-              <div className="hidden sm:block">
-                <TokenStatus showRefreshButton={false} className="text-xs" />
-              </div>
-
               {/* Language Switcher */}
               <div className="hidden sm:block">
                 <LanguageSwitcher />
@@ -235,7 +229,6 @@ export const TopNavbar: React.FC = () => {
             <div className="border-t border-gray-200 pt-4 pb-3">
               <div className="px-4 space-y-3">
                 <LanguageSwitcher />
-                <TokenStatus showRefreshButton={false} className="text-xs" />
               </div>
             </div>
           </div>
