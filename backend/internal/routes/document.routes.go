@@ -29,6 +29,7 @@ func SetupDocumentRoutes(
 
 		// Document actions (require document access)
 		documents.POST("/:id/duplicate", documentMiddleware.RequireDocumentAccess(), documentHandler.DuplicateDocument)
+		documents.POST("/:id/publish", documentMiddleware.RequireDocumentAccess(), documentHandler.PublishDocument)
 		documents.GET("/:id/versions", documentMiddleware.RequireDocumentAccess(), documentHandler.GetDocumentVersions)
 
 		// Permissions (require document access)

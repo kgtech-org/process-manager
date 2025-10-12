@@ -33,9 +33,10 @@ const (
 type SignatureStatus string
 
 const (
-	SignatureStatusPending SignatureStatus = "pending"
-	SignatureStatusSigned  SignatureStatus = "signed"
-	SignatureStatusRejected SignatureStatus = "rejected"
+	SignatureStatusJoined   SignatureStatus = "joined"   // Contributor has joined but document not published yet
+	SignatureStatusPending  SignatureStatus = "pending"  // Document published, waiting for signature
+	SignatureStatusSigned   SignatureStatus = "signed"   // Contributor has signed
+	SignatureStatusRejected SignatureStatus = "rejected" // Contributor rejected
 )
 
 // AnnexType represents the type of annex

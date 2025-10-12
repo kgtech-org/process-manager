@@ -57,7 +57,7 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 		req.Contributors.Validators = make([]models.Contributor, 0)
 	}
 
-	// Add the document owner as an author
+	// Add the document owner as an author with 'joined' status
 	now := time.Now()
 	ownerContributor := models.Contributor{
 		UserID:     userID,
@@ -65,7 +65,7 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 		Title:      "", // Will be populated from job position if needed
 		Department: "", // Will be populated from department if needed
 		Team:       models.ContributorTeamAuthors,
-		Status:     models.SignatureStatusPending,
+		Status:     models.SignatureStatusJoined,
 		InvitedAt:  now,
 	}
 	req.Contributors.Authors = append(req.Contributors.Authors, ownerContributor)
@@ -382,6 +382,69 @@ func (s *DocumentService) Update(ctx context.Context, id primitive.ObjectID, req
 		if err != nil {
 			fmt.Printf("Failed to create version: %v\n", err)
 		}
+	}
+
+	return &updatedDocument, nil
+}
+
+// Publish publishes a document for signature
+// Sets all contributors with 'joined' status to 'pending' signature
+// Changes document status to 'author_review'
+func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*models.Document, error) {
+	// Get existing document
+	document, err := s.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if document is in draft status
+	if document.Status != models.DocumentStatusDraft {
+		return nil, errors.New("only draft documents can be published")
+	}
+
+	// Update all contributors with 'joined' status to 'pending'
+	now := time.Now()
+
+	// Update authors
+	for i := range document.Contributors.Authors {
+		if document.Contributors.Authors[i].Status == models.SignatureStatusJoined {
+			document.Contributors.Authors[i].Status = models.SignatureStatusPending
+		}
+	}
+
+	// Update verifiers
+	for i := range document.Contributors.Verifiers {
+		if document.Contributors.Verifiers[i].Status == models.SignatureStatusJoined {
+			document.Contributors.Verifiers[i].Status = models.SignatureStatusPending
+		}
+	}
+
+	// Update validators
+	for i := range document.Contributors.Validators {
+		if document.Contributors.Validators[i].Status == models.SignatureStatusJoined {
+			document.Contributors.Validators[i].Status = models.SignatureStatusPending
+		}
+	}
+
+	// Update document
+	update := bson.M{
+		"$set": bson.M{
+			"contributors": document.Contributors,
+			"status":       models.DocumentStatusAuthorReview,
+			"updated_at":   now,
+		},
+	}
+
+	result := s.collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": id},
+		update,
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	)
+
+	var updatedDocument models.Document
+	if err := result.Decode(&updatedDocument); err != nil {
+		return nil, fmt.Errorf("failed to publish document: %w", err)
 	}
 
 	return &updatedDocument, nil

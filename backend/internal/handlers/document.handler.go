@@ -325,6 +325,52 @@ func (h *DocumentHandler) DuplicateDocument(c *gin.Context) {
 	})
 }
 
+// PublishDocument publishes a document for signature
+// POST /api/documents/:id/publish
+func (h *DocumentHandler) PublishDocument(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	ctx := c.Request.Context()
+	document, err := h.documentService.Publish(ctx, id)
+	if err != nil {
+		if err.Error() == "document not found" {
+			helpers.SendNotFound(c, "Document not found")
+			return
+		}
+		if err.Error() == "only draft documents can be published" {
+			helpers.SendBadRequest(c, err.Error())
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Log activity
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_published",
+		Description:  fmt.Sprintf("Published document '%s' (%s) for signature", document.Title, document.Reference),
+		ResourceType: "document",
+		ResourceID:   &document.ID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId": document.ID.Hex(),
+			"reference":  document.Reference,
+			"title":      document.Title,
+			"status":     string(document.Status),
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log activity: %v\n", logErr)
+	}
+
+	helpers.SendSuccess(c, "Document published successfully", document.ToResponse())
+}
+
 // GetDocumentVersions retrieves all versions of a document
 // GET /api/documents/:id/versions
 func (h *DocumentHandler) GetDocumentVersions(c *gin.Context) {

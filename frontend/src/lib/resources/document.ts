@@ -13,7 +13,7 @@ export type DocumentStatus =
   | 'archived';
 
 export type ContributorTeam = 'authors' | 'verifiers' | 'validators';
-export type SignatureStatus = 'pending' | 'signed' | 'rejected';
+export type SignatureStatus = 'joined' | 'pending' | 'signed' | 'rejected';
 export type AnnexType = 'diagram' | 'table' | 'text' | 'file';
 
 export interface Contributor {
@@ -228,6 +228,15 @@ export class DocumentResource {
    */
   static async duplicate(documentId: string): Promise<Document> {
     const response = await apiClient.post(`/documents/${documentId}/duplicate`);
+    return response.data;
+  }
+
+  /**
+   * Publish a document for signature
+   * Changes all 'joined' contributors to 'pending' signature status
+   */
+  static async publish(documentId: string): Promise<Document> {
+    const response = await apiClient.post(`/documents/${documentId}/publish`);
     return response.data;
   }
 

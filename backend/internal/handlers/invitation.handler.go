@@ -435,14 +435,14 @@ func (h *InvitationHandler) AcceptInvitation(c *gin.Context) {
 
 	// Only add contributor if they don't already exist
 	if !userExists {
-		// Create contributor entry
+		// Create contributor entry with 'joined' status
 		contributor := models.Contributor{
 			UserID:     user.ID,
 			Name:       user.FirstName + " " + user.LastName,
 			Title:      "", // Can be set later
 			Department: "", // Can be set later
 			Team:       invitation.Team,
-			Status:     models.SignatureStatusPending,
+			Status:     models.SignatureStatusJoined,
 			InvitedAt:  invitation.CreatedAt,
 		}
 
