@@ -65,10 +65,8 @@ function SortableGroup({ id, children }: { id: string; children: React.ReactNode
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      <div {...listeners} className="inline-block">
-        {children}
-      </div>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="w-full">
+      {children}
     </div>
   );
 }
@@ -91,10 +89,8 @@ function SortableStep({ id, children }: { id: string; children: React.ReactNode 
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      <div {...listeners} className="inline-block">
-        {children}
-      </div>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="w-full">
+      {children}
     </div>
   );
 }
@@ -111,9 +107,13 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  // Drag and drop sensors
+  // Drag and drop sensors with activation constraint
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
