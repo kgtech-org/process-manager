@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { dashboardApi } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import { ActivityLogResource } from '@/lib/resources/activity-log';
+import { DocumentResource } from '@/lib/resources/document';
+import { InvitationResource } from '@/lib/resources/invitation';
 import type { ActivityLog, ActivityAction, ActivityCategory } from '@/types/activity-log';
 import { PendingInvitationsWidget } from '@/components/invitations';
 
@@ -58,6 +60,10 @@ export default function DashboardPage() {
   const [recentActivityLogs, setRecentActivityLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingActivity, setLoadingActivity] = useState(true);
+  const [userStats, setUserStats] = useState({
+    myDocuments: 0,
+    pendingInvitations: 0,
+  });
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -114,8 +120,35 @@ export default function DashboardPage() {
       }
     };
 
+    const fetchUserStats = async () => {
+      if (user?.role === 'admin') {
+        return; // Admin sees system stats, not user stats
+      }
+
+      try {
+        // Fetch user's documents count
+        const documentsResponse = await DocumentResource.getPaginated({ page: 1, limit: 1 });
+
+        // Fetch pending invitations count
+        const invitationsResponse = await InvitationResource.list({
+          page: 1,
+          limit: 1,
+          status: 'pending',
+          forMe: true
+        });
+
+        setUserStats({
+          myDocuments: documentsResponse.pagination?.total || 0,
+          pendingInvitations: invitationsResponse.pagination?.total || 0,
+        });
+      } catch (error) {
+        console.error('Failed to fetch user stats:', error);
+      }
+    };
+
     fetchDashboardData();
     fetchRecentActivity();
+    fetchUserStats();
   }, [user?.role]);
 
   const getActivityIcon = (action: ActivityAction, success: boolean = true) => {
@@ -365,7 +398,7 @@ export default function DashboardPage() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0</div>
+                <div className="text-2xl font-bold">{userStats.myDocuments}</div>
                 <p className="text-xs text-gray-600">
                   Documents you created or contributed to
                 </p>
@@ -380,7 +413,7 @@ export default function DashboardPage() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0</div>
+                <div className="text-2xl font-bold">{userStats.pendingInvitations}</div>
                 <p className="text-xs text-gray-600">
                   Invitations awaiting your response
                 </p>
