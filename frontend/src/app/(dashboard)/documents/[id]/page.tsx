@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DocumentResource, type Document } from '@/lib/resources';
 import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
-import { ProcessFlowVisualization } from '@/components/documents/ProcessFlowVisualization';
+import { ProcessFlowEditor } from '@/components/documents/ProcessFlowEditor';
 import { InvitationModal, PermissionManager, SignaturePanel } from '@/components/collaboration';
 import { DocumentInvitationsList } from '@/components/invitations';
 import { Button } from '@/components/ui/button';
@@ -270,15 +270,15 @@ export default function DocumentDetailPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Process Flow Visualization */}
-      <ProcessFlowVisualization
+      {/* Process Flow Editor */}
+      <ProcessFlowEditor
         processGroups={document.processGroups}
         documentId={documentId}
-        canEdit={document.status === 'draft'}
         onUpdate={async (processGroups) => {
           await DocumentResource.update(documentId, { processGroups });
           await loadDocument();
         }}
+        readOnly={document.status !== 'draft'}
       />
 
       {/* Invitation Modal */}
