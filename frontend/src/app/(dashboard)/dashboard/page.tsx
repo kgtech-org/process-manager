@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { dashboardApi } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import { ActivityLogResource } from '@/lib/resources/activity-log';
@@ -474,31 +475,31 @@ export default function DashboardPage() {
             <div className="space-y-4">
               {recentActivityLogs.map((log) => (
                 <div key={log.id} className="flex items-start space-x-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
-                  <div className="flex-shrink-0 mt-1">
-                    {getActivityIcon(log.action, log.success)}
+                  <div className="flex-shrink-0">
+                    <Avatar className="w-8 h-8">
+                      {log.actorAvatar && (
+                        <AvatarImage src={log.actorAvatar} alt={log.actorName} />
+                      )}
+                      <AvatarFallback className="text-xs">
+                        {log.actorName ? log.actorName.split(' ').map(n => n[0]).join('').toUpperCase() : '?'}
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900">
-                        {log.description}
-                      </p>
-                      {getActivityBadge(log.action, log.success)}
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-gray-900">
+                          {log.actorName}
+                        </p>
+                        {getActivityBadge(log.action, log.success)}
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {formatTimestamp(log.timestamp)}
+                      </span>
                     </div>
-                    <div className="flex items-center mt-1 text-xs text-gray-500">
-                      <span>{formatTimestamp(log.timestamp)}</span>
-                      {log.actorName && (
-                        <>
-                          <span className="mx-1">•</span>
-                          <span>{log.actorName}</span>
-                        </>
-                      )}
-                      {log.ipAddress && (
-                        <>
-                          <span className="mx-1">•</span>
-                          <span>{log.ipAddress}</span>
-                        </>
-                      )}
-                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {log.description}
+                    </p>
                     {log.errorMessage && !log.success && (
                       <p className="text-xs text-red-600 mt-1">{log.errorMessage}</p>
                     )}
