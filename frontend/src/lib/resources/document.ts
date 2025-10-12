@@ -137,6 +137,7 @@ export interface UpdateDocumentRequest {
   metadata?: DocumentMetadata;
   processGroups?: ProcessGroup[];
   annexes?: Annex[];
+  isAutosave?: boolean; // Skip activity logging for autosave operations
 }
 
 export interface DocumentFilter {

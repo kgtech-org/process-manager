@@ -208,6 +208,7 @@ type UpdateDocumentRequest struct {
 	Metadata      *DocumentMetadata `json:"metadata"`
 	ProcessGroups *[]ProcessGroup   `json:"processGroups"`
 	Annexes       *[]Annex          `json:"annexes"`
+	IsAutosave    *bool             `json:"isAutosave"` // Skip activity logging for autosave operations
 }
 
 // DocumentFilter represents filtering options for documents

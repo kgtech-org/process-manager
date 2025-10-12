@@ -275,7 +275,7 @@ export default function DocumentDetailPage() {
         processGroups={document.processGroups}
         documentId={documentId}
         onUpdate={async (processGroups) => {
-          await DocumentResource.update(documentId, { processGroups });
+          await DocumentResource.update(documentId, { processGroups, isAutosave: true });
           // Update local state without reloading
           setDocument((prev) => prev ? { ...prev, processGroups } : null);
         }}

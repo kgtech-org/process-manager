@@ -214,23 +214,25 @@ func (h *DocumentHandler) UpdateDocument(c *gin.Context) {
 		return
 	}
 
-	// Log activity
-	activityReq := models.ActivityLogRequest{
-		Action:       "document_updated",
-		Description:  fmt.Sprintf("Updated document '%s' (%s)", document.Title, document.Reference),
-		ResourceType: "document",
-		ResourceID:   &document.ID,
-		Success:      true,
-		Details: map[string]interface{}{
-			"documentId":   document.ID.Hex(),
-			"reference":    document.Reference,
-			"title":        document.Title,
-			"version":      document.Version,
-			"status":       string(document.Status),
-		},
-	}
-	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
-		fmt.Printf("Failed to log activity: %v\n", logErr)
+	// Log activity (skip for autosave operations)
+	if req.IsAutosave == nil || !*req.IsAutosave {
+		activityReq := models.ActivityLogRequest{
+			Action:       "document_updated",
+			Description:  fmt.Sprintf("Updated document '%s' (%s)", document.Title, document.Reference),
+			ResourceType: "document",
+			ResourceID:   &document.ID,
+			Success:      true,
+			Details: map[string]interface{}{
+				"documentId": document.ID.Hex(),
+				"reference":  document.Reference,
+				"title":      document.Title,
+				"version":    document.Version,
+				"status":     string(document.Status),
+			},
+		}
+		if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+			fmt.Printf("Failed to log activity: %v\n", logErr)
+		}
 	}
 
 	helpers.SendSuccess(c, "Document updated successfully", document.ToResponse())
