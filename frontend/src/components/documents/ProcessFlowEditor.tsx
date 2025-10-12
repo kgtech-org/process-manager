@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@/lib/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   onUpdate,
   readOnly = false,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('documents');
   const [groups, setGroups] = useState<ProcessGroup[]>(initialGroups);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
