@@ -246,12 +246,12 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     autoSave(updated);
   };
 
-  const updateGroupTitle = async (groupId: string, newTitle: string) => {
+  const updateGroupTitle = useCallback(async (groupId: string, newTitle: string) => {
     const updated = groups.map((g) =>
       g.id === groupId ? { ...g, title: newTitle } : g
     );
     await autoSave(updated);
-  };
+  }, [groups, autoSave]);
 
   const deleteGroup = (groupId: string) => {
     if (confirm(t('processFlow.deleteGroupConfirm'))) {
@@ -284,7 +284,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     autoSave(updated);
   };
 
-  const updateStepField = async (
+  const updateStepField = useCallback(async (
     groupId: string,
     stepId: string,
     field: keyof ProcessStep,
@@ -300,7 +300,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
       };
     });
     await autoSave(updated);
-  };
+  }, [groups, autoSave]);
 
   const deleteStep = (groupId: string, stepId: string) => {
     if (confirm(t('processFlow.deleteStepConfirm'))) {
@@ -314,7 +314,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   };
 
   // Array field operations (outputs, durations)
-  const addArrayItem = async (groupId: string, stepId: string, field: 'outputs' | 'durations', value: string) => {
+  const addArrayItem = useCallback(async (groupId: string, stepId: string, field: 'outputs' | 'durations', value: string) => {
     if (!value.trim()) return;
 
     const updated = groups.map((g) => {
@@ -327,9 +327,9 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
       };
     });
     await autoSave(updated);
-  };
+  }, [groups, autoSave]);
 
-  const removeArrayItem = async (groupId: string, stepId: string, field: 'outputs' | 'durations', index: number) => {
+  const removeArrayItem = useCallback(async (groupId: string, stepId: string, field: 'outputs' | 'durations', index: number) => {
     const updated = groups.map((g) => {
       if (g.id !== groupId) return g;
       return {
@@ -342,7 +342,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
       };
     });
     await autoSave(updated);
-  };
+  }, [groups, autoSave]);
 
   // Drag and drop handlers
   const handleGroupDragEnd = (event: DragEndEvent) => {

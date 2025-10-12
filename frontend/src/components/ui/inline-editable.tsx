@@ -31,11 +31,19 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
   const [localValue, setLocalValue] = useState(value);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const onSaveRef = useRef(onSave);
 
-  // Sync with external value changes
+  // Keep onSaveRef updated
   useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
+    onSaveRef.current = onSave;
+  }, [onSave]);
+
+  // Sync with external value changes (only when not editing)
+  useEffect(() => {
+    if (!isEditing) {
+      setLocalValue(value);
+    }
+  }, [value, isEditing]);
 
   // Auto-enable edit mode when external edit mode is active
   useEffect(() => {
@@ -57,10 +65,10 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
     return () => {
       if (isEditing && autoSave && localValue.trim() !== value.trim() && !isSaving) {
         // Synchronous save on unmount to ensure data isn't lost
-        onSave(localValue.trim());
+        onSaveRef.current(localValue.trim());
       }
     };
-  }, [isEditing, autoSave, localValue, value, isSaving, onSave]);
+  }, [isEditing, autoSave, localValue, value, isSaving]);
 
   const handleSave = async () => {
     if (localValue.trim() === value.trim()) {
