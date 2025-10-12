@@ -49,8 +49,8 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: t('documents.processFlow.saveFailed'),
-        description: error.message || t('documents.messages.error'),
+        title: t('processFlow.saveFailed'),
+        description: error.message || t('messages.error'),
       });
     }
   }, [onUpdate, toast, t]);
@@ -83,7 +83,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   const addGroup = () => {
     const newGroup: ProcessGroup = {
       id: `group-${Date.now()}`,
-      title: t('documents.processFlow.groupTitle'),
+      title: t('processFlow.groupTitle'),
       order: groups.length + 1,
       processSteps: [],
     };
@@ -102,7 +102,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   };
 
   const deleteGroup = (groupId: string) => {
-    if (confirm(t('documents.processFlow.deleteGroupConfirm'))) {
+    if (confirm(t('processFlow.deleteGroupConfirm'))) {
       const updated = groups.filter((g) => g.id !== groupId);
       setGroups(updated);
       autoSave(updated);
@@ -116,7 +116,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
 
     const newStep: ProcessStep = {
       id: `step-${Date.now()}`,
-      title: t('documents.processFlow.stepTitle'),
+      title: t('processFlow.stepTitle'),
       order: group.processSteps.length + 1,
       outputs: [],
       durations: [],
@@ -154,7 +154,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   };
 
   const deleteStep = (groupId: string, stepId: string) => {
-    if (confirm(t('documents.processFlow.deleteStepConfirm'))) {
+    if (confirm(t('processFlow.deleteStepConfirm'))) {
       const updated = groups.map((g) =>
         g.id === groupId
           ? { ...g, processSteps: g.processSteps.filter((s) => s.id !== stepId) }
@@ -204,7 +204,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         <CardContent className="py-8">
           <div className="text-center text-muted-foreground">
             <List className="h-12 w-12 mx-auto mb-2 opacity-20" />
-            <p>{t('documents.processFlow.emptyState')}</p>
+            <p>{t('processFlow.emptyState')}</p>
           </div>
         </CardContent>
       </Card>
@@ -217,11 +217,11 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         <CardContent className="py-8">
           <div className="text-center">
             <List className="h-12 w-12 mx-auto mb-2 opacity-20" />
-            <p className="mb-4 text-muted-foreground">{t('documents.processFlow.emptyState')}</p>
-            <p className="mb-4 text-sm text-muted-foreground">{t('documents.processFlow.emptyStateDescription')}</p>
+            <p className="mb-4 text-muted-foreground">{t('processFlow.emptyState')}</p>
+            <p className="mb-4 text-sm text-muted-foreground">{t('processFlow.emptyStateDescription')}</p>
             <Button onClick={addGroup}>
               <Plus className="h-4 w-4 mr-2" />
-              {t('documents.processFlow.addGroup')}
+              {t('processFlow.addGroup')}
             </Button>
           </div>
         </CardContent>
@@ -233,17 +233,17 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>{t('documents.processFlow.title')}</CardTitle>
+          <CardTitle>{t('processFlow.title')}</CardTitle>
           {!readOnly && (
             <Button variant="outline" size="sm" onClick={addGroup}>
               <Plus className="h-4 w-4 mr-2" />
-              {t('documents.processFlow.addGroup')}
+              {t('processFlow.addGroup')}
             </Button>
           )}
         </div>
         {readOnly && (
           <p className="text-sm text-muted-foreground mt-2">
-            {t('documents.processFlow.readOnlyNote')}
+            {t('processFlow.readOnlyNote')}
           </p>
         )}
       </CardHeader>
@@ -391,16 +391,16 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                           <div className="ml-6 space-y-3 p-4 rounded-lg border bg-muted/30">
                             {/* Responsible */}
                             <div>
-                              <label className="text-sm font-medium mb-1 block">{t('documents.processFlow.responsible')}</label>
+                              <label className="text-sm font-medium mb-1 block">{t('processFlow.responsible')}</label>
                               {readOnly ? (
-                                <p className="text-sm">{step.responsible || t('documents.processFlow.responsiblePlaceholder')}</p>
+                                <p className="text-sm">{step.responsible || t('processFlow.responsiblePlaceholder')}</p>
                               ) : (
                                 <InlineEditable
                                   value={step.responsible}
                                   onSave={(value) =>
                                     updateStepField(group.id, step.id, 'responsible', value)
                                   }
-                                  placeholder={t('documents.processFlow.responsiblePlaceholder')}
+                                  placeholder={t('processFlow.responsiblePlaceholder')}
                                   autoSave={true}
                                 />
                               )}
@@ -410,7 +410,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                             <div>
                               <div className="flex items-center gap-2 mb-2">
                                 <FileOutput className="h-4 w-4 text-muted-foreground" />
-                                <h4 className="font-semibold text-sm">{t('documents.processFlow.outputs')}</h4>
+                                <h4 className="font-semibold text-sm">{t('processFlow.outputs')}</h4>
                               </div>
                               {step.outputs.length > 0 ? (
                                 <ul className="list-disc list-inside space-y-1 mb-2">
@@ -431,13 +431,13 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                                   ))}
                                 </ul>
                               ) : readOnly ? (
-                                <p className="text-sm text-muted-foreground">{t('documents.processFlow.outputsEmpty')}</p>
+                                <p className="text-sm text-muted-foreground">{t('processFlow.outputsEmpty')}</p>
                               ) : null}
                               {!readOnly && (
                                 <InlineEditable
                                   value=""
                                   onSave={(value) => addArrayItem(group.id, step.id, 'outputs', value)}
-                                  placeholder={t('documents.processFlow.outputPlaceholder')}
+                                  placeholder={t('processFlow.outputPlaceholder')}
                                   autoSave={true}
                                 />
                               )}
@@ -447,7 +447,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                             <div>
                               <div className="flex items-center gap-2 mb-2">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
-                                <h4 className="font-semibold text-sm">{t('documents.processFlow.durations')}</h4>
+                                <h4 className="font-semibold text-sm">{t('processFlow.durations')}</h4>
                               </div>
                               {step.durations.length > 0 ? (
                                 <ul className="list-disc list-inside space-y-1 mb-2">
@@ -468,13 +468,13 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                                   ))}
                                 </ul>
                               ) : readOnly ? (
-                                <p className="text-sm text-muted-foreground">{t('documents.processFlow.durationsEmpty')}</p>
+                                <p className="text-sm text-muted-foreground">{t('processFlow.durationsEmpty')}</p>
                               ) : null}
                               {!readOnly && (
                                 <InlineEditable
                                   value=""
                                   onSave={(value) => addArrayItem(group.id, step.id, 'durations', value)}
-                                  placeholder={t('documents.processFlow.durationPlaceholder')}
+                                  placeholder={t('processFlow.durationPlaceholder')}
                                   autoSave={true}
                                 />
                               )}
@@ -501,7 +501,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                       className="w-full"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      {t('documents.processFlow.addStep')}
+                      {t('processFlow.addStep')}
                     </Button>
                   )}
                 </div>
