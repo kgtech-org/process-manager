@@ -99,7 +99,7 @@ func (s *ActivityLogService) LogActivity(ctx context.Context, req models.Activit
 	userAgent := s.extractUserAgent(c)
 
 	// Get actor information from context
-	var actorName, actorEmail string
+	var actorName, actorEmail, actorAvatar string
 	var userID *primitive.ObjectID
 
 	if user, exists := c.Get("user"); exists {
@@ -107,6 +107,7 @@ func (s *ActivityLogService) LogActivity(ctx context.Context, req models.Activit
 			userID = &userModel.ID
 			actorName = userModel.FirstName + " " + userModel.LastName
 			actorEmail = userModel.Email
+			actorAvatar = userModel.Avatar
 		}
 	}
 
@@ -121,6 +122,7 @@ func (s *ActivityLogService) LogActivity(ctx context.Context, req models.Activit
 		UserID:       userID,
 		ActorName:    actorName,
 		ActorEmail:   actorEmail,
+		ActorAvatar:  actorAvatar,
 		TargetUserID: req.TargetUserID,
 		TargetName:   req.TargetName,
 		Action:       req.Action,
@@ -160,12 +162,13 @@ func (s *ActivityLogService) LogActivitySimple(ctx context.Context, action model
 	now := time.Now()
 
 	// Get user information if userID is provided
-	var actorName, actorEmail string
+	var actorName, actorEmail, actorAvatar string
 	if userID != nil {
 		userService := GetUserService()
 		if user, err := userService.GetUserByID(ctx, *userID); err == nil {
 			actorName = user.FirstName + " " + user.LastName
 			actorEmail = user.Email
+			actorAvatar = user.Avatar
 		}
 	}
 
@@ -175,6 +178,7 @@ func (s *ActivityLogService) LogActivitySimple(ctx context.Context, action model
 		UserID:      userID,
 		ActorName:   actorName,
 		ActorEmail:  actorEmail,
+		ActorAvatar: actorAvatar,
 		Action:      action,
 		Category:    models.GetCategoryFromAction(action),
 		Level:       models.GetLevelFromAction(action),
