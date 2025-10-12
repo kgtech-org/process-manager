@@ -2,6 +2,23 @@
 
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from '@/lib/i18n';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +47,58 @@ interface ProcessFlowEditorProps {
   readOnly?: boolean;
 }
 
+// Sortable Group Wrapper
+function SortableGroup({ id, children }: { id: string; children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <div {...listeners} className="inline-block">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Sortable Step Wrapper
+function SortableStep({ id, children }: { id: string; children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <div {...listeners} className="inline-block">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   processGroups: initialGroups,
   documentId,
@@ -41,6 +110,14 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Auto-save helper with debouncing
   const autoSave = useCallback(async (updatedGroups: ProcessGroup[]) => {
@@ -198,6 +275,47 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     await autoSave(updated);
   };
 
+  // Drag and drop handlers
+  const handleGroupDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = groups.findIndex((g) => g.id === active.id);
+      const newIndex = groups.findIndex((g) => g.id === over.id);
+
+      const reordered = arrayMove(groups, oldIndex, newIndex).map((g, idx) => ({
+        ...g,
+        order: idx + 1,
+      }));
+
+      setGroups(reordered);
+      autoSave(reordered);
+    }
+  };
+
+  const handleStepDragEnd = (groupId: string) => (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const updated = groups.map((g) => {
+        if (g.id !== groupId) return g;
+
+        const oldIndex = g.processSteps.findIndex((s) => s.id === active.id);
+        const newIndex = g.processSteps.findIndex((s) => s.id === over.id);
+
+        const reordered = arrayMove(g.processSteps, oldIndex, newIndex).map((s, idx) => ({
+          ...s,
+          order: idx + 1,
+        }));
+
+        return { ...g, processSteps: reordered };
+      });
+
+      setGroups(updated);
+      autoSave(updated);
+    }
+  };
+
   if (groups.length === 0 && readOnly) {
     return (
       <Card>
@@ -248,270 +366,296 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-        {groups.map((group, groupIndex) => {
-          const isGroupExpanded = expandedGroups.has(group.id);
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleGroupDragEnd}
+        >
+          <SortableContext
+            items={groups.map((g) => g.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {groups.map((group, groupIndex) => {
+              const isGroupExpanded = expandedGroups.has(group.id);
 
-          return (
-            <div key={group.id} className="space-y-3">
-              {/* Process Group Header */}
-              <div className="relative group/header">
-                <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-primary/5">
-                  {!readOnly && (
-                    <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0 cursor-move" />
-                  )}
-                  <button
-                    onClick={() => toggleGroup(group.id)}
-                    className="flex-shrink-0"
-                  >
-                    {isGroupExpanded ? (
-                      <ChevronDown className="h-5 w-5 text-primary" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-primary" />
-                    )}
-                  </button>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="default" className="font-mono">
-                        {group.order}
-                      </Badge>
-                      {readOnly ? (
-                        <h3 className="font-semibold text-lg">{group.title}</h3>
-                      ) : (
-                        <InlineEditable
-                          value={group.title}
-                          onSave={(newTitle) => updateGroupTitle(group.id, newTitle)}
-                          displayClassName="font-semibold text-lg"
-                          autoSave={true}
-                        />
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {group.processSteps.length} step{group.processSteps.length !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                  {!readOnly && (
-                    <div className="flex gap-2 opacity-0 group-hover/header:opacity-100 transition-opacity">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addStep(group.id)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteGroup(group.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Process Steps */}
-              {isGroupExpanded && (
-                <div className="ml-8 space-y-3">
-                  {group.processSteps.map((step, stepIndex) => {
-                    const isStepExpanded = expandedSteps.has(step.id);
-
-                    return (
-                      <div key={step.id} className="space-y-2">
-                        {/* Process Step Header */}
-                        <div className="relative group/step">
-                          <div className="flex items-start gap-3 p-3 rounded-lg border bg-card">
-                            {!readOnly && (
-                              <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0 cursor-move" />
-                            )}
-                            <button
-                              onClick={() => toggleStep(step.id)}
-                              className="flex-shrink-0"
-                            >
-                              {isStepExpanded ? (
-                                <ChevronDown className="h-4 w-4" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4" />
-                              )}
-                            </button>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Badge variant="outline" className="font-mono text-xs">
-                                  {group.order}.{step.order}
-                                </Badge>
-                                {readOnly ? (
-                                  <span className="font-medium">{step.title}</span>
-                                ) : (
-                                  <InlineEditable
-                                    value={step.title}
-                                    onSave={(newTitle) =>
-                                      updateStepField(group.id, step.id, 'title', newTitle)
-                                    }
-                                    displayClassName="font-medium"
-                                    autoSave={true}
-                                  />
-                                )}
-                              </div>
-                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                {step.responsible && (
-                                  <div className="flex items-center gap-1">
-                                    <User className="h-3 w-3" />
-                                    <span>{step.responsible}</span>
-                                  </div>
-                                )}
-                                {step.outputs.length > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <FileOutput className="h-3 w-3" />
-                                    <span>{step.outputs.length} output{step.outputs.length !== 1 ? 's' : ''}</span>
-                                  </div>
-                                )}
-                                {step.durations.length > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{step.durations.length} duration{step.durations.length !== 1 ? 's' : ''}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            {!readOnly && (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                className="opacity-0 group-hover/step:opacity-100 transition-opacity"
-                                onClick={() => deleteStep(group.id, step.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Process Step Details */}
-                        {isStepExpanded && (
-                          <div className="ml-6 space-y-3 p-4 rounded-lg border bg-muted/30">
-                            {/* Responsible */}
-                            <div>
-                              <label className="text-sm font-medium mb-1 block">{t('processFlow.responsible')}</label>
-                              {readOnly ? (
-                                <p className="text-sm">{step.responsible || t('processFlow.responsiblePlaceholder')}</p>
-                              ) : (
-                                <InlineEditable
-                                  value={step.responsible}
-                                  onSave={(value) =>
-                                    updateStepField(group.id, step.id, 'responsible', value)
-                                  }
-                                  placeholder={t('processFlow.responsiblePlaceholder')}
-                                  autoSave={true}
-                                />
-                              )}
-                            </div>
-
-                            {/* Outputs */}
-                            <div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <FileOutput className="h-4 w-4 text-muted-foreground" />
-                                <h4 className="font-semibold text-sm">{t('processFlow.outputs')}</h4>
-                              </div>
-                              {step.outputs.length > 0 ? (
-                                <ul className="list-disc list-inside space-y-1 mb-2">
-                                  {step.outputs.map((output, idx) => (
-                                    <li key={idx} className="text-sm flex items-center justify-between group/item">
-                                      <span>{output}</span>
-                                      {!readOnly && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="opacity-0 group-hover/item:opacity-100"
-                                          onClick={() => removeArrayItem(group.id, step.id, 'outputs', idx)}
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </Button>
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : readOnly ? (
-                                <p className="text-sm text-muted-foreground">{t('processFlow.outputsEmpty')}</p>
-                              ) : null}
-                              {!readOnly && (
-                                <InlineEditable
-                                  value=""
-                                  onSave={(value) => addArrayItem(group.id, step.id, 'outputs', value)}
-                                  placeholder={t('processFlow.outputPlaceholder')}
-                                  autoSave={true}
-                                />
-                              )}
-                            </div>
-
-                            {/* Durations */}
-                            <div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-                                <h4 className="font-semibold text-sm">{t('processFlow.durations')}</h4>
-                              </div>
-                              {step.durations.length > 0 ? (
-                                <ul className="list-disc list-inside space-y-1 mb-2">
-                                  {step.durations.map((duration, idx) => (
-                                    <li key={idx} className="text-sm flex items-center justify-between group/item">
-                                      <span>{duration}</span>
-                                      {!readOnly && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="opacity-0 group-hover/item:opacity-100"
-                                          onClick={() => removeArrayItem(group.id, step.id, 'durations', idx)}
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </Button>
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : readOnly ? (
-                                <p className="text-sm text-muted-foreground">{t('processFlow.durationsEmpty')}</p>
-                              ) : null}
-                              {!readOnly && (
-                                <InlineEditable
-                                  value=""
-                                  onSave={(value) => addArrayItem(group.id, step.id, 'durations', value)}
-                                  placeholder={t('processFlow.durationPlaceholder')}
-                                  autoSave={true}
-                                />
-                              )}
-                            </div>
-                          </div>
+              return (
+                <SortableGroup key={group.id} id={group.id}>
+                  <div className="space-y-3">
+                    {/* Process Group Header */}
+                    <div className="relative group/header">
+                      <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-primary/5">
+                        {!readOnly && (
+                          <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0 cursor-move" />
                         )}
-
-                        {/* Arrow between steps */}
-                        {stepIndex < group.processSteps.length - 1 && (
-                          <div className="flex items-center justify-center py-1">
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        <button
+                          onClick={() => toggleGroup(group.id)}
+                          className="flex-shrink-0"
+                        >
+                          {isGroupExpanded ? (
+                            <ChevronDown className="h-5 w-5 text-primary" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5 text-primary" />
+                          )}
+                        </button>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="default" className="font-mono">
+                              {group.order}
+                            </Badge>
+                            {readOnly ? (
+                              <h3 className="font-semibold text-lg">{group.title}</h3>
+                            ) : (
+                              <InlineEditable
+                                value={group.title}
+                                onSave={(newTitle) => updateGroupTitle(group.id, newTitle)}
+                                displayClassName="font-semibold text-lg"
+                                autoSave={true}
+                              />
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {group.processSteps.length} step{group.processSteps.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        {!readOnly && (
+                          <div className="flex gap-2 opacity-0 group-hover/header:opacity-100 transition-opacity">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addStep(group.id)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => deleteGroup(group.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         )}
                       </div>
-                    );
-                  })}
+                    </div>
 
-                  {/* Add Step Button */}
-                  {!readOnly && group.processSteps.length === 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addStep(group.id)}
-                      className="w-full"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      {t('processFlow.addStep')}
-                    </Button>
-                  )}
-                </div>
-              )}
+                    {/* Process Steps */}
+                    {isGroupExpanded && (
+                      <div className="ml-8 space-y-3">
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleStepDragEnd(group.id)}
+                        >
+                          <SortableContext
+                            items={group.processSteps.map((s) => s.id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {group.processSteps.map((step, stepIndex) => {
+                              const isStepExpanded = expandedSteps.has(step.id);
 
-              {/* Separator between groups */}
-              {groupIndex < groups.length - 1 && <Separator className="my-4" />}
-            </div>
-          );
-        })}
+                              return (
+                                <SortableStep key={step.id} id={step.id}>
+                                  <div className="space-y-2">
+                                    {/* Process Step Header */}
+                                    <div className="relative group/step">
+                                      <div className="flex items-start gap-3 p-3 rounded-lg border bg-card">
+                                        {!readOnly && (
+                                          <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0 cursor-move" />
+                                        )}
+                                        <button
+                                          onClick={() => toggleStep(step.id)}
+                                          className="flex-shrink-0"
+                                        >
+                                          {isStepExpanded ? (
+                                            <ChevronDown className="h-4 w-4" />
+                                          ) : (
+                                            <ChevronRight className="h-4 w-4" />
+                                          )}
+                                        </button>
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <Badge variant="outline" className="font-mono text-xs">
+                                              {group.order}.{step.order}
+                                            </Badge>
+                                            {readOnly ? (
+                                              <span className="font-medium">{step.title}</span>
+                                            ) : (
+                                              <InlineEditable
+                                                value={step.title}
+                                                onSave={(newTitle) =>
+                                                  updateStepField(group.id, step.id, 'title', newTitle)
+                                                }
+                                                displayClassName="font-medium"
+                                                autoSave={true}
+                                              />
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                            {step.responsible && (
+                                              <div className="flex items-center gap-1">
+                                                <User className="h-3 w-3" />
+                                                <span>{step.responsible}</span>
+                                              </div>
+                                            )}
+                                            {step.outputs.length > 0 && (
+                                              <div className="flex items-center gap-1">
+                                                <FileOutput className="h-3 w-3" />
+                                                <span>{step.outputs.length} output{step.outputs.length !== 1 ? 's' : ''}</span>
+                                              </div>
+                                            )}
+                                            {step.durations.length > 0 && (
+                                              <div className="flex items-center gap-1">
+                                                <Clock className="h-3 w-3" />
+                                                <span>{step.durations.length} duration{step.durations.length !== 1 ? 's' : ''}</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                        {!readOnly && (
+                                          <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            className="opacity-0 group-hover/step:opacity-100 transition-opacity"
+                                            onClick={() => deleteStep(group.id, step.id)}
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Process Step Details */}
+                                    {isStepExpanded && (
+                                      <div className="ml-6 space-y-3 p-4 rounded-lg border bg-muted/30">
+                                        {/* Responsible */}
+                                        <div>
+                                          <label className="text-sm font-medium mb-1 block">{t('processFlow.responsible')}</label>
+                                          {readOnly ? (
+                                            <p className="text-sm">{step.responsible || t('processFlow.responsiblePlaceholder')}</p>
+                                          ) : (
+                                            <InlineEditable
+                                              value={step.responsible}
+                                              onSave={(value) =>
+                                                updateStepField(group.id, step.id, 'responsible', value)
+                                              }
+                                              placeholder={t('processFlow.responsiblePlaceholder')}
+                                              autoSave={true}
+                                            />
+                                          )}
+                                        </div>
+
+                                        {/* Outputs */}
+                                        <div>
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <FileOutput className="h-4 w-4 text-muted-foreground" />
+                                            <h4 className="font-semibold text-sm">{t('processFlow.outputs')}</h4>
+                                          </div>
+                                          {step.outputs.length > 0 ? (
+                                            <ul className="list-disc list-inside space-y-1 mb-2">
+                                              {step.outputs.map((output, idx) => (
+                                                <li key={idx} className="text-sm flex items-center justify-between group/item">
+                                                  <span>{output}</span>
+                                                  {!readOnly && (
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      className="opacity-0 group-hover/item:opacity-100"
+                                                      onClick={() => removeArrayItem(group.id, step.id, 'outputs', idx)}
+                                                    >
+                                                      <X className="h-3 w-3" />
+                                                    </Button>
+                                                  )}
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          ) : readOnly ? (
+                                            <p className="text-sm text-muted-foreground">{t('processFlow.outputsEmpty')}</p>
+                                          ) : null}
+                                          {!readOnly && (
+                                            <InlineEditable
+                                              value=""
+                                              onSave={(value) => addArrayItem(group.id, step.id, 'outputs', value)}
+                                              placeholder={t('processFlow.outputPlaceholder')}
+                                              autoSave={true}
+                                            />
+                                          )}
+                                        </div>
+
+                                        {/* Durations */}
+                                        <div>
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <Clock className="h-4 w-4 text-muted-foreground" />
+                                            <h4 className="font-semibold text-sm">{t('processFlow.durations')}</h4>
+                                          </div>
+                                          {step.durations.length > 0 ? (
+                                            <ul className="list-disc list-inside space-y-1 mb-2">
+                                              {step.durations.map((duration, idx) => (
+                                                <li key={idx} className="text-sm flex items-center justify-between group/item">
+                                                  <span>{duration}</span>
+                                                  {!readOnly && (
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      className="opacity-0 group-hover/item:opacity-100"
+                                                      onClick={() => removeArrayItem(group.id, step.id, 'durations', idx)}
+                                                    >
+                                                      <X className="h-3 w-3" />
+                                                    </Button>
+                                                  )}
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          ) : readOnly ? (
+                                            <p className="text-sm text-muted-foreground">{t('processFlow.durationsEmpty')}</p>
+                                          ) : null}
+                                          {!readOnly && (
+                                            <InlineEditable
+                                              value=""
+                                              onSave={(value) => addArrayItem(group.id, step.id, 'durations', value)}
+                                              placeholder={t('processFlow.durationPlaceholder')}
+                                              autoSave={true}
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Arrow between steps */}
+                                    {stepIndex < group.processSteps.length - 1 && (
+                                      <div className="flex items-center justify-center py-1">
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                  </div>
+                                </SortableStep>
+                              );
+                            })}
+                          </SortableContext>
+                        </DndContext>
+
+                        {/* Add Step Button */}
+                        {!readOnly && group.processSteps.length === 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addStep(group.id)}
+                            className="w-full"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            {t('processFlow.addStep')}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Separator between groups */}
+                    {groupIndex < groups.length - 1 && <Separator className="my-4" />}
+                  </div>
+                </SortableGroup>
+              );
+            })}
+          </SortableContext>
+        </DndContext>
       </CardContent>
     </Card>
   );
