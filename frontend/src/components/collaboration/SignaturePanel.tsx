@@ -22,15 +22,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Signature, SignatureResource, SignatureType } from '@/lib/resources';
+import { Signature, SignatureResource, SignatureType, Document, Contributor } from '@/lib/resources';
+import { CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 interface SignaturePanelProps {
   documentId: string;
+  document: Document;
   userTeam?: 'authors' | 'verifiers' | 'validators';
   onSignatureAdded?: () => void;
 }
 
-export function SignaturePanel({ documentId, userTeam, onSignatureAdded }: SignaturePanelProps) {
+export function SignaturePanel({ documentId, document, userTeam, onSignatureAdded }: SignaturePanelProps) {
   const { t } = useTranslation('collaboration');
   const { toast } = useToast();
   const [signatures, setSignatures] = useState<Signature[]>([]);
@@ -158,6 +160,62 @@ export function SignaturePanel({ documentId, userTeam, onSignatureAdded }: Signa
     return grouped;
   };
 
+  const getSignatureForContributor = (contributor: Contributor): Signature | null => {
+    return signatures.find(sig => sig.userId === contributor.userId) || null;
+  };
+
+  const getSignatureStatusIcon = (status: string) => {
+    switch (status) {
+      case 'signed':
+        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-600" />;
+      case 'joined':
+        return <CheckCircle2 className="h-4 w-4 text-blue-600" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  const renderContributorWithSignature = (contributor: Contributor, type: SignatureType) => {
+    const signature = getSignatureForContributor(contributor);
+
+    return (
+      <div
+        key={contributor.userId}
+        className="p-3 border rounded-lg space-y-2"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="font-medium">{contributor.name}</p>
+            {(contributor.title || contributor.department) && (
+              <p className="text-sm text-muted-foreground">
+                {[contributor.title, contributor.department].filter(Boolean).join(' • ')}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {getSignatureStatusIcon(contributor.status)}
+            <span className="text-sm capitalize">{contributor.status}</span>
+          </div>
+        </div>
+
+        {signature && (
+          <div className="pl-4 border-l-2 border-green-500 space-y-1">
+            <p className="text-xs text-muted-foreground">
+              Signed: {new Date(signature.signedAt).toLocaleString()}
+            </p>
+            {signature.comments && (
+              <p className="text-sm text-gray-600">{signature.comments}</p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const groupedSignatures = groupSignaturesByType();
 
   if (loading) {
@@ -193,84 +251,48 @@ export function SignaturePanel({ documentId, userTeam, onSignatureAdded }: Signa
           <div className="space-y-6">
             {/* Authors */}
             <div>
-              <h4 className="font-medium mb-2">{t('signatures.types.author')}</h4>
-              {groupedSignatures.author.length === 0 ? (
-                <p className="text-sm text-gray-500">{t('signatures.noSignatures')}</p>
+              <h4 className="font-medium mb-3 flex items-center gap-2">
+                <Badge variant="secondary">{t('signatures.types.author')}</Badge>
+              </h4>
+              {document.contributors.authors.length === 0 ? (
+                <p className="text-sm text-gray-500">{t('signatures.noContributors')}</p>
               ) : (
                 <div className="space-y-2">
-                  {groupedSignatures.author.map((sig) => (
-                    <div
-                      key={sig.id}
-                      className="flex items-start justify-between p-3 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{sig.userName || sig.userEmail}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(sig.signedAt).toLocaleString()}
-                        </p>
-                        {sig.comments && (
-                          <p className="text-sm mt-1 text-gray-600">{sig.comments}</p>
-                        )}
-                      </div>
-                      {getSignatureTypeBadge(sig.type)}
-                    </div>
-                  ))}
+                  {document.contributors.authors.map((contributor) =>
+                    renderContributorWithSignature(contributor, 'author')
+                  )}
                 </div>
               )}
             </div>
 
             {/* Verifiers */}
             <div>
-              <h4 className="font-medium mb-2">{t('signatures.types.verifier')}</h4>
-              {groupedSignatures.verifier.length === 0 ? (
-                <p className="text-sm text-gray-500">{t('signatures.noSignatures')}</p>
+              <h4 className="font-medium mb-3 flex items-center gap-2">
+                <Badge variant="secondary">{t('signatures.types.verifier')}</Badge>
+              </h4>
+              {document.contributors.verifiers.length === 0 ? (
+                <p className="text-sm text-gray-500">{t('signatures.noContributors')}</p>
               ) : (
                 <div className="space-y-2">
-                  {groupedSignatures.verifier.map((sig) => (
-                    <div
-                      key={sig.id}
-                      className="flex items-start justify-between p-3 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{sig.userName || sig.userEmail}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(sig.signedAt).toLocaleString()}
-                        </p>
-                        {sig.comments && (
-                          <p className="text-sm mt-1 text-gray-600">{sig.comments}</p>
-                        )}
-                      </div>
-                      {getSignatureTypeBadge(sig.type)}
-                    </div>
-                  ))}
+                  {document.contributors.verifiers.map((contributor) =>
+                    renderContributorWithSignature(contributor, 'verifier')
+                  )}
                 </div>
               )}
             </div>
 
             {/* Validators */}
             <div>
-              <h4 className="font-medium mb-2">{t('signatures.types.validator')}</h4>
-              {groupedSignatures.validator.length === 0 ? (
-                <p className="text-sm text-gray-500">{t('signatures.noSignatures')}</p>
+              <h4 className="font-medium mb-3 flex items-center gap-2">
+                <Badge variant="secondary">{t('signatures.types.validator')}</Badge>
+              </h4>
+              {document.contributors.validators.length === 0 ? (
+                <p className="text-sm text-gray-500">{t('signatures.noContributors')}</p>
               ) : (
                 <div className="space-y-2">
-                  {groupedSignatures.validator.map((sig) => (
-                    <div
-                      key={sig.id}
-                      className="flex items-start justify-between p-3 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{sig.userName || sig.userEmail}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(sig.signedAt).toLocaleString()}
-                        </p>
-                        {sig.comments && (
-                          <p className="text-sm mt-1 text-gray-600">{sig.comments}</p>
-                        )}
-                      </div>
-                      {getSignatureTypeBadge(sig.type)}
-                    </div>
-                  ))}
+                  {document.contributors.validators.map((contributor) =>
+                    renderContributorWithSignature(contributor, 'validator')
+                  )}
                 </div>
               )}
             </div>

@@ -11,15 +11,13 @@ export default function ProfilePage() {
 
   return (
     <AuthGuard>
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">{t('profile.title')}</h1>
-          <p className="text-gray-600">{t('profile.subtitle', { defaultValue: 'Manage your account information and preferences.' })}</p>
+      <div className="container mx-auto py-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t('profile.title')}</h1>
+          <p className="text-muted-foreground">{t('profile.subtitle', { defaultValue: 'Manage your account information and preferences.' })}</p>
         </div>
 
-        <div className="space-y-8">
-          <ProfileForm />
-        </div>
+        <ProfileForm />
       </div>
     </AuthGuard>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { DocumentList } from '@/components/documents/DocumentList';
+import { PendingInvitationsWidget } from '@/components/invitations/PendingInvitationsWidget';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
@@ -25,6 +26,9 @@ export default function DocumentsPage() {
           </Link>
         </Button>
       </div>
+
+      {/* Pending Invitations */}
+      <PendingInvitationsWidget />
 
       <DocumentList />
     </div>

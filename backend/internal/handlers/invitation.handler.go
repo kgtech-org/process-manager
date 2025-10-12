@@ -22,17 +22,23 @@ type InvitationHandler struct {
 	documentCollection   *mongo.Collection
 	userCollection       *mongo.Collection
 	emailService         *services.EmailService
+	notificationService  *services.NotificationService
+	activityLogService   *services.ActivityLogService
 }
 
 func NewInvitationHandler(
 	db *mongo.Database,
 	emailService *services.EmailService,
+	notificationService *services.NotificationService,
+	activityLogService *services.ActivityLogService,
 ) *InvitationHandler {
 	return &InvitationHandler{
 		invitationCollection: db.Collection("invitations"),
 		documentCollection:   db.Collection("documents"),
 		userCollection:       db.Collection("users"),
 		emailService:         emailService,
+		notificationService:  notificationService,
+		activityLogService:   activityLogService,
 	}
 }
 
@@ -166,6 +172,55 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	if err != nil {
 		fmt.Printf("Failed to send invitation email: %v\n", err)
 		// Don't fail the request if email fails
+	}
+
+	// Send push notification if user exists
+	if invitedUserID != nil {
+		notifTitle := fmt.Sprintf("Document Invitation from %s %s", user.FirstName, user.LastName)
+		notifBody := fmt.Sprintf("You have been invited to collaborate on '%s' as a %s", document.Title, teamName)
+
+		notifReq := &models.SendNotificationRequest{
+			UserIDs:  []string{invitedUserID.Hex()},
+			Title:    notifTitle,
+			Body:     notifBody,
+			Category: models.NotificationCategorySystem,
+			Priority: models.NotificationPriorityHigh,
+			Data: map[string]interface{}{
+				"type":       "invitation",
+				"documentId": documentID.Hex(),
+				"team":       string(req.Team),
+			},
+		}
+
+		_, notifErr := h.notificationService.SendNotification(ctx, notifReq, user.ID)
+		if notifErr != nil {
+			fmt.Printf("Failed to send push notification: %v\n", notifErr)
+		}
+	}
+
+	// Log activity
+	activityDescription := fmt.Sprintf("Invited %s to collaborate on document '%s' (%s) as %s",
+		req.InvitedEmail, document.Title, document.Reference, teamName)
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_invitation_sent",
+		Description:  activityDescription,
+		ResourceType: "document",
+		ResourceID:   &documentID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId":     documentID.Hex(),
+			"invitedEmail":   req.InvitedEmail,
+			"team":           string(req.Team),
+			"invitationType": string(req.Type),
+			"invitationId":   invitation.ID.Hex(),
+		},
+	}
+	if invitedUserID != nil {
+		activityReq.TargetUserID = invitedUserID
+	}
+	logErr := h.activityLogService.LogActivity(ctx, activityReq, c)
+	if logErr != nil {
+		fmt.Printf("Failed to log activity: %v\n", logErr)
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -344,7 +399,7 @@ func (h *InvitationHandler) AcceptInvitation(c *gin.Context) {
 		return
 	}
 
-	// Add user to document contributors
+	// Get document and update contributor status
 	var document models.Document
 	err = h.documentCollection.FindOne(ctx, bson.M{"_id": invitation.DocumentID}).Decode(&document)
 	if err != nil {
@@ -352,32 +407,90 @@ func (h *InvitationHandler) AcceptInvitation(c *gin.Context) {
 		return
 	}
 
-	// Create contributor entry
-	contributor := models.Contributor{
-		UserID:     user.ID,
-		Name:       user.FirstName + " " + user.LastName,
-		Title:      "", // Can be set later
-		Department: "", // Can be set later
-		Team:       invitation.Team,
-		Status:     models.SignatureStatusPending,
-		InvitedAt:  invitation.CreatedAt,
-	}
-
-	// Update document contributors based on team
-	update := bson.M{}
+	// Check if user already exists in contributors
+	userExists := false
 	switch invitation.Team {
 	case models.ContributorTeamAuthors:
-		update["$push"] = bson.M{"contributors.authors": contributor}
+		for _, author := range document.Contributors.Authors {
+			if author.UserID == user.ID {
+				userExists = true
+				break
+			}
+		}
 	case models.ContributorTeamVerifiers:
-		update["$push"] = bson.M{"contributors.verifiers": contributor}
+		for _, verifier := range document.Contributors.Verifiers {
+			if verifier.UserID == user.ID {
+				userExists = true
+				break
+			}
+		}
 	case models.ContributorTeamValidators:
-		update["$push"] = bson.M{"contributors.validators": contributor}
+		for _, validator := range document.Contributors.Validators {
+			if validator.UserID == user.ID {
+				userExists = true
+				break
+			}
+		}
 	}
 
-	_, err = h.documentCollection.UpdateOne(ctx, bson.M{"_id": invitation.DocumentID}, update)
-	if err != nil {
-		helpers.SendInternalError(c, err)
-		return
+	// Only add contributor if they don't already exist
+	if !userExists {
+		// Create contributor entry with 'joined' status
+		contributor := models.Contributor{
+			UserID:     user.ID,
+			Name:       user.FirstName + " " + user.LastName,
+			Title:      "", // Can be set later
+			Department: "", // Can be set later
+			Team:       invitation.Team,
+			Status:     models.SignatureStatusJoined,
+			InvitedAt:  invitation.CreatedAt,
+		}
+
+		// Add new contributor
+		pushUpdate := bson.M{}
+		switch invitation.Team {
+		case models.ContributorTeamAuthors:
+			pushUpdate["$push"] = bson.M{"contributors.authors": contributor}
+		case models.ContributorTeamVerifiers:
+			pushUpdate["$push"] = bson.M{"contributors.verifiers": contributor}
+		case models.ContributorTeamValidators:
+			pushUpdate["$push"] = bson.M{"contributors.validators": contributor}
+		}
+
+		_, err = h.documentCollection.UpdateOne(ctx, bson.M{"_id": invitation.DocumentID}, pushUpdate)
+		if err != nil {
+			helpers.SendInternalError(c, err)
+			return
+		}
+	}
+
+	// Log activity
+	teamName := string(invitation.Team)
+	if invitation.Team == models.ContributorTeamAuthors {
+		teamName = "Authors"
+	} else if invitation.Team == models.ContributorTeamVerifiers {
+		teamName = "Verifiers"
+	} else if invitation.Team == models.ContributorTeamValidators {
+		teamName = "Validators"
+	}
+
+	activityDescription := fmt.Sprintf("Accepted invitation to collaborate on document '%s' (%s) as %s",
+		document.Title, document.Reference, teamName)
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_invitation_accepted",
+		Description:  activityDescription,
+		ResourceType: "document",
+		ResourceID:   &invitation.DocumentID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId":   invitation.DocumentID.Hex(),
+			"team":         string(invitation.Team),
+			"invitationId": invitation.ID.Hex(),
+		},
+	}
+	logErr := h.activityLogService.LogActivity(ctx, activityReq, c)
+	if logErr != nil {
+		fmt.Printf("⚠️  [INVITATION] Failed to log activity: %v\n", logErr)
 	}
 
 	helpers.SendSuccess(c, "Invitation accepted successfully", nil)
@@ -431,6 +544,14 @@ func (h *InvitationHandler) DeclineInvitation(c *gin.Context) {
 		return
 	}
 
+	// Get document details for activity log
+	var document models.Document
+	err = h.documentCollection.FindOne(ctx, bson.M{"_id": invitation.DocumentID}).Decode(&document)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
 	// Update invitation status
 	now := primitive.DateTime(invitation.UpdatedAt.Unix() * 1000)
 	_, err = h.invitationCollection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{
@@ -444,6 +565,31 @@ func (h *InvitationHandler) DeclineInvitation(c *gin.Context) {
 	if err != nil {
 		helpers.SendInternalError(c, err)
 		return
+	}
+
+	// Log activity
+	teamName := string(invitation.Team)
+	activityDescription := fmt.Sprintf("Declined invitation to collaborate on document '%s' (%s) as %s", document.Title, document.Reference, teamName)
+	if req.Reason != "" {
+		activityDescription += fmt.Sprintf(" - Reason: %s", req.Reason)
+	}
+
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_invitation_declined",
+		Description:  activityDescription,
+		ResourceType: "document",
+		ResourceID:   &invitation.DocumentID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId":     invitation.DocumentID.Hex(),
+			"documentTitle":  document.Title,
+			"team":           teamName,
+			"declineReason":  req.Reason,
+			"invitationId":   id.Hex(),
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log decline activity: %v\n", logErr)
 	}
 
 	helpers.SendSuccess(c, "Invitation declined successfully", nil)

@@ -65,6 +65,7 @@ export interface ActivityLog {
   userId?: string;
   actorName: string;
   actorEmail: string;
+  actorAvatar?: string;
   targetUserId?: string;
   targetName?: string;
   action: ActivityAction;

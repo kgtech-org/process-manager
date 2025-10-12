@@ -3,7 +3,7 @@
 import React from 'react';
 import { ActivityLog, getLevelColor, getLevelIcon, getActionLabel, getCategoryLabel } from '@/types/activity-log';
 import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface ActivityLogItemProps {
   log: ActivityLog;
@@ -60,9 +60,12 @@ export const ActivityLogItem: React.FC<ActivityLogItemProps> = ({ log, showUser 
             {showUser && (
               <div className="flex items-center space-x-2">
                 <Avatar className="w-6 h-6">
-                  <span className="text-xs font-medium">
+                  {log.actorAvatar && (
+                    <AvatarImage src={log.actorAvatar} alt={log.actorName} />
+                  )}
+                  <AvatarFallback className="text-xs font-medium">
                     {log.actorName.split(' ').map(n => n[0]).join('').toUpperCase()}
-                  </span>
+                  </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium text-gray-900">
                   {log.actorName}

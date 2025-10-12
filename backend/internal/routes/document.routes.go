@@ -13,31 +13,33 @@ func SetupDocumentRoutes(
 	permissionHandler *handlers.PermissionHandler,
 	signatureHandler *handlers.SignatureHandler,
 	authMiddleware *middleware.AuthMiddleware,
+	documentMiddleware *middleware.DocumentMiddleware,
 ) {
 	documents := router.Group("/documents")
 	documents.Use(authMiddleware.RequireAuth())
 	{
-		// List and create documents
+		// List and create documents (no document-specific permission check needed)
 		documents.GET("", documentHandler.ListDocuments)
 		documents.POST("", documentHandler.CreateDocument)
 
-		// Document operations
-		documents.GET("/:id", documentHandler.GetDocument)
-		documents.PUT("/:id", documentHandler.UpdateDocument)
-		documents.DELETE("/:id", authMiddleware.RequireManager(), documentHandler.DeleteDocument)
+		// Document operations (require document access)
+		documents.GET("/:id", documentMiddleware.RequireDocumentAccess(), documentHandler.GetDocument)
+		documents.PUT("/:id", documentMiddleware.RequireDocumentAccess(), documentHandler.UpdateDocument)
+		documents.DELETE("/:id", authMiddleware.RequireManager(), documentMiddleware.RequireDocumentAccess(), documentHandler.DeleteDocument)
 
-		// Document actions
-		documents.POST("/:id/duplicate", documentHandler.DuplicateDocument)
-		documents.GET("/:id/versions", documentHandler.GetDocumentVersions)
+		// Document actions (require document access)
+		documents.POST("/:id/duplicate", documentMiddleware.RequireDocumentAccess(), documentHandler.DuplicateDocument)
+		documents.POST("/:id/publish", documentMiddleware.RequireDocumentAccess(), documentHandler.PublishDocument)
+		documents.GET("/:id/versions", documentMiddleware.RequireDocumentAccess(), documentHandler.GetDocumentVersions)
 
-		// Permissions
-		documents.GET("/:id/permissions", permissionHandler.GetDocumentPermissions)
-		documents.POST("/:id/permissions", permissionHandler.AddDocumentPermission)
-		documents.PUT("/:id/permissions/:userId", permissionHandler.UpdateDocumentPermission)
-		documents.DELETE("/:id/permissions/:userId", permissionHandler.DeleteDocumentPermission)
+		// Permissions (require document access)
+		documents.GET("/:id/permissions", documentMiddleware.RequireDocumentAccess(), permissionHandler.GetDocumentPermissions)
+		documents.POST("/:id/permissions", documentMiddleware.RequireDocumentAccess(), permissionHandler.AddDocumentPermission)
+		documents.PUT("/:id/permissions/:userId", documentMiddleware.RequireDocumentAccess(), permissionHandler.UpdateDocumentPermission)
+		documents.DELETE("/:id/permissions/:userId", documentMiddleware.RequireDocumentAccess(), permissionHandler.DeleteDocumentPermission)
 
-		// Signatures
-		documents.GET("/:id/signatures", signatureHandler.GetDocumentSignatures)
-		documents.POST("/:id/signatures", signatureHandler.AddDocumentSignature)
+		// Signatures (require document access)
+		documents.GET("/:id/signatures", documentMiddleware.RequireDocumentAccess(), signatureHandler.GetDocumentSignatures)
+		documents.POST("/:id/signatures", documentMiddleware.RequireDocumentAccess(), signatureHandler.AddDocumentSignature)
 	}
 }

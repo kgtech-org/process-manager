@@ -20,10 +20,8 @@ import {
   Copy,
   Trash2,
   Loader2,
-  Clock,
-  CheckCircle2,
-  XCircle,
   UserPlus,
+  Send,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -48,11 +46,28 @@ export default function DocumentDetailPage() {
       const data = await DocumentResource.getById(documentId);
       setDocument(data);
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to load document',
-        description: error.message || 'An error occurred',
-      });
+      const status = error.response?.status;
+      const errorCode = error.response?.data?.code;
+
+      if (status === 403 || errorCode === 'FORBIDDEN') {
+        toast({
+          variant: 'destructive',
+          title: 'Access Denied',
+          description: 'You do not have permission to access this document. Please request an invitation from the document owner.',
+        });
+      } else if (status === 404) {
+        toast({
+          variant: 'destructive',
+          title: 'Document Not Found',
+          description: 'The requested document does not exist.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to load document',
+          description: error.response?.data?.message || error.message || 'An error occurred',
+        });
+      }
       router.push('/documents');
     } finally {
       setLoading(false);
@@ -93,6 +108,25 @@ export default function DocumentDetailPage() {
     }
   };
 
+  const handlePublish = async () => {
+    if (!confirm('Are you sure you want to publish this document? All contributors will be notified to sign.')) return;
+
+    try {
+      await DocumentResource.publish(documentId);
+      toast({
+        title: 'Document published successfully',
+        description: 'All contributors have been notified to sign the document.',
+      });
+      loadDocument(); // Reload to show updated status
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to publish document',
+        description: error.message || 'An error occurred',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -109,17 +143,6 @@ export default function DocumentDetailPage() {
     document.contributors.authors.length +
     document.contributors.verifiers.length +
     document.contributors.validators.length;
-
-  const getSignatureStatusIcon = (status: string) => {
-    switch (status) {
-      case 'signed':
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
-      case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      default:
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-    }
-  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -139,7 +162,13 @@ export default function DocumentDetailPage() {
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={() => setInvitationModalOpen(true)}>
+        {document.status === 'draft' && (
+          <Button onClick={handlePublish}>
+            <Send className="h-4 w-4 mr-2" />
+            Publish for Signature
+          </Button>
+        )}
+        <Button onClick={() => setInvitationModalOpen(true)} variant={document.status === 'draft' ? 'outline' : 'default'}>
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Collaborator
         </Button>
@@ -221,13 +250,14 @@ export default function DocumentDetailPage() {
       {/* Collaboration Section */}
       <Tabs defaultValue="signatures" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="signatures">Signatures</TabsTrigger>
+          <TabsTrigger value="signatures">Signatures & Contributors</TabsTrigger>
           <TabsTrigger value="permissions">Permissions</TabsTrigger>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
         </TabsList>
         <TabsContent value="signatures">
           <SignaturePanel
             documentId={documentId}
+            document={document}
             onSignatureAdded={loadDocument}
           />
         </TabsContent>
@@ -238,94 +268,6 @@ export default function DocumentDetailPage() {
           <DocumentInvitationsList documentId={documentId} />
         </TabsContent>
       </Tabs>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Contributors</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {document.contributors.authors.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Badge variant="secondary">Authors</Badge>
-              </h3>
-              <div className="space-y-2">
-                {document.contributors.authors.map((contributor) => (
-                  <div
-                    key={contributor.userId}
-                    className="flex items-center justify-between p-3 rounded-lg border"
-                  >
-                    <div>
-                      <p className="font-medium">{contributor.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {contributor.title} • {contributor.department}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getSignatureStatusIcon(contributor.status)}
-                      <span className="text-sm capitalize">{contributor.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {document.contributors.verifiers.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Badge variant="secondary">Verifiers</Badge>
-              </h3>
-              <div className="space-y-2">
-                {document.contributors.verifiers.map((contributor) => (
-                  <div
-                    key={contributor.userId}
-                    className="flex items-center justify-between p-3 rounded-lg border"
-                  >
-                    <div>
-                      <p className="font-medium">{contributor.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {contributor.title} • {contributor.department}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getSignatureStatusIcon(contributor.status)}
-                      <span className="text-sm capitalize">{contributor.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {document.contributors.validators.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Badge variant="secondary">Validators</Badge>
-              </h3>
-              <div className="space-y-2">
-                {document.contributors.validators.map((contributor) => (
-                  <div
-                    key={contributor.userId}
-                    className="flex items-center justify-between p-3 rounded-lg border"
-                  >
-                    <div>
-                      <p className="font-medium">{contributor.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {contributor.title} • {contributor.department}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getSignatureStatusIcon(contributor.status)}
-                      <span className="text-sm capitalize">{contributor.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {document.processGroups.length > 0 && (
         <Card>

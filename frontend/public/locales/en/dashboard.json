@@ -29,6 +29,12 @@
     "pendingApprovalsDesc": "Users waiting for approval",
     "activeUsersDesc": "Currently active users",
     "jobPositionsDesc": "Available job positions",
-    "allSystemsOperational": "All systems operational"
+    "allSystemsOperational": "All systems operational",
+    "myDocuments": "My Documents",
+    "myDocumentsDesc": "Documents you created or contributed to",
+    "pendingInvitations": "Pending Invitations",
+    "pendingInvitationsDesc": "Invitations awaiting your response",
+    "myActivity": "My Activity",
+    "myActivityDesc": "Recent actions this week"
   }
 }

@@ -98,6 +98,7 @@ type ActivityLog struct {
 	UserID        *primitive.ObjectID `bson:"user_id,omitempty" json:"userId,omitempty"`         // The user who performed the action
 	ActorName     string             `bson:"actor_name" json:"actorName"`                       // Name of the user who performed the action
 	ActorEmail    string             `bson:"actor_email" json:"actorEmail"`                     // Email of the user who performed the action
+	ActorAvatar   string             `bson:"actor_avatar,omitempty" json:"actorAvatar,omitempty"` // Avatar URL of the user who performed the action
 	TargetUserID  *primitive.ObjectID `bson:"target_user_id,omitempty" json:"targetUserId,omitempty"` // The user who was affected by the action
 	TargetName    string             `bson:"target_name,omitempty" json:"targetName,omitempty"` // Name of the target user/resource
 	Action        ActivityAction     `bson:"action" json:"action"`                              // What action was performed

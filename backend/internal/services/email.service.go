@@ -311,7 +311,6 @@ func (e *EmailService) sendEmail(toEmail, toName string, emailTemplate EmailTemp
 		return fmt.Errorf("failed to close writer: %w", err)
 	}
 
-	fmt.Printf("✅ Email sent successfully: %s to %s\n", emailTemplate.Subject, toEmail)
 	return nil
 }
 
