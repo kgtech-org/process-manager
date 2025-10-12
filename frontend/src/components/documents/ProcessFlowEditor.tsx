@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import {
   DndContext,
@@ -103,9 +103,42 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
 }) => {
   const { t } = useTranslation('documents');
   const [groups, setGroups] = useState<ProcessGroup[]>(initialGroups);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+
+  // Helper to get localStorage key
+  const getStorageKey = (suffix: string) => `processFlow_${documentId}_${suffix}`;
+
+  // Load expanded state from localStorage
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      const stored = localStorage.getItem(getStorageKey('groups'));
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const [expandedSteps, setExpandedSteps] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      const stored = localStorage.getItem(getStorageKey('steps'));
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  // Persist expanded state to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(getStorageKey('groups'), JSON.stringify(Array.from(expandedGroups)));
+  }, [expandedGroups, documentId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(getStorageKey('steps'), JSON.stringify(Array.from(expandedSteps)));
+  }, [expandedSteps, documentId]);
 
   // Drag and drop sensors with activation constraint
   const sensors = useSensors(
