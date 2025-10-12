@@ -245,6 +245,25 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
 
           {/* Details Cards */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Personal Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Personal Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">First Name</p>
+                    <p className="text-sm text-gray-600 mt-1">{user.firstName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Last Name</p>
+                    <p className="text-sm text-gray-600 mt-1">{user.lastName}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Contact Information */}
             <Card>
               <CardHeader>
