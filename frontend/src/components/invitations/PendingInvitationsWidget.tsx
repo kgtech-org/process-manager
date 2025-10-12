@@ -134,21 +134,9 @@ export function PendingInvitationsWidget() {
     );
   }
 
+  // Don't display widget if there are no pending invitations
   if (invitations.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('widget.title')}</CardTitle>
-          <CardDescription>{t('widget.description')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Mail className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">{t('widget.noInvitations')}</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   return (
