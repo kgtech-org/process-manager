@@ -7,6 +7,7 @@ import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge'
 import { ProcessFlowEditor } from '@/components/documents/ProcessFlowEditor';
 import { ProcessFlowTableView } from '@/components/documents/ProcessFlowTableView';
 import { MetadataEditor } from '@/components/documents/MetadataEditor';
+import { AnnexEditor } from '@/components/documents/AnnexEditor';
 import { InvitationModal, SignaturePanel } from '@/components/collaboration';
 import { DocumentInvitationsList } from '@/components/invitations';
 import { Button } from '@/components/ui/button';
@@ -143,6 +144,24 @@ export default function DocumentDetailPage() {
     await DocumentResource.updateMetadata(documentId, metadata);
     // Update local state
     setDocument((prev) => prev ? { ...prev, metadata } : null);
+  }, [documentId]);
+
+  const handleCreateAnnex = useCallback(async (annex: any) => {
+    const createdAnnex = await DocumentResource.createAnnex(documentId, annex);
+    // Reload document to get updated annexes
+    await loadDocument();
+  }, [documentId]);
+
+  const handleUpdateAnnex = useCallback(async (annexId: string, updates: any) => {
+    await DocumentResource.updateAnnex(documentId, annexId, updates);
+    // Reload document to get updated annexes
+    await loadDocument();
+  }, [documentId]);
+
+  const handleDeleteAnnex = useCallback(async (annexId: string) => {
+    await DocumentResource.deleteAnnex(documentId, annexId);
+    // Reload document to get updated annexes
+    await loadDocument();
   }, [documentId]);
 
   if (loading) {
@@ -311,31 +330,14 @@ export default function DocumentDetailPage() {
 
         {/* Annexes Tab */}
         <TabsContent value="annexes" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Annexes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {document.annexes && document.annexes.length > 0 ? (
-                <div className="space-y-4">
-                  {document.annexes.map((annex) => (
-                    <div key={annex.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-semibold">{annex.title}</h4>
-                          <Badge variant="outline" className="mt-1">
-                            {annex.type}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No annexes added</p>
-              )}
-            </CardContent>
-          </Card>
+          <AnnexEditor
+            documentId={documentId}
+            annexes={document.annexes || []}
+            onCreateAnnex={handleCreateAnnex}
+            onUpdateAnnex={handleUpdateAnnex}
+            onDeleteAnnex={handleDeleteAnnex}
+            readOnly={document.status !== 'draft'}
+          />
         </TabsContent>
 
         {/* Signatures & Contributors Tab */}
