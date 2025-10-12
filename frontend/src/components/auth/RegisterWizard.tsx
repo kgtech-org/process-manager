@@ -58,7 +58,8 @@ export const RegisterWizard: React.FC = () => {
   const step3Form = useForm<RegistrationStep3Data>({
     resolver: zodResolver(registrationStep3Schema),
     defaultValues: {
-      name: '',
+      firstName: '',
+      lastName: '',
       phone: '',
       departmentId: '',
       jobPositionId: '',
@@ -243,24 +244,45 @@ export const RegisterWizard: React.FC = () => {
           {step === 3 && (
             <Form {...step3Form}>
               <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="space-y-4">
-                <FormField
-                  control={step3Form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="John Doe"
-                          {...field}
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={step3Form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="John"
+                            {...field}
+                            disabled={isLoading}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={step3Form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="Doe"
+                            {...field}
+                            disabled={isLoading}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={step3Form.control}

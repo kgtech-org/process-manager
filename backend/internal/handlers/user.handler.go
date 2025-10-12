@@ -350,7 +350,7 @@ func (h *UserHandler) ValidateUser(c *gin.Context) {
 		}
 
 		// Send approval email
-		if err := h.emailService.SendAccountApprovedEmail(user.Email, user.Name); err != nil {
+		if err := h.emailService.SendAccountApprovedEmail(user.Email, user.FirstName + " " + user.LastName); err != nil {
 			// Log error but don't fail the approval
 		}
 
@@ -375,7 +375,7 @@ func (h *UserHandler) ValidateUser(c *gin.Context) {
 		}
 
 		// Send rejection email
-		if err := h.emailService.SendAccountRejectedEmail(user.Email, user.Name, req.Reason); err != nil {
+		if err := h.emailService.SendAccountRejectedEmail(user.Email, user.FirstName + " " + user.LastName, req.Reason); err != nil {
 			// Log error but don't fail the rejection
 		}
 

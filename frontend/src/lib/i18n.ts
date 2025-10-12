@@ -14,6 +14,8 @@ import jobPositionsFr from '../../public/locales/fr/jobPositions.json';
 import documentsFr from '../../public/locales/fr/documents.json';
 import notificationsFr from '../../public/locales/fr/notifications.json';
 import collaborationFr from '../../public/locales/fr/collaboration.json';
+import invitationsFr from '../../public/locales/fr/invitations.json';
+import signaturesFr from '../../public/locales/fr/signatures.json';
 
 import commonEn from '../../public/locales/en/common.json';
 import authEn from '../../public/locales/en/auth.json';
@@ -25,6 +27,8 @@ import jobPositionsEn from '../../public/locales/en/jobPositions.json';
 import documentsEn from '../../public/locales/en/documents.json';
 import notificationsEn from '../../public/locales/en/notifications.json';
 import collaborationEn from '../../public/locales/en/collaboration.json';
+import invitationsEn from '../../public/locales/en/invitations.json';
+import signaturesEn from '../../public/locales/en/signatures.json';
 
 const resources = {
   fr: {
@@ -38,6 +42,8 @@ const resources = {
     documents: documentsFr,
     notifications: notificationsFr,
     collaboration: collaborationFr,
+    invitations: invitationsFr,
+    signatures: signaturesFr,
   },
   en: {
     common: commonEn,
@@ -50,6 +56,8 @@ const resources = {
     documents: documentsEn,
     notifications: notificationsEn,
     collaboration: collaborationEn,
+    invitations: invitationsEn,
+    signatures: signaturesEn,
   },
 };
 
@@ -61,7 +69,7 @@ i18n
     resources,
     fallbackLng: 'fr',
     defaultNS: 'common',
-    ns: ['common', 'auth', 'activity', 'dashboard', 'users', 'departments', 'jobPositions', 'documents', 'notifications', 'collaboration'],
+    ns: ['common', 'auth', 'activity', 'dashboard', 'users', 'departments', 'jobPositions', 'documents', 'notifications', 'collaboration', 'invitations', 'signatures'],
 
     interpolation: {
       escapeValue: false,

@@ -1,0 +1,66 @@
+{
+  "widget": {
+    "title": "Invitations en attente",
+    "description": "Invitations à collaborer sur des documents",
+    "noInvitations": "Aucune invitation en attente",
+    "untitledDocument": "Document sans titre",
+    "invitedBy": "Invité par {{name}}",
+    "expiresIn": "Expire dans {{days}} jours",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "acceptSuccess": "Invitation acceptée",
+    "acceptSuccessMessage": "Vous pouvez maintenant collaborer sur {{document}}",
+    "acceptError": "Échec de l'acceptation",
+    "declineSuccess": "Invitation refusée",
+    "declineSuccessMessage": "L'invitation a été refusée",
+    "declineError": "Échec du refus",
+    "actionFailed": "Une erreur s'est produite. Veuillez réessayer.",
+    "declineConfirmTitle": "Refuser l'invitation",
+    "declineConfirmMessage": "Êtes-vous sûr de vouloir refuser l'invitation à collaborer sur {{document}} ?",
+    "cancel": "Annuler",
+    "confirmDecline": "Refuser",
+    "teams": {
+      "authors": "Auteur",
+      "verifiers": "Vérificateur",
+      "validators": "Validateur"
+    }
+  },
+  "list": {
+    "title": "Invitations du document",
+    "description": "Gérer les invitations envoyées pour ce document",
+    "noInvitations": "Aucune invitation envoyée",
+    "loadError": "Échec du chargement des invitations",
+    "actionFailed": "Une erreur s'est produite. Veuillez réessayer.",
+    "resend": "Renvoyer",
+    "cancel": "Annuler",
+    "resendSuccess": "Invitation renvoyée",
+    "resendSuccessMessage": "Email d'invitation envoyé à {{email}}",
+    "resendError": "Échec de l'envoi",
+    "cancelSuccess": "Invitation annulée",
+    "cancelSuccessMessage": "L'invitation a été annulée",
+    "cancelError": "Échec de l'annulation",
+    "cancelConfirmTitle": "Annuler l'invitation",
+    "cancelConfirmMessage": "Êtes-vous sûr de vouloir annuler l'invitation envoyée à {{email}} ?",
+    "cancelAction": "Retour",
+    "confirmCancel": "Oui, annuler",
+    "columns": {
+      "email": "Email",
+      "team": "Équipe",
+      "status": "Statut",
+      "sentDate": "Date d'envoi",
+      "expiresAt": "Expire le",
+      "actions": "Actions"
+    },
+    "statuses": {
+      "pending": "En attente",
+      "accepted": "Acceptée",
+      "declined": "Refusée",
+      "expired": "Expirée"
+    },
+    "teams": {
+      "authors": "Auteurs",
+      "verifiers": "Vérificateurs",
+      "validators": "Validateurs"
+    }
+  }
+}

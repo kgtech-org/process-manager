@@ -22,6 +22,8 @@ type JWTService struct {
 type JWTCustomClaims struct {
 	UserID    primitive.ObjectID `json:"userId"`
 	Email     string             `json:"email"`
+	FirstName string             `json:"firstName"`
+	LastName  string             `json:"lastName"`
 	Role      models.UserRole    `json:"role"`
 	TokenType string             `json:"tokenType"` // "access" or "refresh"
 	jwt.RegisteredClaims
@@ -40,8 +42,8 @@ func NewJWTService() *JWTService {
 		issuer = "process-manager-api"
 	}
 
-	// Access token expires in 15 minutes
-	accessExpiry := 15 * time.Minute
+	// Access token expires in 24 hours
+	accessExpiry := 24 * time.Hour
 	if exp := os.Getenv("JWT_ACCESS_EXPIRY"); exp != "" {
 		if duration, err := time.ParseDuration(exp); err == nil {
 			accessExpiry = duration
@@ -100,6 +102,8 @@ func (s *JWTService) generateToken(user *models.User, tokenType string, expiry t
 	claims := JWTCustomClaims{
 		UserID:    user.ID,
 		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
 		Role:      user.Role,
 		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{

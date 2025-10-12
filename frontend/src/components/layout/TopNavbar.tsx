@@ -7,7 +7,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { TokenStatus } from '@/components/auth/TokenStatus';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import {
@@ -137,13 +136,8 @@ export const TopNavbar: React.FC = () => {
               })}
             </div>
 
-            {/* Right side - Language Switcher, Token Status, and User Menu */}
+            {/* Right side - Language Switcher and User Menu */}
             <div className="flex items-center space-x-4">
-              {/* Token Status */}
-              <div className="hidden sm:block">
-                <TokenStatus showRefreshButton={false} className="text-xs" />
-              </div>
-
               {/* Language Switcher */}
               <div className="hidden sm:block">
                 <LanguageSwitcher />
@@ -157,9 +151,9 @@ export const TopNavbar: React.FC = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.avatar} alt={user?.name} />
-                      <AvatarFallback className={`${user?.name ? getAvatarColor(user.name).bg : 'bg-gray-100'} ${user?.name ? getAvatarColor(user.name).text : 'text-gray-700'} text-xs font-semibold`}>
-                        {user?.name ? getInitials(user.name) : 'U'}
+                      <AvatarImage src={user?.avatar} alt={user?.firstName ? `${user.firstName} ${user.lastName}` : "User"} />
+                      <AvatarFallback className={`${user?.firstName ? getAvatarColor(`${user.firstName} ${user.lastName}`).bg : 'bg-gray-100'} ${user?.firstName ? getAvatarColor(`${user.firstName} ${user.lastName}`).text : 'text-gray-700'} text-xs font-semibold`}>
+                        {user?.firstName ? getInitials(`${user.firstName} ${user.lastName}`) : 'U'}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -167,7 +161,7 @@ export const TopNavbar: React.FC = () => {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user?.name}</p>
+                      <p className="font-medium">{user?.firstName ? `${user.firstName} ${user.lastName}` : ""}</p>
                       <p className="w-[200px] truncate text-sm text-muted-foreground">
                         {user?.email}
                       </p>
@@ -235,7 +229,6 @@ export const TopNavbar: React.FC = () => {
             <div className="border-t border-gray-200 pt-4 pb-3">
               <div className="px-4 space-y-3">
                 <LanguageSwitcher />
-                <TokenStatus showRefreshButton={false} className="text-xs" />
               </div>
             </div>
           </div>

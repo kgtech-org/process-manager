@@ -84,13 +84,13 @@ export const useRegistration = () => {
       setState(prev => ({ ...prev, isLoading: true }));
       
       const response = await authService.registerStep3(data, state.registrationToken);
-      
-      setState(prev => ({ 
-        ...prev, 
+
+      setState(prev => ({
+        ...prev,
         step: 4,
         isLoading: false,
         isComplete: true,
-        userName: data.name 
+        userName: `${data.firstName} ${data.lastName}`
       }));
 
       return response;

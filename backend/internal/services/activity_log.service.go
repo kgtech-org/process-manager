@@ -105,7 +105,7 @@ func (s *ActivityLogService) LogActivity(ctx context.Context, req models.Activit
 	if user, exists := c.Get("user"); exists {
 		if userModel, ok := user.(*models.User); ok {
 			userID = &userModel.ID
-			actorName = userModel.Name
+			actorName = userModel.FirstName + " " + userModel.LastName
 			actorEmail = userModel.Email
 		}
 	}
@@ -164,7 +164,7 @@ func (s *ActivityLogService) LogActivitySimple(ctx context.Context, action model
 	if userID != nil {
 		userService := GetUserService()
 		if user, err := userService.GetUserByID(ctx, *userID); err == nil {
-			actorName = user.Name
+			actorName = user.FirstName + " " + user.LastName
 			actorEmail = user.Email
 		}
 	}

@@ -198,13 +198,13 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                     {user.avatar ? (
                       <img
                         src={user.avatar}
-                        alt={user.name}
+                        alt={user.firstName + " " + user.lastName}
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className={`h-full w-full flex items-center justify-center bg-gradient-to-br ${getAvatarColor(user.name).bg}`}>
-                        <span className={`${getAvatarColor(user.name).text} text-xl font-bold`}>
-                          {getInitials(user.name)}
+                      <div className={`h-full w-full flex items-center justify-center bg-gradient-to-br ${getAvatarColor(user.firstName + " " + user.lastName).bg}`}>
+                        <span className={`${getAvatarColor(user.firstName + " " + user.lastName).text} text-xl font-bold`}>
+                          {getInitials(user.firstName + " " + user.lastName)}
                         </span>
                       </div>
                     )}
@@ -212,7 +212,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
 
                   {/* Basic Info */}
                   <div className="text-center">
-                    <h3 className="text-lg font-semibold text-gray-900">{user.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{user.firstName + " " + user.lastName}</h3>
                     <p className="text-gray-600">{user.email}</p>
                     <div className="flex justify-center gap-2 mt-3">
                       {getStatusBadge(user.status)}
@@ -245,6 +245,25 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
 
           {/* Details Cards */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Personal Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Personal Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">First Name</p>
+                    <p className="text-sm text-gray-600 mt-1">{user.firstName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Last Name</p>
+                    <p className="text-sm text-gray-600 mt-1">{user.lastName}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Contact Information */}
             <Card>
               <CardHeader>

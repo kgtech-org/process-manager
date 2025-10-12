@@ -33,6 +33,7 @@ export interface InvitationFilter {
   invitedEmail?: string;
   status?: 'pending' | 'accepted' | 'declined' | 'expired';
   type?: 'collaborator' | 'reviewer';
+  forMe?: boolean;
   page?: number;
   limit?: number;
 }
@@ -66,16 +67,17 @@ export class InvitationResource {
     if (filters?.invitedEmail) params.append('invitedEmail', filters.invitedEmail);
     if (filters?.status) params.append('status', filters.status);
     if (filters?.type) params.append('type', filters.type);
+    if (filters?.forMe) params.append('forMe', 'true');
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
 
-    const response = await apiClient.get<{ data: Invitation[]; pagination: any }>(
+    const response = await apiClient.get<Invitation[]>(
       `/invitations?${params.toString()}`
     );
 
     return {
-      data: response.data?.data || [],
-      pagination: response.data?.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
+      data: response.data || [],
+      pagination: response.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
     };
   }
 
@@ -91,5 +93,19 @@ export class InvitationResource {
    */
   static async decline(invitationId: string, reason?: string): Promise<void> {
     await apiClient.put(`/invitations/${invitationId}/decline`, { reason });
+  }
+
+  /**
+   * Resend an invitation
+   */
+  static async resend(invitationId: string): Promise<void> {
+    await apiClient.post(`/invitations/${invitationId}/resend`);
+  }
+
+  /**
+   * Cancel an invitation
+   */
+  static async cancel(invitationId: string): Promise<void> {
+    await apiClient.delete(`/invitations/${invitationId}/cancel`);
   }
 }

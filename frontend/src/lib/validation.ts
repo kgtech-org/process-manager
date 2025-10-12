@@ -7,7 +7,7 @@ const phoneSchema = z.string()
   .regex(/^\+?[\d\s-()]+$/, 'Please enter a valid phone number');
 const nameSchema = z.string()
   .min(2, 'Name must be at least 2 characters')
-  .max(100, 'Name cannot exceed 100 characters');
+  .max(50, 'Name cannot exceed 50 characters');
 const otpSchema = z.string()
   .length(6, 'OTP must be exactly 6 digits')
   .regex(/^\d{6}$/, 'OTP must contain only numbers');
@@ -28,7 +28,8 @@ export type RegistrationStep2Data = z.infer<typeof registrationStep2Schema>;
 
 // Registration Step 3 - Profile Completion
 export const registrationStep3Schema = z.object({
-  name: nameSchema,
+  firstName: nameSchema,
+  lastName: nameSchema,
   phone: phoneSchema,
   departmentId: z.string().min(1, 'Please select a department'),
   jobPositionId: z.string().min(1, 'Please select a job position'),
@@ -52,7 +53,8 @@ export type LoginVerifyData = z.infer<typeof loginVerifySchema>;
 
 // Profile Update
 export const profileUpdateSchema = z.object({
-  name: nameSchema,
+  firstName: nameSchema,
+  lastName: nameSchema,
   phone: phoneSchema,
   departmentId: z.string().optional(),
   jobPositionId: z.string().optional(),
@@ -130,7 +132,8 @@ export type JobPosition = z.infer<typeof jobPositionSchema>;
 export const userSchema = z.object({
   id: z.string(),
   email: z.string(),
-  name: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
   phone: z.string().optional(),
   role: z.enum(['admin', 'manager', 'user']),
   status: z.enum(['pending', 'active', 'inactive']),

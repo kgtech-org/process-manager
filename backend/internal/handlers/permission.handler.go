@@ -93,14 +93,14 @@ func (h *PermissionHandler) GetDocumentPermissions(c *gin.Context) {
 		// Fetch user details
 		var user models.User
 		if err := h.userCollection.FindOne(ctx, bson.M{"_id": perm.UserID}).Decode(&user); err == nil {
-			response.UserName = user.Name
+			response.UserName = user.FirstName + " " + user.LastName
 			response.UserEmail = user.Email
 		}
 
 		// Fetch granter details
 		var granter models.User
 		if err := h.userCollection.FindOne(ctx, bson.M{"_id": perm.GrantedBy}).Decode(&granter); err == nil {
-			response.GrantedByName = granter.Name
+			response.GrantedByName = granter.FirstName + " " + granter.LastName
 		}
 
 		responses = append(responses, response)
@@ -212,9 +212,9 @@ func (h *PermissionHandler) AddDocumentPermission(c *gin.Context) {
 	permission.ID = result.InsertedID.(primitive.ObjectID)
 
 	response := permission.ToResponse()
-	response.UserName = targetUser.Name
+	response.UserName = targetUser.FirstName + " " + targetUser.LastName
 	response.UserEmail = targetUser.Email
-	response.GrantedByName = user.Name
+	response.GrantedByName = user.FirstName + " " + user.LastName
 
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,

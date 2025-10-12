@@ -36,7 +36,8 @@ const (
 type User struct {
 	ID              primitive.ObjectID  `bson:"_id,omitempty" json:"id,omitempty"`
 	Email           string              `bson:"email" json:"email" validate:"required,email"`
-	Name            string              `bson:"name" json:"name" validate:"required,min=2,max=100"`
+	FirstName       string              `bson:"first_name" json:"firstName" validate:"required,min=2,max=50"`
+	LastName        string              `bson:"last_name" json:"lastName" validate:"required,min=2,max=50"`
 	Role            UserRole            `bson:"role" json:"role" validate:"required"`
 	Status          UserStatus          `bson:"status" json:"status"`
 	Active          bool                `bson:"active" json:"active"`
@@ -62,7 +63,8 @@ type User struct {
 // RegisterUserRequest represents the request payload for user registration
 type RegisterUserRequest struct {
 	Email         string `json:"email" validate:"required,email"`
-	Name          string `json:"name" validate:"required,min=2,max=100"`
+	FirstName     string `json:"firstName" validate:"required,min=2,max=50"`
+	LastName      string `json:"lastName" validate:"required,min=2,max=50"`
 	Phone         string `json:"phone,omitempty"`
 	DepartmentID  string `json:"departmentId,omitempty"`
 	JobPositionID string `json:"jobPositionId,omitempty"`
@@ -71,7 +73,8 @@ type RegisterUserRequest struct {
 // CreateUserRequest represents the request payload for admin user creation
 type CreateUserRequest struct {
 	Email         string   `json:"email" validate:"required,email"`
-	Name          string   `json:"name" validate:"required,min=2,max=100"`
+	FirstName     string   `json:"firstName" validate:"required,min=2,max=50"`
+	LastName      string   `json:"lastName" validate:"required,min=2,max=50"`
 	Role          UserRole `json:"role" validate:"required"`
 	Phone         string   `json:"phone,omitempty"`
 	DepartmentID  string   `json:"departmentId,omitempty"`
@@ -80,7 +83,8 @@ type CreateUserRequest struct {
 
 // UpdateProfileRequest represents the request payload for profile updates
 type UpdateProfileRequest struct {
-	Name          string `json:"name" validate:"omitempty,min=2,max=100"`
+	FirstName     string `json:"firstName" validate:"omitempty,min=2,max=50"`
+	LastName      string `json:"lastName" validate:"omitempty,min=2,max=50"`
 	Phone         string `json:"phone,omitempty"`
 	DepartmentID  string `json:"departmentId,omitempty"`
 	JobPositionID string `json:"jobPositionId,omitempty"`
@@ -107,7 +111,8 @@ type UpdateUserRoleRequest struct {
 type UserResponse struct {
 	ID              primitive.ObjectID  `json:"id"`
 	Email           string              `json:"email"`
-	Name            string              `json:"name"`
+	FirstName       string              `json:"firstName"`
+	LastName        string              `json:"lastName"`
 	Role            UserRole            `json:"role"`
 	Status          UserStatus          `json:"status"`
 	Active          bool                `json:"active"`
@@ -201,7 +206,8 @@ func (u *User) ToResponse() UserResponse {
 	return UserResponse{
 		ID:              u.ID,
 		Email:           u.Email,
-		Name:            u.Name,
+		FirstName:       u.FirstName,
+		LastName:        u.LastName,
 		Role:            u.Role,
 		Status:          u.Status,
 		Active:          u.Active,

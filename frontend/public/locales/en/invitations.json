@@ -1,0 +1,66 @@
+{
+  "widget": {
+    "title": "Pending Invitations",
+    "description": "Invitations to collaborate on documents",
+    "noInvitations": "No pending invitations",
+    "untitledDocument": "Untitled Document",
+    "invitedBy": "Invited by {{name}}",
+    "expiresIn": "Expires in {{days}} days",
+    "accept": "Accept",
+    "decline": "Decline",
+    "acceptSuccess": "Invitation Accepted",
+    "acceptSuccessMessage": "You can now collaborate on {{document}}",
+    "acceptError": "Failed to Accept",
+    "declineSuccess": "Invitation Declined",
+    "declineSuccessMessage": "The invitation has been declined",
+    "declineError": "Failed to Decline",
+    "actionFailed": "An error occurred. Please try again.",
+    "declineConfirmTitle": "Decline Invitation",
+    "declineConfirmMessage": "Are you sure you want to decline the invitation to collaborate on {{document}}?",
+    "cancel": "Cancel",
+    "confirmDecline": "Decline",
+    "teams": {
+      "authors": "Author",
+      "verifiers": "Verifier",
+      "validators": "Validator"
+    }
+  },
+  "list": {
+    "title": "Document Invitations",
+    "description": "Manage invitations sent for this document",
+    "noInvitations": "No invitations sent yet",
+    "loadError": "Failed to Load Invitations",
+    "actionFailed": "An error occurred. Please try again.",
+    "resend": "Resend",
+    "cancel": "Cancel",
+    "resendSuccess": "Invitation Resent",
+    "resendSuccessMessage": "Invitation email sent to {{email}}",
+    "resendError": "Failed to Resend",
+    "cancelSuccess": "Invitation Cancelled",
+    "cancelSuccessMessage": "The invitation has been cancelled",
+    "cancelError": "Failed to Cancel",
+    "cancelConfirmTitle": "Cancel Invitation",
+    "cancelConfirmMessage": "Are you sure you want to cancel the invitation sent to {{email}}?",
+    "cancelAction": "Go Back",
+    "confirmCancel": "Yes, Cancel",
+    "columns": {
+      "email": "Email",
+      "team": "Team",
+      "status": "Status",
+      "sentDate": "Sent Date",
+      "expiresAt": "Expires At",
+      "actions": "Actions"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "expired": "Expired"
+    },
+    "teams": {
+      "authors": "Authors",
+      "verifiers": "Verifiers",
+      "validators": "Validators"
+    }
+  }
+}

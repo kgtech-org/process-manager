@@ -1,0 +1,1 @@
+export { SignatureManager } from './SignatureManager';

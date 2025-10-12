@@ -43,7 +43,8 @@ func (h *EmailHandler) SendTestEmail(c *gin.Context) {
 	body := `<p>This is a test email from Process Manager to verify email configuration is working properly.</p>
 	<p>If you received this email, it means the email service is configured correctly.</p>`
 
-	if err := h.emailService.SendCustomEmail(input.Email, currentUser.Name, subject, body); err != nil {
+	fullName := currentUser.FirstName + " " + currentUser.LastName
+	if err := h.emailService.SendCustomEmail(input.Email, fullName, subject, body); err != nil {
 		helpers.SendInternalError(c, err)
 		return
 	}
@@ -93,7 +94,8 @@ func (h *EmailHandler) SendEmailToUser(c *gin.Context) {
 	}
 
 	// Send email
-	if err := h.emailService.SendCustomEmail(user.Email, user.Name, input.Subject, emailBody); err != nil {
+	fullName := user.FirstName + " " + user.LastName
+	if err := h.emailService.SendCustomEmail(user.Email, fullName, input.Subject, emailBody); err != nil {
 		helpers.SendInternalError(c, err)
 		return
 	}
@@ -101,7 +103,7 @@ func (h *EmailHandler) SendEmailToUser(c *gin.Context) {
 	helpers.SendSuccess(c, "Email sent successfully", gin.H{
 		"userId":  user.ID,
 		"email":   user.Email,
-		"name":    user.Name,
+		"name":    fullName,
 		"subject": input.Subject,
 		"status":  "sent",
 	})
@@ -146,7 +148,8 @@ func (h *EmailHandler) SendBroadcastEmail(c *gin.Context) {
 	var errors []string
 
 	for _, user := range users {
-		if err := h.emailService.SendCustomEmail(user.Email, user.Name, input.Subject, emailBody); err != nil {
+		fullName := user.FirstName + " " + user.LastName
+		if err := h.emailService.SendCustomEmail(user.Email, fullName, input.Subject, emailBody); err != nil {
 			failed++
 			errors = append(errors, user.Email+": "+err.Error())
 		} else {
@@ -224,7 +227,8 @@ func (h *EmailHandler) SendEmailToGroup(c *gin.Context) {
 			continue
 		}
 
-		if err := h.emailService.SendCustomEmail(user.Email, user.Name, input.Subject, emailBody); err != nil {
+		fullName := user.FirstName + " " + user.LastName
+		if err := h.emailService.SendCustomEmail(user.Email, fullName, input.Subject, emailBody); err != nil {
 			failed++
 			errors = append(errors, user.Email+": "+err.Error())
 		} else {
@@ -232,7 +236,7 @@ func (h *EmailHandler) SendEmailToGroup(c *gin.Context) {
 			recipients = append(recipients, gin.H{
 				"id":    user.ID,
 				"email": user.Email,
-				"name":  user.Name,
+				"name":  fullName,
 			})
 		}
 	}
