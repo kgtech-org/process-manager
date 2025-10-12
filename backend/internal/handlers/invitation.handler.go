@@ -23,12 +23,14 @@ type InvitationHandler struct {
 	userCollection       *mongo.Collection
 	emailService         *services.EmailService
 	notificationService  *services.NotificationService
+	activityLogService   *services.ActivityLogService
 }
 
 func NewInvitationHandler(
 	db *mongo.Database,
 	emailService *services.EmailService,
 	notificationService *services.NotificationService,
+	activityLogService *services.ActivityLogService,
 ) *InvitationHandler {
 	return &InvitationHandler{
 		invitationCollection: db.Collection("invitations"),
@@ -36,6 +38,7 @@ func NewInvitationHandler(
 		userCollection:       db.Collection("users"),
 		emailService:         emailService,
 		notificationService:  notificationService,
+		activityLogService:   activityLogService,
 	}
 }
 
@@ -217,6 +220,31 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		}
 	} else {
 		fmt.Printf("ℹ️  [INVITATION] Skipping push notification - user does not exist in system yet\n")
+	}
+
+	// Log activity
+	activityDescription := fmt.Sprintf("Invited %s to collaborate on document '%s' (%s) as %s",
+		req.InvitedEmail, document.Title, document.Reference, teamName)
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_invitation_sent",
+		Description:  activityDescription,
+		ResourceType: "document",
+		ResourceID:   &documentID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId":     documentID.Hex(),
+			"invitedEmail":   req.InvitedEmail,
+			"team":           string(req.Team),
+			"invitationType": string(req.Type),
+			"invitationId":   invitation.ID.Hex(),
+		},
+	}
+	if invitedUserID != nil {
+		activityReq.TargetUserID = invitedUserID
+	}
+	logErr := h.activityLogService.LogActivity(ctx, activityReq, c)
+	if logErr != nil {
+		fmt.Printf("⚠️  [INVITATION] Failed to log activity: %v\n", logErr)
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -429,6 +457,35 @@ func (h *InvitationHandler) AcceptInvitation(c *gin.Context) {
 	if err != nil {
 		helpers.SendInternalError(c, err)
 		return
+	}
+
+	// Log activity
+	teamName := string(invitation.Team)
+	if invitation.Team == models.ContributorTeamAuthors {
+		teamName = "Authors"
+	} else if invitation.Team == models.ContributorTeamVerifiers {
+		teamName = "Verifiers"
+	} else if invitation.Team == models.ContributorTeamValidators {
+		teamName = "Validators"
+	}
+
+	activityDescription := fmt.Sprintf("Accepted invitation to collaborate on document '%s' (%s) as %s",
+		document.Title, document.Reference, teamName)
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_invitation_accepted",
+		Description:  activityDescription,
+		ResourceType: "document",
+		ResourceID:   &invitation.DocumentID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId":   invitation.DocumentID.Hex(),
+			"team":         string(invitation.Team),
+			"invitationId": invitation.ID.Hex(),
+		},
+	}
+	logErr := h.activityLogService.LogActivity(ctx, activityReq, c)
+	if logErr != nil {
+		fmt.Printf("⚠️  [INVITATION] Failed to log activity: %v\n", logErr)
 	}
 
 	helpers.SendSuccess(c, "Invitation accepted successfully", nil)
