@@ -14,14 +14,16 @@ import (
 )
 
 type DocumentService struct {
-	collection        *mongo.Collection
-	versionCollection *mongo.Collection
+	collection           *mongo.Collection
+	versionCollection    *mongo.Collection
+	invitationCollection *mongo.Collection
 }
 
 func NewDocumentService(db *mongo.Database) *DocumentService {
 	return &DocumentService{
-		collection:        db.Collection("documents"),
-		versionCollection: db.Collection("document_versions"),
+		collection:           db.Collection("documents"),
+		versionCollection:    db.Collection("document_versions"),
+		invitationCollection: db.Collection("invitations"),
 	}
 }
 
@@ -175,6 +177,118 @@ func (s *DocumentService) List(ctx context.Context, filter *models.DocumentFilte
 		SetLimit(int64(limit))
 
 	cursor, err := s.collection.Find(ctx, query, findOptions)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to find documents: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	documents := make([]*models.Document, 0)
+	if err = cursor.All(ctx, &documents); err != nil {
+		return nil, 0, fmt.Errorf("failed to decode documents: %w", err)
+	}
+
+	return documents, total, nil
+}
+
+// ListUserAccessible retrieves documents that a user has access to
+// Users can access documents if they are:
+// 1. The document creator
+// 2. A contributor (author, verifier, validator)
+// 3. Have an accepted invitation
+// Note: Admins should be handled at the handler level
+func (s *DocumentService) ListUserAccessible(ctx context.Context, userID primitive.ObjectID, userRole models.UserRole, filter *models.DocumentFilter) ([]*models.Document, int64, error) {
+	// Admin users can see all documents
+	if userRole == models.RoleAdmin {
+		return s.List(ctx, filter)
+	}
+
+	// Build base filter
+	baseQuery := bson.M{}
+
+	if filter.Status != nil {
+		baseQuery["status"] = *filter.Status
+	}
+
+	if filter.CreatedBy != nil {
+		createdByID, err := primitive.ObjectIDFromHex(*filter.CreatedBy)
+		if err != nil {
+			return nil, 0, errors.New("invalid createdBy ID")
+		}
+		baseQuery["created_by"] = createdByID
+	}
+
+	if filter.Search != nil && *filter.Search != "" {
+		baseQuery["$or"] = []bson.M{
+			{"title": bson.M{"$regex": *filter.Search, "$options": "i"}},
+			{"reference": bson.M{"$regex": *filter.Search, "$options": "i"}},
+		}
+	}
+
+	// Get documents where user has accepted invitations
+	invitedDocIDs := []primitive.ObjectID{}
+	invCursor, err := s.invitationCollection.Find(ctx, bson.M{
+		"invited_user_id": userID,
+		"status":          models.InvitationStatusAccepted,
+	})
+	if err == nil {
+		defer invCursor.Close(ctx)
+		for invCursor.Next(ctx) {
+			var inv models.Invitation
+			if err := invCursor.Decode(&inv); err == nil {
+				invitedDocIDs = append(invitedDocIDs, inv.DocumentID)
+			}
+		}
+	}
+
+	// Build access query: user is creator OR contributor OR has invitation
+	accessQuery := bson.M{
+		"$or": []bson.M{
+			{"created_by": userID}, // User is creator
+			{"contributors.authors.user_id": userID},    // User is author
+			{"contributors.verifiers.user_id": userID},  // User is verifier
+			{"contributors.validators.user_id": userID}, // User is validator
+		},
+	}
+
+	// Add invited documents if any
+	if len(invitedDocIDs) > 0 {
+		accessQuery["$or"] = append(accessQuery["$or"].([]bson.M), bson.M{
+			"_id": bson.M{"$in": invitedDocIDs},
+		})
+	}
+
+	// Combine base filter with access query
+	finalQuery := bson.M{
+		"$and": []bson.M{
+			baseQuery,
+			accessQuery,
+		},
+	}
+
+	// Count total accessible documents
+	total, err := s.collection.CountDocuments(ctx, finalQuery)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count documents: %w", err)
+	}
+
+	// Set pagination defaults
+	page := filter.Page
+	if page < 1 {
+		page = 1
+	}
+	limit := filter.Limit
+	if limit < 1 {
+		limit = 20
+	}
+	skip := (page - 1) * limit
+
+	// Find documents
+	findOptions := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetSkip(int64(skip)).
+		SetLimit(int64(limit))
+
+	cursor, err := s.collection.Find(ctx, finalQuery, findOptions)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to find documents: %w", err)
 	}

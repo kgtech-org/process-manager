@@ -81,8 +81,16 @@ func (h *DocumentHandler) GetDocument(c *gin.Context) {
 }
 
 // ListDocuments retrieves documents with filtering and pagination
+// Only returns documents that the user has access to
 // GET /api/documents
 func (h *DocumentHandler) ListDocuments(c *gin.Context) {
+	// Get current user
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
 	var filter models.DocumentFilter
 
 	// Parse query parameters
@@ -117,7 +125,8 @@ func (h *DocumentHandler) ListDocuments(c *gin.Context) {
 	filter.Limit = limit
 
 	ctx := c.Request.Context()
-	documents, total, err := h.documentService.List(ctx, &filter)
+	// Use ListUserAccessible instead of List to filter by user access
+	documents, total, err := h.documentService.ListUserAccessible(ctx, user.ID, user.Role, &filter)
 	if err != nil {
 		helpers.SendInternalError(c, err)
 		return
