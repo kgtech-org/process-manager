@@ -36,6 +36,9 @@ import {
   Trash2,
   GripVertical,
   X,
+  Loader2,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import type { ProcessGroup, ProcessStep } from '@/types/document';
 import { useToast } from '@/hooks/use-toast';
@@ -105,6 +108,8 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   const [groups, setGroups] = useState<ProcessGroup[]>(initialGroups);
   const { toast } = useToast();
   const isInternalChangeRef = useRef(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Sync with prop changes (only when not from internal changes)
   useEffect(() => {
@@ -113,6 +118,15 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     }
     isInternalChangeRef.current = false;
   }, [initialGroups]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Helper to get localStorage key
   const getStorageKey = (suffix: string) => `processFlow_${documentId}_${suffix}`;
@@ -198,14 +212,34 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   const autoSave = useCallback(async (updatedGroups: ProcessGroup[]) => {
     isInternalChangeRef.current = true;
     setGroups(updatedGroups);
+
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    setSaveStatus('saving');
+
     try {
       await onUpdate(updatedGroups);
+      setSaveStatus('saved');
+
+      // Reset to idle after 2 seconds
+      saveTimeoutRef.current = setTimeout(() => {
+        setSaveStatus('idle');
+      }, 2000);
     } catch (error: any) {
+      setSaveStatus('error');
       toast({
         variant: 'destructive',
         title: t('processFlow.saveFailed'),
         description: error.message || t('messages.error'),
       });
+
+      // Reset to idle after 3 seconds for errors
+      saveTimeoutRef.current = setTimeout(() => {
+        setSaveStatus('idle');
+      }, 3000);
     }
   }, [onUpdate, toast, t]);
 
@@ -418,7 +452,31 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>{t('processFlow.title')}</CardTitle>
+          <div className="flex items-center gap-3">
+            <CardTitle>{t('processFlow.title')}</CardTitle>
+            {!readOnly && saveStatus !== 'idle' && (
+              <div className="flex items-center gap-2 text-sm">
+                {saveStatus === 'saving' && (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <span className="text-muted-foreground">Saving...</span>
+                  </>
+                )}
+                {saveStatus === 'saved' && (
+                  <>
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-green-600">Saved</span>
+                  </>
+                )}
+                {saveStatus === 'error' && (
+                  <>
+                    <XCircle className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive">Save failed</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
           {!readOnly && (
             <Button variant="outline" size="sm" onClick={addGroup}>
               <Plus className="h-4 w-4 mr-2" />
