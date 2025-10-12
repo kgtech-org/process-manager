@@ -5,7 +5,6 @@ import { useTranslation } from '@/lib/i18n';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -14,7 +13,6 @@ import {
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
@@ -197,14 +195,12 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   }, [documentId]);
 
   // Drag and drop sensors with activation constraint
+  // Only use PointerSensor to avoid KeyboardSensor capturing spacebar in input fields
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8, // Require 8px movement before drag starts
       },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
