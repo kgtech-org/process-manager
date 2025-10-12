@@ -85,7 +85,7 @@ func main() {
 	notificationService := services.NewNotificationService(db, firebaseService, deviceService, userService)
 
 	// Initialize document service
-	documentService := services.NewDocumentService(db.Database)
+	documentService := services.NewDocumentService(db.Database, userService)
 
 	// Ensure default admin exists
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

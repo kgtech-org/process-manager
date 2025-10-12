@@ -206,16 +206,7 @@ func (e *EmailService) SendAccountRejectedEmail(userEmail, userName, reason stri
 
 // SendInvitationEmail sends a collaboration invitation email
 func (e *EmailService) SendInvitationEmail(userEmail, userName, inviterName, documentTitle, documentRef, teamName, invitationToken string) error {
-	fmt.Printf("📧 [EMAIL SERVICE] SendInvitationEmail called:\n")
-	fmt.Printf("   - User Email: %s\n", userEmail)
-	fmt.Printf("   - User Name: %s\n", userName)
-	fmt.Printf("   - Inviter: %s\n", inviterName)
-	fmt.Printf("   - Document: %s (%s)\n", documentTitle, documentRef)
-	fmt.Printf("   - Team: %s\n", teamName)
-	fmt.Printf("   - App URL: %s\n", e.appURL)
-
 	invitationURL := fmt.Sprintf("%s/invitations/accept?token=%s", e.appURL, invitationToken)
-	fmt.Printf("   - Invitation URL: %s\n", invitationURL)
 
 	data := EmailData{
 		UserName:      userName,
@@ -233,66 +224,19 @@ func (e *EmailService) SendInvitationEmail(userEmail, userName, inviterName, doc
 	}
 
 	template := e.getInvitationTemplate()
-	fmt.Printf("   - Template Subject: %s\n", template.Subject)
-
-	err := e.sendEmail(userEmail, userName, template, data)
-	if err != nil {
-		fmt.Printf("❌ [EMAIL SERVICE] sendEmail returned error: %v\n", err)
-	} else {
-		fmt.Printf("✅ [EMAIL SERVICE] sendEmail completed successfully\n")
-	}
-	return err
+	return e.sendEmail(userEmail, userName, template, data)
 }
 
 func (e *EmailService) sendEmail(toEmail, toName string, emailTemplate EmailTemplate, data EmailData) error {
-	fmt.Printf("📧 [SEND EMAIL] Starting email send process\n")
-	fmt.Printf("   - To: %s (%s)\n", toEmail, toName)
-	fmt.Printf("   - From: %s (%s)\n", e.fromEmail, e.fromName)
-	fmt.Printf("   - Subject: %s\n", emailTemplate.Subject)
-	fmt.Printf("   - SMTP Host: %s:%d\n", e.smtpHost, e.smtpPort)
-	fmt.Printf("   - SMTP Username: %s\n", e.smtpUsername)
-	fmt.Printf("   - SMTP Configured: %v\n", e.smtpUsername != "" && e.smtpPassword != "")
-
 	// Skip sending email if SMTP is not configured
 	if e.smtpUsername == "" || e.smtpPassword == "" {
 		fmt.Printf("⚠️ Email not sent (SMTP not configured): %s to %s\n", emailTemplate.Subject, toEmail)
 		return nil
 	}
 
-	// Check if From email domain matches SMTP domain
-	if e.fromEmail != "" && e.smtpUsername != "" {
-		// Extract email from possible "Name <email>" format
-		fromEmailAddr := e.fromEmail
-		if strings.Contains(fromEmailAddr, "<") && strings.Contains(fromEmailAddr, ">") {
-			start := strings.Index(fromEmailAddr, "<")
-			end := strings.Index(fromEmailAddr, ">")
-			fromEmailAddr = fromEmailAddr[start+1 : end]
-		}
-
-		// Extract domains
-		fromAtIndex := strings.LastIndex(fromEmailAddr, "@")
-		smtpAtIndex := strings.LastIndex(e.smtpUsername, "@")
-
-		if fromAtIndex > 0 && smtpAtIndex > 0 {
-			fromDomain := fromEmailAddr[fromAtIndex+1:]
-			smtpDomain := e.smtpUsername[smtpAtIndex+1:]
-
-			fmt.Printf("   - From Email Domain: %s\n", fromDomain)
-			fmt.Printf("   - SMTP Domain: %s\n", smtpDomain)
-
-			if fromDomain != smtpDomain {
-				fmt.Printf("⚠️  WARNING: FROM_EMAIL domain (%s) doesn't match SMTP_USERNAME domain (%s)\n", fromDomain, smtpDomain)
-				fmt.Printf("   This may cause emails to be rejected or marked as spam by Gmail/Outlook\n")
-				fmt.Printf("   Recommendation: Set FROM_EMAIL=admin@%s (without angle brackets)\n", smtpDomain)
-			}
-		}
-	}
-
-	fmt.Printf("   - Parsing templates...\n")
 	// Parse and execute template
 	htmlTemplate, err := template.New("html").Parse(emailTemplate.HTMLBody)
 	if err != nil {
-		fmt.Printf("❌ [SEND EMAIL] Failed to parse HTML template: %v\n", err)
 		return fmt.Errorf("failed to parse HTML template: %w", err)
 	}
 
@@ -367,7 +311,6 @@ func (e *EmailService) sendEmail(toEmail, toName string, emailTemplate EmailTemp
 		return fmt.Errorf("failed to close writer: %w", err)
 	}
 
-	fmt.Printf("✅ Email sent successfully: %s to %s\n", emailTemplate.Subject, toEmail)
 	return nil
 }
 

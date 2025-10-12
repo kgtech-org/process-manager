@@ -170,13 +170,6 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		teamName = "Validators"
 	}
 
-	fmt.Printf("📧 [INVITATION] Attempting to send invitation email:\n")
-	fmt.Printf("   - To: %s (%s)\n", req.InvitedEmail, invitedUserName)
-	fmt.Printf("   - From: %s %s\n", user.FirstName, user.LastName)
-	fmt.Printf("   - Document: %s (%s)\n", document.Title, document.Reference)
-	fmt.Printf("   - Team: %s\n", teamName)
-	fmt.Printf("   - Token: %s...\n", token[:10])
-
 	err = h.emailService.SendInvitationEmail(
 		req.InvitedEmail,
 		invitedUserName,
@@ -187,10 +180,8 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		token,
 	)
 	if err != nil {
-		fmt.Printf("❌ [INVITATION] Failed to send invitation email: %v\n", err)
+		fmt.Printf("Failed to send invitation email: %v\n", err)
 		// Don't fail the request if email fails
-	} else {
-		fmt.Printf("✅ [INVITATION] Invitation email sent successfully to %s\n", req.InvitedEmail)
 	}
 
 	// Send push notification if user exists
@@ -539,6 +530,14 @@ func (h *InvitationHandler) DeclineInvitation(c *gin.Context) {
 		return
 	}
 
+	// Get document details for activity log
+	var document models.Document
+	err = h.documentCollection.FindOne(ctx, bson.M{"_id": invitation.DocumentID}).Decode(&document)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
 	// Update invitation status
 	now := primitive.DateTime(invitation.UpdatedAt.Unix() * 1000)
 	_, err = h.invitationCollection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{
@@ -552,6 +551,31 @@ func (h *InvitationHandler) DeclineInvitation(c *gin.Context) {
 	if err != nil {
 		helpers.SendInternalError(c, err)
 		return
+	}
+
+	// Log activity
+	teamName := string(invitation.Team)
+	activityDescription := fmt.Sprintf("Declined invitation to collaborate on document '%s' (%s) as %s", document.Title, document.Reference, teamName)
+	if req.Reason != "" {
+		activityDescription += fmt.Sprintf(" - Reason: %s", req.Reason)
+	}
+
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_invitation_declined",
+		Description:  activityDescription,
+		ResourceType: "document",
+		ResourceID:   &invitation.DocumentID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId":     invitation.DocumentID.Hex(),
+			"documentTitle":  document.Title,
+			"team":           teamName,
+			"declineReason":  req.Reason,
+			"invitationId":   id.Hex(),
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log decline activity: %v\n", logErr)
 	}
 
 	helpers.SendSuccess(c, "Invitation declined successfully", nil)
@@ -648,13 +672,6 @@ func (h *InvitationHandler) ResendInvitation(c *gin.Context) {
 		teamName = "Validators"
 	}
 
-	fmt.Printf("📧 [INVITATION RESEND] Attempting to resend invitation email:\n")
-	fmt.Printf("   - To: %s (%s)\n", invitation.InvitedEmail, invitedUserName)
-	fmt.Printf("   - From: %s %s\n", user.FirstName, user.LastName)
-	fmt.Printf("   - Document: %s (%s)\n", document.Title, document.Reference)
-	fmt.Printf("   - Team: %s\n", teamName)
-	fmt.Printf("   - New Token: %s...\n", token[:10])
-
 	err = h.emailService.SendInvitationEmail(
 		invitation.InvitedEmail,
 		invitedUserName,
@@ -665,10 +682,8 @@ func (h *InvitationHandler) ResendInvitation(c *gin.Context) {
 		token,
 	)
 	if err != nil {
-		fmt.Printf("❌ [INVITATION RESEND] Failed to resend invitation email: %v\n", err)
+		fmt.Printf("Failed to resend invitation email: %v\n", err)
 		// Don't fail the request if email fails
-	} else {
-		fmt.Printf("✅ [INVITATION RESEND] Invitation email resent successfully to %s\n", invitation.InvitedEmail)
 	}
 
 	helpers.SendSuccess(c, "Invitation resent successfully", nil)

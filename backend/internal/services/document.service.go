@@ -17,13 +17,15 @@ type DocumentService struct {
 	collection           *mongo.Collection
 	versionCollection    *mongo.Collection
 	invitationCollection *mongo.Collection
+	userService          *UserService
 }
 
-func NewDocumentService(db *mongo.Database) *DocumentService {
+func NewDocumentService(db *mongo.Database, userService *UserService) *DocumentService {
 	return &DocumentService{
 		collection:           db.Collection("documents"),
 		versionCollection:    db.Collection("document_versions"),
 		invitationCollection: db.Collection("invitations"),
+		userService:          userService,
 	}
 }
 
@@ -38,6 +40,12 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 		return nil, errors.New("document reference already exists")
 	}
 
+	// Get user details to add as author
+	user, err := s.userService.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user details: %w", err)
+	}
+
 	// Initialize empty arrays if nil
 	if req.Contributors.Authors == nil {
 		req.Contributors.Authors = make([]models.Contributor, 0)
@@ -48,6 +56,19 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 	if req.Contributors.Validators == nil {
 		req.Contributors.Validators = make([]models.Contributor, 0)
 	}
+
+	// Add the document owner as an author
+	now := time.Now()
+	ownerContributor := models.Contributor{
+		UserID:     userID,
+		Name:       fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+		Title:      "", // Will be populated from job position if needed
+		Department: "", // Will be populated from department if needed
+		Team:       models.ContributorTeamAuthors,
+		Status:     models.SignatureStatusPending,
+		InvitedAt:  now,
+	}
+	req.Contributors.Authors = append(req.Contributors.Authors, ownerContributor)
 	if req.Metadata.Objectives == nil {
 		req.Metadata.Objectives = make([]string, 0)
 	}
@@ -70,7 +91,6 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 		req.Annexes = make([]models.Annex, 0)
 	}
 
-	now := time.Now()
 	document := &models.Document{
 		ID:            primitive.NewObjectID(),
 		Reference:     req.Reference,
