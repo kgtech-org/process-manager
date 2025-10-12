@@ -140,6 +140,39 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     localStorage.setItem(getStorageKey('steps'), JSON.stringify(Array.from(expandedSteps)));
   }, [expandedSteps, documentId]);
 
+  // Persist and restore scroll position
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Restore scroll position on mount
+    const savedScrollPosition = localStorage.getItem(getStorageKey('scroll'));
+    if (savedScrollPosition) {
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedScrollPosition, 10));
+      }, 100);
+    }
+
+    // Save scroll position on scroll
+    const handleScroll = () => {
+      localStorage.setItem(getStorageKey('scroll'), window.scrollY.toString());
+    };
+
+    // Throttle scroll events to avoid performance issues
+    let scrollTimeout: NodeJS.Timeout;
+    const throttledScroll = () => {
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(handleScroll, 100);
+    };
+
+    window.addEventListener('scroll', throttledScroll);
+
+    return () => {
+      window.removeEventListener('scroll', throttledScroll);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+    };
+  }, [documentId]);
+
   // Drag and drop sensors with activation constraint
   const sensors = useSensors(
     useSensor(PointerSensor, {
