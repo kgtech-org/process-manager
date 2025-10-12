@@ -51,7 +51,7 @@ interface ProcessFlowEditorProps {
 }
 
 // Sortable Group Wrapper
-function SortableGroup({ id, children }: { id: string; children: React.ReactNode }) {
+const SortableGroup = React.memo(function SortableGroup({ id, children }: { id: string; children: React.ReactNode }) {
   const {
     attributes,
     listeners,
@@ -72,10 +72,10 @@ function SortableGroup({ id, children }: { id: string; children: React.ReactNode
       {children}
     </div>
   );
-}
+});
 
 // Sortable Step Wrapper
-function SortableStep({ id, children }: { id: string; children: React.ReactNode }) {
+const SortableStep = React.memo(function SortableStep({ id, children }: { id: string; children: React.ReactNode }) {
   const {
     attributes,
     listeners,
@@ -96,7 +96,7 @@ function SortableStep({ id, children }: { id: string; children: React.ReactNode 
       {children}
     </div>
   );
-}
+});
 
 export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   processGroups: initialGroups,

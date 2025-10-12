@@ -99,12 +99,7 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Explicitly allow spacebar and other typing characters
-    if (e.key === ' ') {
-      // Don't prevent default - allow normal space character input
-      return;
-    }
-
+    // Only handle specific control keys, let all other keys (including spacebar) pass through normally
     if (e.key === 'Enter' && !multiline) {
       e.preventDefault();
       if (autoSave) {
@@ -118,6 +113,7 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
         handleSave();
       }
     }
+    // All other keys including spacebar are handled normally by the input
   };
 
   const handleBlur = (e: React.FocusEvent) => {
