@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DocumentResource, type Document } from '@/lib/resources';
 import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
+import { ProcessFlowVisualization } from '@/components/documents/ProcessFlowVisualization';
 import { InvitationModal, PermissionManager, SignaturePanel } from '@/components/collaboration';
 import { DocumentInvitationsList } from '@/components/invitations';
 import { Button } from '@/components/ui/button';
@@ -269,35 +270,8 @@ export default function DocumentDetailPage() {
         </TabsContent>
       </Tabs>
 
-      {document.processGroups.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Process Groups</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {document.processGroups.map((group, groupIndex) => (
-              <div key={group.id}>
-                <h3 className="font-semibold mb-3">
-                  {group.order}. {group.title}
-                </h3>
-                <div className="space-y-2 pl-4">
-                  {group.processSteps.map((step) => (
-                    <div key={step.id} className="p-3 rounded-lg border">
-                      <p className="font-medium">
-                        {step.order}. {step.title}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Responsible: {step.responsible}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                {groupIndex < document.processGroups.length - 1 && <Separator className="mt-4" />}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      {/* Process Flow Visualization */}
+      <ProcessFlowVisualization processGroups={document.processGroups} />
 
       {/* Invitation Modal */}
       <InvitationModal
