@@ -13,12 +13,14 @@ import (
 )
 
 type DocumentHandler struct {
-	documentService *services.DocumentService
+	documentService     *services.DocumentService
+	activityLogService  *services.ActivityLogService
 }
 
-func NewDocumentHandler(documentService *services.DocumentService) *DocumentHandler {
+func NewDocumentHandler(documentService *services.DocumentService, activityLogService *services.ActivityLogService) *DocumentHandler {
 	return &DocumentHandler{
-		documentService: documentService,
+		documentService:    documentService,
+		activityLogService: activityLogService,
 	}
 }
 
@@ -58,6 +60,25 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 	}
 
 	fmt.Printf("✅ [DOCUMENT] Document created successfully - ID: %s\n", document.ID.Hex())
+
+	// Log activity
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_created",
+		Description:  fmt.Sprintf("Created document '%s' (%s)", document.Title, document.Reference),
+		ResourceType: "document",
+		ResourceID:   &document.ID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId":   document.ID.Hex(),
+			"reference":    document.Reference,
+			"title":        document.Title,
+			"version":      document.Version,
+			"status":       string(document.Status),
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log activity: %v\n", logErr)
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
@@ -193,6 +214,25 @@ func (h *DocumentHandler) UpdateDocument(c *gin.Context) {
 		return
 	}
 
+	// Log activity
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_updated",
+		Description:  fmt.Sprintf("Updated document '%s' (%s)", document.Title, document.Reference),
+		ResourceType: "document",
+		ResourceID:   &document.ID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId":   document.ID.Hex(),
+			"reference":    document.Reference,
+			"title":        document.Title,
+			"version":      document.Version,
+			"status":       string(document.Status),
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log activity: %v\n", logErr)
+	}
+
 	helpers.SendSuccess(c, "Document updated successfully", document.ToResponse())
 }
 
@@ -207,6 +247,18 @@ func (h *DocumentHandler) DeleteDocument(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
+
+	// Get document details before deleting for activity log
+	document, err := h.documentService.GetByID(ctx, id)
+	if err != nil {
+		if err.Error() == "document not found" {
+			helpers.SendNotFound(c, "Document not found")
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
 	err = h.documentService.Delete(ctx, id)
 	if err != nil {
 		if err.Error() == "document not found" {
@@ -215,6 +267,24 @@ func (h *DocumentHandler) DeleteDocument(c *gin.Context) {
 		}
 		helpers.SendInternalError(c, err)
 		return
+	}
+
+	// Log activity
+	activityReq := models.ActivityLogRequest{
+		Action:       "document_deleted",
+		Description:  fmt.Sprintf("Deleted document '%s' (%s)", document.Title, document.Reference),
+		ResourceType: "document",
+		ResourceID:   &document.ID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId":   document.ID.Hex(),
+			"reference":    document.Reference,
+			"title":        document.Title,
+			"version":      document.Version,
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log activity: %v\n", logErr)
 	}
 
 	helpers.SendSuccess(c, "Document deleted successfully", nil)

@@ -107,7 +107,7 @@ func main() {
 	activityLogHandler := handlers.NewActivityLogHandler(activityLogService)
 	emailHandler := handlers.NewEmailHandler(emailService, userService)
 	notificationHandler := handlers.NewNotificationHandler(userService, notificationService, deviceService)
-	documentHandler := handlers.NewDocumentHandler(documentService)
+	documentHandler := handlers.NewDocumentHandler(documentService, activityLogService)
 	invitationHandler := handlers.NewInvitationHandler(db.Database, emailService, notificationService, activityLogService)
 	permissionHandler := handlers.NewPermissionHandler(db.Database)
 	signatureHandler := handlers.NewSignatureHandler(db.Database)

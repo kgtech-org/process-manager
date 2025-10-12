@@ -399,7 +399,7 @@ func (h *InvitationHandler) AcceptInvitation(c *gin.Context) {
 		return
 	}
 
-	// Add user to document contributors
+	// Get document and update contributor status
 	var document models.Document
 	err = h.documentCollection.FindOne(ctx, bson.M{"_id": invitation.DocumentID}).Decode(&document)
 	if err != nil {
@@ -407,32 +407,61 @@ func (h *InvitationHandler) AcceptInvitation(c *gin.Context) {
 		return
 	}
 
-	// Create contributor entry
-	contributor := models.Contributor{
-		UserID:     user.ID,
-		Name:       user.FirstName + " " + user.LastName,
-		Title:      "", // Can be set later
-		Department: "", // Can be set later
-		Team:       invitation.Team,
-		Status:     models.SignatureStatusPending,
-		InvitedAt:  invitation.CreatedAt,
-	}
-
-	// Update document contributors based on team
-	update := bson.M{}
+	// Check if user already exists in contributors
+	userExists := false
 	switch invitation.Team {
 	case models.ContributorTeamAuthors:
-		update["$push"] = bson.M{"contributors.authors": contributor}
+		for _, author := range document.Contributors.Authors {
+			if author.UserID == user.ID {
+				userExists = true
+				break
+			}
+		}
 	case models.ContributorTeamVerifiers:
-		update["$push"] = bson.M{"contributors.verifiers": contributor}
+		for _, verifier := range document.Contributors.Verifiers {
+			if verifier.UserID == user.ID {
+				userExists = true
+				break
+			}
+		}
 	case models.ContributorTeamValidators:
-		update["$push"] = bson.M{"contributors.validators": contributor}
+		for _, validator := range document.Contributors.Validators {
+			if validator.UserID == user.ID {
+				userExists = true
+				break
+			}
+		}
 	}
 
-	_, err = h.documentCollection.UpdateOne(ctx, bson.M{"_id": invitation.DocumentID}, update)
-	if err != nil {
-		helpers.SendInternalError(c, err)
-		return
+	// Only add contributor if they don't already exist
+	if !userExists {
+		// Create contributor entry
+		contributor := models.Contributor{
+			UserID:     user.ID,
+			Name:       user.FirstName + " " + user.LastName,
+			Title:      "", // Can be set later
+			Department: "", // Can be set later
+			Team:       invitation.Team,
+			Status:     models.SignatureStatusPending,
+			InvitedAt:  invitation.CreatedAt,
+		}
+
+		// Add new contributor
+		pushUpdate := bson.M{}
+		switch invitation.Team {
+		case models.ContributorTeamAuthors:
+			pushUpdate["$push"] = bson.M{"contributors.authors": contributor}
+		case models.ContributorTeamVerifiers:
+			pushUpdate["$push"] = bson.M{"contributors.verifiers": contributor}
+		case models.ContributorTeamValidators:
+			pushUpdate["$push"] = bson.M{"contributors.validators": contributor}
+		}
+
+		_, err = h.documentCollection.UpdateOne(ctx, bson.M{"_id": invitation.DocumentID}, pushUpdate)
+		if err != nil {
+			helpers.SendInternalError(c, err)
+			return
+		}
 	}
 
 	// Log activity
