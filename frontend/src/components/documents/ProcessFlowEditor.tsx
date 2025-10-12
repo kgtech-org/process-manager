@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import {
   Plus,
   Trash2,
   GripVertical,
+  X,
 } from 'lucide-react';
 import type { ProcessGroup, ProcessStep } from '@/types/document';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +36,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   onUpdate,
   readOnly = false,
 }) => {
+  const { t } = useTranslation();
   const [groups, setGroups] = useState<ProcessGroup[]>(initialGroups);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
@@ -46,11 +49,11 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Failed to save',
-        description: error.message || 'An error occurred',
+        title: t('documents.processFlow.saveFailed'),
+        description: error.message || t('documents.messages.error'),
       });
     }
-  }, [onUpdate, toast]);
+  }, [onUpdate, toast, t]);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => {
@@ -80,7 +83,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   const addGroup = () => {
     const newGroup: ProcessGroup = {
       id: `group-${Date.now()}`,
-      title: 'New Process Group',
+      title: t('documents.processFlow.groupTitle'),
       order: groups.length + 1,
       processSteps: [],
     };
@@ -99,7 +102,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   };
 
   const deleteGroup = (groupId: string) => {
-    if (confirm('Delete this process group and all its steps?')) {
+    if (confirm(t('documents.processFlow.deleteGroupConfirm'))) {
       const updated = groups.filter((g) => g.id !== groupId);
       setGroups(updated);
       autoSave(updated);
@@ -113,7 +116,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
 
     const newStep: ProcessStep = {
       id: `step-${Date.now()}`,
-      title: 'New Process Step',
+      title: t('documents.processFlow.stepTitle'),
       order: group.processSteps.length + 1,
       outputs: [],
       durations: [],
@@ -151,7 +154,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   };
 
   const deleteStep = (groupId: string, stepId: string) => {
-    if (confirm('Delete this process step?')) {
+    if (confirm(t('documents.processFlow.deleteStepConfirm'))) {
       const updated = groups.map((g) =>
         g.id === groupId
           ? { ...g, processSteps: g.processSteps.filter((s) => s.id !== stepId) }
@@ -201,7 +204,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         <CardContent className="py-8">
           <div className="text-center text-muted-foreground">
             <List className="h-12 w-12 mx-auto mb-2 opacity-20" />
-            <p>No process groups defined</p>
+            <p>{t('documents.processFlow.emptyState')}</p>
           </div>
         </CardContent>
       </Card>
@@ -214,10 +217,11 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         <CardContent className="py-8">
           <div className="text-center">
             <List className="h-12 w-12 mx-auto mb-2 opacity-20" />
-            <p className="mb-4 text-muted-foreground">No process groups defined yet</p>
+            <p className="mb-4 text-muted-foreground">{t('documents.processFlow.emptyState')}</p>
+            <p className="mb-4 text-sm text-muted-foreground">{t('documents.processFlow.emptyStateDescription')}</p>
             <Button onClick={addGroup}>
               <Plus className="h-4 w-4 mr-2" />
-              Add First Process Group
+              {t('documents.processFlow.addGroup')}
             </Button>
           </div>
         </CardContent>
@@ -229,14 +233,19 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Process Flow</CardTitle>
+          <CardTitle>{t('documents.processFlow.title')}</CardTitle>
           {!readOnly && (
             <Button variant="outline" size="sm" onClick={addGroup}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Group
+              {t('documents.processFlow.addGroup')}
             </Button>
           )}
         </div>
+        {readOnly && (
+          <p className="text-sm text-muted-foreground mt-2">
+            {t('documents.processFlow.readOnlyNote')}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {groups.map((group, groupIndex) => {
@@ -382,16 +391,16 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                           <div className="ml-6 space-y-3 p-4 rounded-lg border bg-muted/30">
                             {/* Responsible */}
                             <div>
-                              <label className="text-sm font-medium mb-1 block">Responsible</label>
+                              <label className="text-sm font-medium mb-1 block">{t('documents.processFlow.responsible')}</label>
                               {readOnly ? (
-                                <p className="text-sm">{step.responsible || 'Not assigned'}</p>
+                                <p className="text-sm">{step.responsible || t('documents.processFlow.responsiblePlaceholder')}</p>
                               ) : (
                                 <InlineEditable
                                   value={step.responsible}
                                   onSave={(value) =>
                                     updateStepField(group.id, step.id, 'responsible', value)
                                   }
-                                  placeholder="Click to assign responsible person"
+                                  placeholder={t('documents.processFlow.responsiblePlaceholder')}
                                   autoSave={true}
                                 />
                               )}
@@ -401,9 +410,9 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                             <div>
                               <div className="flex items-center gap-2 mb-2">
                                 <FileOutput className="h-4 w-4 text-muted-foreground" />
-                                <h4 className="font-semibold text-sm">Outputs</h4>
+                                <h4 className="font-semibold text-sm">{t('documents.processFlow.outputs')}</h4>
                               </div>
-                              {step.outputs.length > 0 && (
+                              {step.outputs.length > 0 ? (
                                 <ul className="list-disc list-inside space-y-1 mb-2">
                                   {step.outputs.map((output, idx) => (
                                     <li key={idx} className="text-sm flex items-center justify-between group/item">
@@ -421,12 +430,14 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                                     </li>
                                   ))}
                                 </ul>
-                              )}
+                              ) : readOnly ? (
+                                <p className="text-sm text-muted-foreground">{t('documents.processFlow.outputsEmpty')}</p>
+                              ) : null}
                               {!readOnly && (
                                 <InlineEditable
                                   value=""
                                   onSave={(value) => addArrayItem(group.id, step.id, 'outputs', value)}
-                                  placeholder="Add output..."
+                                  placeholder={t('documents.processFlow.outputPlaceholder')}
                                   autoSave={true}
                                 />
                               )}
@@ -436,9 +447,9 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                             <div>
                               <div className="flex items-center gap-2 mb-2">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
-                                <h4 className="font-semibold text-sm">Durations</h4>
+                                <h4 className="font-semibold text-sm">{t('documents.processFlow.durations')}</h4>
                               </div>
-                              {step.durations.length > 0 && (
+                              {step.durations.length > 0 ? (
                                 <ul className="list-disc list-inside space-y-1 mb-2">
                                   {step.durations.map((duration, idx) => (
                                     <li key={idx} className="text-sm flex items-center justify-between group/item">
@@ -456,12 +467,14 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                                     </li>
                                   ))}
                                 </ul>
-                              )}
+                              ) : readOnly ? (
+                                <p className="text-sm text-muted-foreground">{t('documents.processFlow.durationsEmpty')}</p>
+                              ) : null}
                               {!readOnly && (
                                 <InlineEditable
                                   value=""
                                   onSave={(value) => addArrayItem(group.id, step.id, 'durations', value)}
-                                  placeholder="Add duration (e.g., T0+5min)..."
+                                  placeholder={t('documents.processFlow.durationPlaceholder')}
                                   autoSave={true}
                                 />
                               )}
@@ -488,7 +501,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                       className="w-full"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Add First Step
+                      {t('documents.processFlow.addStep')}
                     </Button>
                   )}
                 </div>
