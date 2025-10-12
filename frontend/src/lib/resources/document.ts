@@ -276,4 +276,59 @@ export class DocumentResource {
   static async search(query: string, limit?: number): Promise<Document[]> {
     return this.getAll({ search: query, limit });
   }
+
+  /**
+   * Update document metadata
+   */
+  static async updateMetadata(
+    documentId: string,
+    metadata: {
+      objectives?: string[];
+      implicatedActors?: string[];
+      managementRules?: string[];
+      terminology?: string[];
+    }
+  ): Promise<Document> {
+    const response = await apiClient.patch(`/documents/${documentId}/metadata`, metadata);
+    return response.data;
+  }
+
+  /**
+   * Create an annex
+   */
+  static async createAnnex(
+    documentId: string,
+    annex: {
+      title: string;
+      type: AnnexType;
+      content?: Record<string, any>;
+    }
+  ): Promise<Annex> {
+    const response = await apiClient.post(`/documents/${documentId}/annexes`, annex);
+    return response.data;
+  }
+
+  /**
+   * Update an annex
+   */
+  static async updateAnnex(
+    documentId: string,
+    annexId: string,
+    updates: {
+      title?: string;
+      type?: AnnexType;
+      content?: Record<string, any>;
+      order?: number;
+    }
+  ): Promise<Annex> {
+    const response = await apiClient.patch(`/documents/${documentId}/annexes/${annexId}`, updates);
+    return response.data;
+  }
+
+  /**
+   * Delete an annex
+   */
+  static async deleteAnnex(documentId: string, annexId: string): Promise<void> {
+    await apiClient.delete(`/documents/${documentId}/annexes/${annexId}`);
+  }
 }

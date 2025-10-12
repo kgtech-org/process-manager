@@ -6,6 +6,7 @@ import { DocumentResource, type Document } from '@/lib/resources';
 import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
 import { ProcessFlowEditor } from '@/components/documents/ProcessFlowEditor';
 import { ProcessFlowTableView } from '@/components/documents/ProcessFlowTableView';
+import { MetadataEditor } from '@/components/documents/MetadataEditor';
 import { InvitationModal, SignaturePanel } from '@/components/collaboration';
 import { DocumentInvitationsList } from '@/components/invitations';
 import { Button } from '@/components/ui/button';
@@ -136,6 +137,12 @@ export default function DocumentDetailPage() {
     await DocumentResource.update(documentId, { processGroups, isAutosave: true });
     // Update local state to keep parent in sync (ProcessFlowEditor uses ref to prevent loop)
     setDocument((prev) => prev ? { ...prev, processGroups } : null);
+  }, [documentId]);
+
+  const handleMetadataUpdate = useCallback(async (metadata: any) => {
+    await DocumentResource.updateMetadata(documentId, metadata);
+    // Update local state
+    setDocument((prev) => prev ? { ...prev, metadata } : null);
   }, [documentId]);
 
   if (loading) {
@@ -289,76 +296,17 @@ export default function DocumentDetailPage() {
 
         {/* Metadata Tab */}
         <TabsContent value="metadata" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Document Metadata</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Objectives */}
-              <div>
-                <h3 className="font-semibold mb-2">Objectives</h3>
-                {document.metadata?.objectives && document.metadata.objectives.length > 0 ? (
-                  <ul className="list-disc list-inside space-y-1">
-                    {document.metadata.objectives.map((objective, index) => (
-                      <li key={index} className="text-sm">
-                        {objective}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No objectives defined</p>
-                )}
-              </div>
-
-              {/* Implicated Actors */}
-              <div>
-                <h3 className="font-semibold mb-2">Implicated Actors</h3>
-                {document.metadata?.implicatedActors && document.metadata.implicatedActors.length > 0 ? (
-                  <ul className="list-disc list-inside space-y-1">
-                    {document.metadata.implicatedActors.map((actor, index) => (
-                      <li key={index} className="text-sm">
-                        {actor}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No actors defined</p>
-                )}
-              </div>
-
-              {/* Management Rules */}
-              <div>
-                <h3 className="font-semibold mb-2">Management Rules</h3>
-                {document.metadata?.managementRules && document.metadata.managementRules.length > 0 ? (
-                  <ul className="list-disc list-inside space-y-1">
-                    {document.metadata.managementRules.map((rule, index) => (
-                      <li key={index} className="text-sm">
-                        {rule}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No rules defined</p>
-                )}
-              </div>
-
-              {/* Terminology */}
-              <div>
-                <h3 className="font-semibold mb-2">Terminology</h3>
-                {document.metadata?.terminology && document.metadata.terminology.length > 0 ? (
-                  <ul className="list-disc list-inside space-y-1">
-                    {document.metadata.terminology.map((term, index) => (
-                      <li key={index} className="text-sm">
-                        {term}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No terminology defined</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <MetadataEditor
+            documentId={documentId}
+            metadata={{
+              objectives: document.metadata?.objectives || [],
+              implicatedActors: document.metadata?.implicatedActors || [],
+              managementRules: document.metadata?.managementRules || [],
+              terminology: document.metadata?.terminology || [],
+            }}
+            onUpdate={handleMetadataUpdate}
+            readOnly={document.status !== 'draft'}
+          />
         </TabsContent>
 
         {/* Annexes Tab */}
