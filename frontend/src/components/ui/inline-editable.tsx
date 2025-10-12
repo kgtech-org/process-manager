@@ -52,6 +52,16 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
     }
   }, [isEditing]);
 
+  // Save on unmount if editing and autoSave is enabled
+  useEffect(() => {
+    return () => {
+      if (isEditing && autoSave && localValue.trim() !== value.trim() && !isSaving) {
+        // Synchronous save on unmount to ensure data isn't lost
+        onSave(localValue.trim());
+      }
+    };
+  }, [isEditing, autoSave, localValue, value, isSaving, onSave]);
+
   const handleSave = async () => {
     if (localValue.trim() === value.trim()) {
       setIsEditing(false);
