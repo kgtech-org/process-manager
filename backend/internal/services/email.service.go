@@ -261,12 +261,30 @@ func (e *EmailService) sendEmail(toEmail, toName string, emailTemplate EmailTemp
 
 	// Check if From email domain matches SMTP domain
 	if e.fromEmail != "" && e.smtpUsername != "" {
-		fromDomain := e.fromEmail[strings.LastIndex(e.fromEmail, "@")+1:]
-		smtpDomain := e.smtpUsername[strings.LastIndex(e.smtpUsername, "@")+1:]
-		if fromDomain != smtpDomain {
-			fmt.Printf("⚠️  WARNING: FROM_EMAIL domain (%s) doesn't match SMTP_USERNAME domain (%s)\n", fromDomain, smtpDomain)
-			fmt.Printf("   This may cause emails to be rejected or marked as spam by Gmail/Outlook\n")
-			fmt.Printf("   Recommendation: Set FROM_EMAIL to use the same domain as SMTP_USERNAME\n")
+		// Extract email from possible "Name <email>" format
+		fromEmailAddr := e.fromEmail
+		if strings.Contains(fromEmailAddr, "<") && strings.Contains(fromEmailAddr, ">") {
+			start := strings.Index(fromEmailAddr, "<")
+			end := strings.Index(fromEmailAddr, ">")
+			fromEmailAddr = fromEmailAddr[start+1 : end]
+		}
+
+		// Extract domains
+		fromAtIndex := strings.LastIndex(fromEmailAddr, "@")
+		smtpAtIndex := strings.LastIndex(e.smtpUsername, "@")
+
+		if fromAtIndex > 0 && smtpAtIndex > 0 {
+			fromDomain := fromEmailAddr[fromAtIndex+1:]
+			smtpDomain := e.smtpUsername[smtpAtIndex+1:]
+
+			fmt.Printf("   - From Email Domain: %s\n", fromDomain)
+			fmt.Printf("   - SMTP Domain: %s\n", smtpDomain)
+
+			if fromDomain != smtpDomain {
+				fmt.Printf("⚠️  WARNING: FROM_EMAIL domain (%s) doesn't match SMTP_USERNAME domain (%s)\n", fromDomain, smtpDomain)
+				fmt.Printf("   This may cause emails to be rejected or marked as spam by Gmail/Outlook\n")
+				fmt.Printf("   Recommendation: Set FROM_EMAIL=admin@%s (without angle brackets)\n", smtpDomain)
+			}
 		}
 	}
 
