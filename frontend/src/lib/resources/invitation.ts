@@ -71,13 +71,13 @@ export class InvitationResource {
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
 
-    const response = await apiClient.get<{ data: Invitation[]; pagination: any }>(
+    const response = await apiClient.get<Invitation[]>(
       `/invitations?${params.toString()}`
     );
 
     return {
-      data: response.data?.data || [],
-      pagination: response.data?.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
+      data: response.data || [],
+      pagination: response.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
     };
   }
 
