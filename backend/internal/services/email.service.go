@@ -247,13 +247,27 @@ func (e *EmailService) SendInvitationEmail(userEmail, userName, inviterName, doc
 func (e *EmailService) sendEmail(toEmail, toName string, emailTemplate EmailTemplate, data EmailData) error {
 	fmt.Printf("📧 [SEND EMAIL] Starting email send process\n")
 	fmt.Printf("   - To: %s (%s)\n", toEmail, toName)
+	fmt.Printf("   - From: %s (%s)\n", e.fromEmail, e.fromName)
 	fmt.Printf("   - Subject: %s\n", emailTemplate.Subject)
+	fmt.Printf("   - SMTP Host: %s:%d\n", e.smtpHost, e.smtpPort)
+	fmt.Printf("   - SMTP Username: %s\n", e.smtpUsername)
 	fmt.Printf("   - SMTP Configured: %v\n", e.smtpUsername != "" && e.smtpPassword != "")
 
 	// Skip sending email if SMTP is not configured
 	if e.smtpUsername == "" || e.smtpPassword == "" {
 		fmt.Printf("⚠️ Email not sent (SMTP not configured): %s to %s\n", emailTemplate.Subject, toEmail)
 		return nil
+	}
+
+	// Check if From email domain matches SMTP domain
+	if e.fromEmail != "" && e.smtpUsername != "" {
+		fromDomain := e.fromEmail[strings.LastIndex(e.fromEmail, "@")+1:]
+		smtpDomain := e.smtpUsername[strings.LastIndex(e.smtpUsername, "@")+1:]
+		if fromDomain != smtpDomain {
+			fmt.Printf("⚠️  WARNING: FROM_EMAIL domain (%s) doesn't match SMTP_USERNAME domain (%s)\n", fromDomain, smtpDomain)
+			fmt.Printf("   This may cause emails to be rejected or marked as spam by Gmail/Outlook\n")
+			fmt.Printf("   Recommendation: Set FROM_EMAIL to use the same domain as SMTP_USERNAME\n")
+		}
 	}
 
 	fmt.Printf("   - Parsing templates...\n")
