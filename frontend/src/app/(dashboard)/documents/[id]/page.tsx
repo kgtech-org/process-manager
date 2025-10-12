@@ -130,7 +130,8 @@ export default function DocumentDetailPage() {
 
   const handleProcessFlowUpdate = useCallback(async (processGroups: any) => {
     await DocumentResource.update(documentId, { processGroups, isAutosave: true });
-    // Don't update local state - ProcessFlowEditor manages its own state
+    // Update local state to keep parent in sync (ProcessFlowEditor uses ref to prevent loop)
+    setDocument((prev) => prev ? { ...prev, processGroups } : null);
   }, [documentId]);
 
   if (loading) {

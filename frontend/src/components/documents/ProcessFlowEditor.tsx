@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import {
   DndContext,
@@ -104,6 +104,15 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
   const { t } = useTranslation('documents');
   const [groups, setGroups] = useState<ProcessGroup[]>(initialGroups);
   const { toast } = useToast();
+  const isInternalChangeRef = useRef(false);
+
+  // Sync with prop changes (only when not from internal changes)
+  useEffect(() => {
+    if (!isInternalChangeRef.current) {
+      setGroups(initialGroups);
+    }
+    isInternalChangeRef.current = false;
+  }, [initialGroups]);
 
   // Helper to get localStorage key
   const getStorageKey = (suffix: string) => `processFlow_${documentId}_${suffix}`;
@@ -185,8 +194,10 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
     })
   );
 
-  // Auto-save helper with debouncing
+  // Auto-save helper - mark as internal change to prevent prop sync loop
   const autoSave = useCallback(async (updatedGroups: ProcessGroup[]) => {
+    isInternalChangeRef.current = true;
+    setGroups(updatedGroups);
     try {
       await onUpdate(updatedGroups);
     } catch (error: any) {
