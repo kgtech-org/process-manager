@@ -392,7 +392,7 @@ export default function DashboardPage() {
             {/* User-focused stats */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">My Documents</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('stats.myDocuments')}</CardTitle>
                 <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -400,14 +400,14 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">{userStats.myDocuments}</div>
                 <p className="text-xs text-gray-600">
-                  Documents you created or contributed to
+                  {t('stats.myDocumentsDesc')}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Invitations</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('stats.pendingInvitations')}</CardTitle>
                 <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
@@ -415,14 +415,14 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">{userStats.pendingInvitations}</div>
                 <p className="text-xs text-gray-600">
-                  Invitations awaiting your response
+                  {t('stats.pendingInvitationsDesc')}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">My Activity</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('stats.myActivity')}</CardTitle>
                 <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
@@ -430,7 +430,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">{recentActivityLogs.length}</div>
                 <p className="text-xs text-gray-600">
-                  Recent actions this week
+                  {t('stats.myActivityDesc')}
                 </p>
               </CardContent>
             </Card>
