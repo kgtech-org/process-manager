@@ -142,7 +142,7 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	// Send invitation email
 	invitedUserName := req.InvitedEmail
 	if invitedUserID != nil {
-		invitedUserName = invitedUser.Name
+		invitedUserName = invitedUser.FirstName + " " + invitedUser.LastName
 	}
 
 	teamName := string(req.Team)
@@ -157,7 +157,7 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	err = h.emailService.SendInvitationEmail(
 		req.InvitedEmail,
 		invitedUserName,
-		user.Name,
+		user.FirstName + " " + user.LastName,
 		document.Title,
 		document.Reference,
 		teamName,
@@ -270,7 +270,7 @@ func (h *InvitationHandler) ListInvitations(c *gin.Context) {
 		// Fetch inviter name
 		var inviter models.User
 		if err := h.userCollection.FindOne(ctx, bson.M{"_id": inv.InvitedBy}).Decode(&inviter); err == nil {
-			response.InvitedByName = inviter.Name
+			response.InvitedByName = inviter.FirstName + " " + inviter.LastName
 		}
 
 		responses = append(responses, response)
@@ -355,7 +355,7 @@ func (h *InvitationHandler) AcceptInvitation(c *gin.Context) {
 	// Create contributor entry
 	contributor := models.Contributor{
 		UserID:     user.ID,
-		Name:       user.Name,
+		Name:       user.FirstName + " " + user.LastName,
 		Title:      "", // Can be set later
 		Department: "", // Can be set later
 		Team:       invitation.Team,
@@ -527,7 +527,7 @@ func (h *InvitationHandler) ResendInvitation(c *gin.Context) {
 		var invitedUser models.User
 		err = h.userCollection.FindOne(ctx, bson.M{"_id": invitation.InvitedUserID}).Decode(&invitedUser)
 		if err == nil {
-			invitedUserName = invitedUser.Name
+			invitedUserName = invitedUser.FirstName + " " + invitedUser.LastName
 		}
 	}
 
@@ -543,7 +543,7 @@ func (h *InvitationHandler) ResendInvitation(c *gin.Context) {
 	err = h.emailService.SendInvitationEmail(
 		invitation.InvitedEmail,
 		invitedUserName,
-		user.Name,
+		user.FirstName + " " + user.LastName,
 		document.Title,
 		document.Reference,
 		teamName,

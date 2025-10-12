@@ -17,13 +17,8 @@ export default function ProfilePage() {
           <p className="text-gray-600">{t('profile.subtitle', { defaultValue: 'Manage your account information and preferences.' })}</p>
         </div>
 
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="space-y-8">
           <ProfileForm />
-
-          {/* Signature Management Section */}
-          <div className="mt-8">
-            <SignatureManager />
-          </div>
         </div>
       </div>
     </AuthGuard>

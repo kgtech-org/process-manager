@@ -278,14 +278,14 @@ export const Navigation: React.FC = () => {
                 <Button variant="ghost" className="w-full justify-start p-2 h-auto">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.avatar} alt={user?.name} />
-                      <AvatarFallback className={`${user?.name ? getAvatarColor(user.name).bg : 'bg-gray-100'} ${user?.name ? getAvatarColor(user.name).text : 'text-gray-700'} text-xs font-semibold`}>
-                        {user?.name ? getInitials(user.name) : 'U'}
+                      <AvatarImage src={user?.avatar} alt={user?.firstName ? `${user.firstName} ${user.lastName}` : "User"} />
+                      <AvatarFallback className={`${user?.firstName ? getAvatarColor(`${user.firstName} ${user.lastName}`).bg : 'bg-gray-100'} ${user?.firstName ? getAvatarColor(`${user.firstName} ${user.lastName}`).text : 'text-gray-700'} text-xs font-semibold`}>
+                        {user?.firstName ? getInitials(`${user.firstName} ${user.lastName}`) : 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
-                        {user?.name}
+                        {user?.firstName ? `${user.firstName} ${user.lastName}` : ""}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
                         {user?.email}

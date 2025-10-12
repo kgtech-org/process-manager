@@ -29,7 +29,8 @@ type Step2RegistrationRequest struct {
 
 // Step3RegistrationRequest represents step 3 of registration (complete profile)
 type Step3RegistrationRequest struct {
-	Name          string `json:"name" validate:"required,min=2,max=100"`
+	FirstName     string `json:"firstName" validate:"required,min=2,max=50"`
+	LastName      string `json:"lastName" validate:"required,min=2,max=50"`
 	Phone         string `json:"phone,omitempty"`
 	DepartmentID  string `json:"departmentId" validate:"required"`
 	JobPositionID string `json:"jobPositionId" validate:"required"`
@@ -92,11 +93,12 @@ type RegistrationStep2Response struct {
 
 // RegistrationStep3Response represents the response for step 3 of registration (completion)
 type RegistrationStep3Response struct {
-	UserID   string `json:"userId"`
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Status   string `json:"status"`
-	Message  string `json:"message"`
+	UserID    string `json:"userId"`
+	Email     string `json:"email"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Status    string `json:"status"`
+	Message   string `json:"message"`
 }
 
 // ============================================
@@ -122,8 +124,9 @@ type TokenPair struct {
 
 // JWTClaims represents the custom JWT claims
 type JWTClaims struct {
-	UserID string   `json:"userId"`
-	Email  string   `json:"email"`
-	Name   string   `json:"name"`
-	Role   UserRole `json:"role"`
+	UserID    string   `json:"userId"`
+	Email     string   `json:"email"`
+	FirstName string   `json:"firstName"`
+	LastName  string   `json:"lastName"`
+	Role      UserRole `json:"role"`
 }

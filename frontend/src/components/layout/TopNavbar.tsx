@@ -157,9 +157,9 @@ export const TopNavbar: React.FC = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.avatar} alt={user?.name} />
-                      <AvatarFallback className={`${user?.name ? getAvatarColor(user.name).bg : 'bg-gray-100'} ${user?.name ? getAvatarColor(user.name).text : 'text-gray-700'} text-xs font-semibold`}>
-                        {user?.name ? getInitials(user.name) : 'U'}
+                      <AvatarImage src={user?.avatar} alt={user?.firstName ? `${user.firstName} ${user.lastName}` : "User"} />
+                      <AvatarFallback className={`${user?.firstName ? getAvatarColor(`${user.firstName} ${user.lastName}`).bg : 'bg-gray-100'} ${user?.firstName ? getAvatarColor(`${user.firstName} ${user.lastName}`).text : 'text-gray-700'} text-xs font-semibold`}>
+                        {user?.firstName ? getInitials(`${user.firstName} ${user.lastName}`) : 'U'}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -167,7 +167,7 @@ export const TopNavbar: React.FC = () => {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user?.name}</p>
+                      <p className="font-medium">{user?.firstName ? `${user.firstName} ${user.lastName}` : ""}</p>
                       <p className="w-[200px] truncate text-sm text-muted-foreground">
                         {user?.email}
                       </p>

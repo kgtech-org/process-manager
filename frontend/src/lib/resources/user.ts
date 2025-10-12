@@ -4,7 +4,8 @@ import { apiClient } from '../api';
 export interface User {
   id: string;
   email: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   phone?: string;
   role: 'admin' | 'manager' | 'user';
   status: 'pending' | 'active' | 'inactive';
@@ -54,7 +55,8 @@ export interface UserValidationData {
 }
 
 export interface UserUpdateData {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
   departmentId?: string;
   jobPositionId?: string;

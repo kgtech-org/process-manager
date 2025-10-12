@@ -25,10 +25,10 @@ export class UserSignatureResource {
    */
   static async get(): Promise<UserSignature | null> {
     try {
-      const response = await apiClient.get<{ data: UserSignature | null }>(
+      const response = await apiClient.get<UserSignature>(
         '/users/me/signature'
       );
-      return response.data?.data as UserSignature | null;
+      return response.data as UserSignature;
     } catch (error) {
       return null;
     }

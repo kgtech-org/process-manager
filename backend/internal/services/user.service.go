@@ -42,7 +42,8 @@ func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequ
 	// Create new user
 	user := &models.User{
 		Email:      req.Email,
-		Name:       req.Name,
+		FirstName:  req.FirstName,
+		LastName:   req.LastName,
 		Role:       req.Role,
 		Phone:      req.Phone,
 		Status:     models.StatusActive, // Admin-created users are active by default
@@ -107,7 +108,8 @@ func (s *UserService) RegisterUser(ctx context.Context, req *models.RegisterUser
 	// Create new user with pending status
 	user := &models.User{
 		Email:      req.Email,
-		Name:       req.Name,
+		FirstName:  req.FirstName,
+		LastName:   req.LastName,
 		Role:       models.RoleUser, // Default role for registration
 		Phone:      req.Phone,
 	}
@@ -209,8 +211,11 @@ func (s *UserService) UpdateUser(ctx context.Context, userID primitive.ObjectID,
 	}
 
 	// Add fields to update if provided
-	if req.Name != "" {
-		update["$set"].(bson.M)["name"] = req.Name
+	if req.FirstName != "" {
+		update["$set"].(bson.M)["first_name"] = req.FirstName
+	}
+	if req.LastName != "" {
+		update["$set"].(bson.M)["last_name"] = req.LastName
 	}
 	if req.Phone != "" {
 		update["$set"].(bson.M)["phone"] = req.Phone
@@ -600,16 +605,18 @@ func (s *UserService) EnsureDefaultAdmin(ctx context.Context) error {
 
 	// Get default admin credentials from environment variables
 	adminEmail := getEnvOrDefault("DEFAULT_ADMIN_EMAIL", "admin@process-manager.local")
-	adminName := getEnvOrDefault("DEFAULT_ADMIN_NAME", "System Administrator")
+	adminFirstName := getEnvOrDefault("DEFAULT_ADMIN_FIRSTNAME", "System")
+	adminLastName := getEnvOrDefault("DEFAULT_ADMIN_LASTNAME", "Administrator")
 
 	// Create default admin user
 	defaultAdmin := &models.User{
-		Email:    adminEmail,
-		Name:     adminName,
-		Role:     models.RoleAdmin,
-		Status:   models.StatusActive,
-		Active:   true,
-		Verified: true,
+		Email:     adminEmail,
+		FirstName: adminFirstName,
+		LastName:  adminLastName,
+		Role:      models.RoleAdmin,
+		Status:    models.StatusActive,
+		Active:    true,
+		Verified:  true,
 	}
 
 	// Set timestamps
@@ -637,7 +644,7 @@ func (s *UserService) EnsureDefaultAdmin(ctx context.Context) error {
 	
 	fmt.Printf("✅ Default admin user created successfully:\n")
 	fmt.Printf("   📧 Email: %s\n", adminEmail)
-	fmt.Printf("   👤 Name: %s\n", adminName)
+	fmt.Printf("   👤 Name: %s %s\n", adminFirstName, adminLastName)
 	fmt.Printf("   🔑 Role: %s\n", models.RoleAdmin)
 	fmt.Printf("   🆔 ID: %s\n", defaultAdmin.ID.Hex())
 	fmt.Println("   ⚠️  Please use OTP-based authentication to log in")
@@ -662,7 +669,8 @@ func (s *UserService) CreateUserFromRegistration(ctx context.Context, email stri
 	now := time.Now()
 	user := &models.User{
 		Email:         email,
-		Name:          req.Name,
+		FirstName:     req.FirstName,
+		LastName:      req.LastName,
 		Phone:         req.Phone,
 		DepartmentID:  &departmentID,
 		JobPositionID: &jobPositionID,

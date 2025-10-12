@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { AvatarUpload } from './AvatarUpload';
 import { DepartmentSelector } from './DepartmentSelector';
 import { JobPositionSelector } from './JobPositionSelector';
+import { SignatureManager } from '@/components/signatures';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/auth';
@@ -29,7 +30,8 @@ export const ProfileForm: React.FC = () => {
   const form = useForm<ProfileUpdateData>({
     resolver: zodResolver(profileUpdateSchema),
     defaultValues: {
-      name: user?.name || '',
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
       phone: user?.phone || '',
       departmentId: user?.departmentId || '',
       jobPositionId: user?.jobPositionId || '',
@@ -62,7 +64,8 @@ export const ProfileForm: React.FC = () => {
   useEffect(() => {
     if (user) {
       form.reset({
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         phone: user.phone || '',
         departmentId: user.departmentId || '',
         jobPositionId: user.jobPositionId || '',
@@ -122,14 +125,20 @@ export const ProfileForm: React.FC = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Avatar Upload Section */}
-      <AvatarUpload 
-        currentAvatarUrl={user.avatar} 
-        onAvatarUpdate={handleAvatarUpdate}
-      />
+    <div className="space-y-6">
+      {/* First Row: Avatar Upload and Signature Management - Side by Side on Large Screens */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Avatar Upload Section */}
+        <AvatarUpload
+          currentAvatarUrl={user.avatar}
+          onAvatarUpdate={handleAvatarUpdate}
+        />
 
-      {/* Profile Information */}
+        {/* Signature Management Section */}
+        <SignatureManager />
+      </div>
+
+      {/* Second Row: Profile Information - Full Width */}
       <Card>
         <CardHeader>
           <CardTitle>{t('profile.personalInfo')}</CardTitle>
@@ -137,7 +146,7 @@ export const ProfileForm: React.FC = () => {
             {t('profile.subtitle')}
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           {/* Status Messages */}
           {error && (
@@ -158,10 +167,10 @@ export const ProfileForm: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('profile.name')}</FormLabel>
+                      <FormLabel>{t('profile.firstName')}</FormLabel>
                       <FormControl>
                         <Input {...field} disabled={isUpdating} />
                       </FormControl>
@@ -172,23 +181,38 @@ export const ProfileForm: React.FC = () => {
 
                 <FormField
                   control={form.control}
-                  name="phone"
+                  name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('profile.phone')}</FormLabel>
+                      <FormLabel>{t('profile.lastName')}</FormLabel>
                       <FormControl>
-                        <Input
-                          type="tel"
-                          placeholder="+228 90 12 34 56"
-                          {...field}
-                          disabled={isUpdating}
-                        />
+                        <Input {...field} disabled={isUpdating} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              {/* Phone Number */}
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('profile.phone')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="tel"
+                        placeholder="+228 90 12 34 56"
+                        {...field}
+                        disabled={isUpdating}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {/* Email (Read-only) */}
               <FormItem>
@@ -248,30 +272,32 @@ export const ProfileForm: React.FC = () => {
               </div>
 
               {/* Account Status Information */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Role</label>
-                  <div className="mt-1">
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                      user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                    </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Role</label>
+                    <div className="mt-1">
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                        user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                        user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Status</label>
-                  <div className="mt-1">
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      user.status === 'active' ? 'bg-green-100 text-green-800' :
-                      user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                    </span>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Status</label>
+                    <div className="mt-1">
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                        user.status === 'active' ? 'bg-green-100 text-green-800' :
+                        user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

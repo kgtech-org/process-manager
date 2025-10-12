@@ -74,7 +74,8 @@ func (h *AuthHandler) RequestOTP(c *gin.Context) {
 	}
 
 	// Send OTP via email
-	if err := h.emailService.SendOTPEmail(user.Email, user.Name, otp); err != nil {
+	fullName := user.FirstName + " " + user.LastName
+	if err := h.emailService.SendOTPEmail(user.Email, fullName, otp); err != nil {
 		helpers.SendInternalError(c, err)
 		return
 	}
@@ -470,16 +471,18 @@ func (h *AuthHandler) RegisterStep3(c *gin.Context) {
 	h.otpService.DeleteRegistrationToken(ctx, regToken)
 
 	// Send registration pending email to admins
-	if err := h.emailService.SendRegistrationPendingEmail(createdUser.Email, createdUser.Name); err != nil {
+	fullName := createdUser.FirstName + " " + createdUser.LastName
+	if err := h.emailService.SendRegistrationPendingEmail(createdUser.Email, fullName); err != nil {
 		// Log error but don't fail the registration
 	}
 
 	response := models.RegistrationStep3Response{
-		UserID:  createdUser.ID.Hex(),
-		Email:   createdUser.Email,
-		Name:    createdUser.Name,
-		Status:  string(createdUser.Status),
-		Message: "Registration completed successfully. Your account is pending admin validation.",
+		UserID:    createdUser.ID.Hex(),
+		Email:     createdUser.Email,
+		FirstName: createdUser.FirstName,
+		LastName:  createdUser.LastName,
+		Status:    string(createdUser.Status),
+		Message:   "Registration completed successfully. Your account is pending admin validation.",
 	}
 
 	helpers.SendCreated(c, "Registration successful. Your account is pending admin validation.", response)

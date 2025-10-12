@@ -59,7 +59,8 @@ export default function AdminUsersPage() {
   }, [pagination.page, pagination.limit, filter]);
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const fullName = `${user.firstName} ${user.lastName}`;
+    const matchesSearch = fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
@@ -296,15 +297,15 @@ export default function AdminUsersPage() {
                   <div key={user.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <div className={`w-10 h-10 ${getAvatarColor(user.name).bg} rounded-full flex items-center justify-center`}>
-                          <span className={`${getAvatarColor(user.name).text} font-semibold text-sm`}>
-                            {getInitials(user.name)}
+                        <div className={`w-10 h-10 ${getAvatarColor(user.firstName + " " + user.lastName).bg} rounded-full flex items-center justify-center`}>
+                          <span className={`${getAvatarColor(user.firstName + " " + user.lastName).text} font-semibold text-sm`}>
+                            {getInitials(user.firstName + " " + user.lastName)}
                           </span>
                         </div>
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
-                          <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                          <p className="text-sm font-medium text-gray-900">{user.firstName + " " + user.lastName}</p>
                           {getStatusBadge(user.status)}
                           {getRoleBadge(user.role)}
                         </div>

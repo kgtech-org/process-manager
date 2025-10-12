@@ -131,9 +131,9 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className={`h-full w-full flex items-center justify-center bg-gradient-to-br ${user?.name ? getAvatarColor(user.name).bg : 'from-gray-400 to-gray-500'}`}>
-                  <span className={`${user?.name ? getAvatarColor(user.name).text : 'text-white'} text-xl font-bold`}>
-                    {user?.name ? getInitials(user.name) : (
+                <div className={`h-full w-full flex items-center justify-center bg-gradient-to-br ${user?.firstName ? getAvatarColor(user.firstName + ' ' + user.lastName).bg : 'from-gray-400 to-gray-500'}`}>
+                  <span className={`${user?.firstName ? getAvatarColor(user.firstName + ' ' + user.lastName).text : 'text-white'} text-xl font-bold`}>
+                    {user?.firstName ? getInitials(user.firstName + ' ' + user.lastName) : (
                       <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>

@@ -74,7 +74,7 @@ func (h *SignatureHandler) GetDocumentSignatures(c *gin.Context) {
 		// Fetch user details
 		var user models.User
 		if err := h.userCollection.FindOne(ctx, bson.M{"_id": sig.UserID}).Decode(&user); err == nil {
-			response.UserName = user.Name
+			response.UserName = user.FirstName + " " + user.LastName
 			response.UserEmail = user.Email
 		}
 
@@ -245,7 +245,7 @@ func (h *SignatureHandler) AddDocumentSignature(c *gin.Context) {
 	h.updateDocumentStatus(ctx, documentID)
 
 	response := signature.ToResponse()
-	response.UserName = user.Name
+	response.UserName = user.FirstName + " " + user.LastName
 	response.UserEmail = user.Email
 
 	c.JSON(http.StatusCreated, gin.H{

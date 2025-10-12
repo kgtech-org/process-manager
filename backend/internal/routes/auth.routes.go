@@ -41,7 +41,7 @@ func SetupAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandler,
 					"user": gin.H{
 						"id":    user.ID,
 						"email": user.Email,
-						"name":  user.Name,
+						"name":  user.FirstName + " " + user.LastName,
 						"role":  user.Role,
 					},
 				})

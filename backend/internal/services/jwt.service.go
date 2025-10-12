@@ -22,6 +22,8 @@ type JWTService struct {
 type JWTCustomClaims struct {
 	UserID    primitive.ObjectID `json:"userId"`
 	Email     string             `json:"email"`
+	FirstName string             `json:"firstName"`
+	LastName  string             `json:"lastName"`
 	Role      models.UserRole    `json:"role"`
 	TokenType string             `json:"tokenType"` // "access" or "refresh"
 	jwt.RegisteredClaims
@@ -100,6 +102,8 @@ func (s *JWTService) generateToken(user *models.User, tokenType string, expiry t
 	claims := JWTCustomClaims{
 		UserID:    user.ID,
 		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
 		Role:      user.Role,
 		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{

@@ -81,15 +81,19 @@ export function SignatureManager() {
     try {
       setLoading(true);
       const data = await UserSignatureResource.get();
+      console.log('data', data);
       setSignature(data);
-      if (data) {
+      if (data && data.type) {
         setCreationType(data.type);
         if (data.type === 'typed') {
           setTypedText(data.data);
           setSelectedFont(data.font || 'cursive');
-        } else if (data.type === 'image') {
+        } else if (data.type === 'image' || data.type === 'drawn') {
           setUploadedImage(data.data);
         }
+      } else {
+        // Set default creation type for new signatures
+        setCreationType('drawn');
       }
     } catch (error: any) {
       console.error('Failed to load signature:', error);
@@ -135,8 +139,10 @@ export function SignatureManager() {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -153,8 +159,10 @@ export function SignatureManager() {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -193,8 +201,22 @@ export function SignatureManager() {
   useEffect(() => {
     if (editMode && creationType === 'drawn') {
       initializeCanvas();
+      // Load existing drawn signature if available
+      if (uploadedImage) {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = uploadedImage;
+      }
     }
-  }, [editMode, creationType]);
+  }, [editMode, creationType, uploadedImage]);
 
   const handleSave = async () => {
     let signatureData = '';
