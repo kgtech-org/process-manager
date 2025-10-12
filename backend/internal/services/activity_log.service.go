@@ -114,6 +114,13 @@ func (s *ActivityLogService) LogActivity(ctx context.Context, req models.Activit
 	// Override userID if provided in request (for system actions)
 	if req.UserID != nil {
 		userID = req.UserID
+		// Fetch user details for the overridden userID
+		userService := GetUserService()
+		if user, err := userService.GetUserByID(ctx, *userID); err == nil {
+			actorName = user.FirstName + " " + user.LastName
+			actorEmail = user.Email
+			actorAvatar = user.Avatar
+		}
 	}
 
 	// Create activity log entry
