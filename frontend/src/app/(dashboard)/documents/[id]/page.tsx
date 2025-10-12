@@ -276,7 +276,8 @@ export default function DocumentDetailPage() {
         documentId={documentId}
         onUpdate={async (processGroups) => {
           await DocumentResource.update(documentId, { processGroups });
-          await loadDocument();
+          // Update local state without reloading
+          setDocument((prev) => prev ? { ...prev, processGroups } : null);
         }}
         readOnly={document.status !== 'draft'}
       />
