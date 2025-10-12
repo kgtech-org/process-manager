@@ -1,0 +1,272 @@
+### Complete Annex Workflow Test
+### This file tests the full annex lifecycle with all types
+
+### Variables
+@baseUrl = http://localhost:8080/api
+@token = your_jwt_token_here
+@documentId = your_document_id_here
+
+### Step 1: Get Document to verify annexes field
+GET {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+
+### Step 2: Create Diagram Annex
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Network Infrastructure Diagram",
+  "type": "diagram",
+  "content": {
+    "shapes": [
+      {
+        "id": "shape-001",
+        "type": "rectangle",
+        "x": 100,
+        "y": 100,
+        "width": 150,
+        "height": 100,
+        "color": "#3b82f6"
+      },
+      {
+        "id": "shape-002",
+        "type": "circle",
+        "x": 300,
+        "y": 100,
+        "width": 100,
+        "height": 100,
+        "color": "#10b981"
+      },
+      {
+        "id": "shape-003",
+        "type": "arrow",
+        "x": 250,
+        "y": 150,
+        "endX": 300,
+        "endY": 150,
+        "color": "#000000"
+      }
+    ]
+  }
+}
+
+### Step 3: Create Table Annex
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Service Level Objectives",
+  "type": "table",
+  "content": {
+    "headers": ["Service Type", "Target Uptime", "Response Time", "Priority"],
+    "rows": [
+      ["Critical Services", "99.99%", "< 5 minutes", "P1"],
+      ["Standard Services", "99.9%", "< 15 minutes", "P2"],
+      ["Low Priority", "99.5%", "< 1 hour", "P3"]
+    ]
+  }
+}
+
+### Step 4: Create Text Annex
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Additional Guidelines and Procedures",
+  "type": "text",
+  "content": {
+    "text": "This section contains additional guidelines for network operations and maintenance procedures.\n\nAll technicians must follow these guidelines when performing network maintenance.",
+    "sections": [
+      "Safety Procedures",
+      "Emergency Contacts",
+      "Escalation Matrix",
+      "Change Management Process"
+    ]
+  }
+}
+
+### Step 5: Create File Annex (placeholder)
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Supporting Documents",
+  "type": "file",
+  "content": {
+    "files": []
+  }
+}
+
+### Step 6: Update Diagram Annex - Add more shapes
+# Replace {{annexId}} with actual annex ID from Step 2 response
+PATCH {{baseUrl}}/documents/{{documentId}}/annexes/{{annexId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "content": {
+    "shapes": [
+      {
+        "id": "shape-001",
+        "type": "rectangle",
+        "x": 100,
+        "y": 100,
+        "width": 150,
+        "height": 100,
+        "color": "#3b82f6"
+      },
+      {
+        "id": "shape-002",
+        "type": "circle",
+        "x": 300,
+        "y": 100,
+        "width": 100,
+        "height": 100,
+        "color": "#10b981"
+      },
+      {
+        "id": "shape-003",
+        "type": "arrow",
+        "x": 250,
+        "y": 150,
+        "endX": 300,
+        "endY": 150,
+        "color": "#000000"
+      },
+      {
+        "id": "shape-004",
+        "type": "triangle",
+        "x": 450,
+        "y": 100,
+        "width": 100,
+        "height": 100,
+        "color": "#f59e0b"
+      },
+      {
+        "id": "shape-005",
+        "type": "text",
+        "x": 150,
+        "y": 250,
+        "text": "Server Room",
+        "color": "#000000"
+      }
+    ]
+  }
+}
+
+### Step 7: Update Table Annex - Add row
+# Replace {{annexId}} with actual annex ID from Step 3 response
+PATCH {{baseUrl}}/documents/{{documentId}}/annexes/{{annexId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "content": {
+    "headers": ["Service Type", "Target Uptime", "Response Time", "Priority"],
+    "rows": [
+      ["Critical Services", "99.99%", "< 5 minutes", "P1"],
+      ["Standard Services", "99.9%", "< 15 minutes", "P2"],
+      ["Low Priority", "99.5%", "< 1 hour", "P3"],
+      ["Maintenance Window", "Planned downtime", "Scheduled", "P4"]
+    ]
+  }
+}
+
+### Step 8: Update Text Annex - Add more content
+# Replace {{annexId}} with actual annex ID from Step 4 response
+PATCH {{baseUrl}}/documents/{{documentId}}/annexes/{{annexId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "content": {
+    "text": "This section contains additional guidelines for network operations and maintenance procedures.\n\nAll technicians must follow these guidelines when performing network maintenance.\n\nUpdated: Added new emergency procedures and contact information.",
+    "sections": [
+      "Safety Procedures",
+      "Emergency Contacts",
+      "Escalation Matrix",
+      "Change Management Process",
+      "Incident Response Plan",
+      "Backup and Recovery"
+    ]
+  }
+}
+
+### Step 9: Update Annex Title
+# Replace {{annexId}} with actual annex ID
+PATCH {{baseUrl}}/documents/{{documentId}}/annexes/{{annexId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Updated Network Infrastructure Diagram v2.0"
+}
+
+### Step 10: Get Document to verify all annexes
+GET {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+
+### Step 11: Delete an Annex
+# Replace {{annexId}} with actual annex ID to delete
+DELETE {{baseUrl}}/documents/{{documentId}}/annexes/{{annexId}}
+Authorization: Bearer {{token}}
+
+### Step 12: Verify deletion
+GET {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{token}}
+
+###############################################
+### Test Empty Content Creation
+###############################################
+
+### Create Annex with Empty Content
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Empty Diagram",
+  "type": "diagram"
+}
+
+### Create Annex with Null Content
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Null Content Test",
+  "type": "text",
+  "content": null
+}
+
+###############################################
+### Test Error Cases
+###############################################
+
+### Create Annex Without Title (Should fail)
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "diagram",
+  "content": {}
+}
+
+### Update Non-Existent Annex (Should fail)
+PATCH {{baseUrl}}/documents/{{documentId}}/annexes/invalid-annex-id
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Updated Title"
+}
+
+### Delete Non-Existent Annex (Should fail)
+DELETE {{baseUrl}}/documents/{{documentId}}/annexes/invalid-annex-id
+Authorization: Bearer {{token}}

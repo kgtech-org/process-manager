@@ -600,12 +600,18 @@ func (s *DocumentService) CreateAnnex(ctx context.Context, documentID primitive.
 	// Calculate order (last + 1)
 	order := len(document.Annexes) + 1
 
+	// Initialize content if nil
+	content := req.Content
+	if content == nil {
+		content = make(map[string]interface{})
+	}
+
 	// Create annex
 	annex := models.Annex{
 		ID:      annexID,
 		Title:   req.Title,
 		Type:    req.Type,
-		Content: req.Content,
+		Content: content,
 		Order:   order,
 		Files:   []models.FileAttachment{},
 	}
