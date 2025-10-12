@@ -64,26 +64,27 @@ export const InlineEditable: React.FC<InlineEditableProps> = ({
   // Save on unmount if editing and autoSave is enabled
   useEffect(() => {
     return () => {
-      if (isEditing && autoSave && localValue.trim() !== value.trim() && !isSaving) {
-        // Synchronous save on unmount to ensure data isn't lost
-        onSaveRef.current(localValue.trim());
+      if (isEditing && autoSave && localValue !== value && !isSaving) {
+        // Synchronous save on unmount to ensure data isn't lost (don't trim)
+        onSaveRef.current(localValue);
       }
     };
   }, [isEditing, autoSave, localValue, value, isSaving]);
 
   const handleSave = async () => {
-    const trimmedValue = localValue.trim();
+    // Don't trim - preserve spaces
+    const newValue = localValue;
 
-    // Skip save if value hasn't changed
-    if (trimmedValue === value.trim() || trimmedValue === lastSavedValueRef.current) {
+    // Skip save if value hasn't changed (compare without trimming)
+    if (newValue === value || newValue === lastSavedValueRef.current) {
       setIsEditing(false);
       return;
     }
 
     setIsSaving(true);
     try {
-      await onSave(trimmedValue);
-      lastSavedValueRef.current = trimmedValue;
+      await onSave(newValue);
+      lastSavedValueRef.current = newValue;
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to save:', error);
