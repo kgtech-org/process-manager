@@ -237,52 +237,152 @@ export default function DocumentDetailPage() {
         </Card>
       </div>
 
-      {document.metadata?.objectives && document.metadata.objectives.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Objectives</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc list-inside space-y-1">
-              {document.metadata.objectives.map((objective, index) => (
-                <li key={index} className="text-sm">
-                  {objective}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Collaboration Section */}
-      <Tabs defaultValue="signatures" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="signatures">Signatures & Contributors</TabsTrigger>
-          <TabsTrigger value="permissions">Permissions</TabsTrigger>
-          <TabsTrigger value="invitations">Invitations</TabsTrigger>
+      {/* Main Document Tabs */}
+      <Tabs defaultValue="process-flow" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="process-flow">Process Flow</TabsTrigger>
+          <TabsTrigger value="metadata">Metadata</TabsTrigger>
+          <TabsTrigger value="annexes">Annexes</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
-        <TabsContent value="signatures">
-          <SignaturePanel
+
+        {/* Process Flow Tab */}
+        <TabsContent value="process-flow" className="space-y-4">
+          <ProcessFlowEditor
+            processGroups={document.processGroups}
             documentId={documentId}
-            document={document}
-            onSignatureAdded={loadDocument}
+            onUpdate={handleProcessFlowUpdate}
+            readOnly={document.status !== 'draft'}
           />
         </TabsContent>
-        <TabsContent value="permissions">
-          <PermissionManager documentId={documentId} />
+
+        {/* Metadata Tab */}
+        <TabsContent value="metadata" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Document Metadata</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Objectives */}
+              <div>
+                <h3 className="font-semibold mb-2">Objectives</h3>
+                {document.metadata?.objectives && document.metadata.objectives.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {document.metadata.objectives.map((objective, index) => (
+                      <li key={index} className="text-sm">
+                        {objective}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No objectives defined</p>
+                )}
+              </div>
+
+              {/* Implicated Actors */}
+              <div>
+                <h3 className="font-semibold mb-2">Implicated Actors</h3>
+                {document.metadata?.implicatedActors && document.metadata.implicatedActors.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {document.metadata.implicatedActors.map((actor, index) => (
+                      <li key={index} className="text-sm">
+                        {actor}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No actors defined</p>
+                )}
+              </div>
+
+              {/* Management Rules */}
+              <div>
+                <h3 className="font-semibold mb-2">Management Rules</h3>
+                {document.metadata?.managementRules && document.metadata.managementRules.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {document.metadata.managementRules.map((rule, index) => (
+                      <li key={index} className="text-sm">
+                        {rule}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No rules defined</p>
+                )}
+              </div>
+
+              {/* Terminology */}
+              <div>
+                <h3 className="font-semibold mb-2">Terminology</h3>
+                {document.metadata?.terminology && document.metadata.terminology.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {document.metadata.terminology.map((term, index) => (
+                      <li key={index} className="text-sm">
+                        {term}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No terminology defined</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
-        <TabsContent value="invitations">
-          <DocumentInvitationsList documentId={documentId} />
+
+        {/* Annexes Tab */}
+        <TabsContent value="annexes" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Annexes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {document.annexes && document.annexes.length > 0 ? (
+                <div className="space-y-4">
+                  {document.annexes.map((annex) => (
+                    <div key={annex.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-semibold">{annex.title}</h4>
+                          <Badge variant="outline" className="mt-1">
+                            {annex.type}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No annexes added</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Activity Tab */}
+        <TabsContent value="activity" className="space-y-4">
+          <Tabs defaultValue="signatures" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="signatures">Signatures & Contributors</TabsTrigger>
+              <TabsTrigger value="permissions">Permissions</TabsTrigger>
+              <TabsTrigger value="invitations">Invitations</TabsTrigger>
+            </TabsList>
+            <TabsContent value="signatures">
+              <SignaturePanel
+                documentId={documentId}
+                document={document}
+                onSignatureAdded={loadDocument}
+              />
+            </TabsContent>
+            <TabsContent value="permissions">
+              <PermissionManager documentId={documentId} />
+            </TabsContent>
+            <TabsContent value="invitations">
+              <DocumentInvitationsList documentId={documentId} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
-
-      {/* Process Flow Editor */}
-      <ProcessFlowEditor
-        processGroups={document.processGroups}
-        documentId={documentId}
-        onUpdate={handleProcessFlowUpdate}
-        readOnly={document.status !== 'draft'}
-      />
 
       {/* Invitation Modal */}
       <InvitationModal
