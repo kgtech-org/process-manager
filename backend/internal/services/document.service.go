@@ -192,7 +192,7 @@ func (s *DocumentService) List(ctx context.Context, filter *models.DocumentFilte
 
 	// Find documents
 	findOptions := options.Find().
-		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetSort(bson.D{{Key: "updated_at", Value: -1}}).
 		SetSkip(int64(skip)).
 		SetLimit(int64(limit))
 
@@ -304,7 +304,7 @@ func (s *DocumentService) ListUserAccessible(ctx context.Context, userID primiti
 
 	// Find documents
 	findOptions := options.Find().
-		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetSort(bson.D{{Key: "updated_at", Value: -1}}).
 		SetSkip(int64(skip)).
 		SetLimit(int64(limit))
 
