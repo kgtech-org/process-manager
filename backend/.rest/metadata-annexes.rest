@@ -1,0 +1,108 @@
+### Variables
+@baseUrl = http://localhost:8080/api
+@token = your_jwt_token_here
+@documentId = your_document_id_here
+@annexId = your_annex_id_here
+
+### Update Document Metadata
+PATCH {{baseUrl}}/documents/{{documentId}}/metadata
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "objectives": [
+    "Improve network surveillance efficiency",
+    "Reduce incident response time"
+  ],
+  "implicatedActors": [
+    "Network Operations Team",
+    "Security Team",
+    "Management"
+  ],
+  "managementRules": [
+    "All incidents must be logged within 15 minutes",
+    "Critical incidents require immediate escalation"
+  ],
+  "terminology": [
+    "NOC: Network Operations Center",
+    "SLA: Service Level Agreement",
+    "MTTR: Mean Time To Repair"
+  ]
+}
+
+### Create Annex
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Network Topology Diagram",
+  "type": "diagram",
+  "content": {
+    "description": "Visual representation of network infrastructure",
+    "diagramUrl": "https://example.com/diagram.png"
+  }
+}
+
+### Create Text Annex
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Additional Guidelines",
+  "type": "text",
+  "content": {
+    "text": "These are additional guidelines for network operations...",
+    "sections": [
+      "Safety procedures",
+      "Emergency contacts",
+      "Escalation matrix"
+    ]
+  }
+}
+
+### Create Table Annex
+POST {{baseUrl}}/documents/{{documentId}}/annexes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Service Level Objectives",
+  "type": "table",
+  "content": {
+    "headers": ["Service", "Target Uptime", "Response Time"],
+    "rows": [
+      ["Critical Services", "99.99%", "< 5 minutes"],
+      ["Standard Services", "99.9%", "< 15 minutes"],
+      ["Low Priority", "99.5%", "< 1 hour"]
+    ]
+  }
+}
+
+### Update Annex
+PATCH {{baseUrl}}/documents/{{documentId}}/annexes/{{annexId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Updated Network Topology Diagram",
+  "content": {
+    "description": "Updated visual representation of network infrastructure",
+    "diagramUrl": "https://example.com/updated-diagram.png",
+    "lastUpdated": "2025-10-12"
+  }
+}
+
+### Update Annex Order
+PATCH {{baseUrl}}/documents/{{documentId}}/annexes/{{annexId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "order": 1
+}
+
+### Delete Annex
+DELETE {{baseUrl}}/documents/{{documentId}}/annexes/{{annexId}}
+Authorization: Bearer {{token}}
