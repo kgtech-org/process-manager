@@ -185,40 +185,13 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
 
     switch (annex.type) {
       case 'diagram':
-        if (readOnly || !isEditing) {
-          // Read-only preview
-          return (
-            <div className="relative">
-              <DiagramEditor
-                initialShapes={annex.content?.shapes || []}
-                onChange={() => {}}
-                readOnly={true}
-              />
-              {!readOnly && (
-                <Button
-                  onClick={() => {
-                    setEditingAnnexId(annex.id);
-                    openDiagramModal(annex);
-                  }}
-                  className="absolute top-2 right-2"
-                  size="sm"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Diagram
-                </Button>
-              )}
-            </div>
-          );
-        }
+        // Always show preview, clicking Edit in header will open modal
         return (
-          <Button
-            onClick={() => openDiagramModal(annex)}
-            variant="outline"
-            className="w-full"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Open Diagram Editor
-          </Button>
+          <DiagramEditor
+            initialShapes={annex.content?.shapes || []}
+            onChange={() => {}}
+            readOnly={true}
+          />
         );
 
       case 'table':
@@ -360,7 +333,13 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditingAnnexId(annex.id)}
+                      onClick={() => {
+                        setEditingAnnexId(annex.id);
+                        // Open modal directly for diagrams
+                        if (annex.type === 'diagram') {
+                          openDiagramModal(annex);
+                        }
+                      }}
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
