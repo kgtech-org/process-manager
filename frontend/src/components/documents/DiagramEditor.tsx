@@ -42,6 +42,8 @@ interface Shape {
   endY?: number;
   text?: string;
   color: string;
+  strokeColor?: string;
+  strokeWidth?: number;
   arrowStyle?: ArrowStyle;
   arrowWidth?: number;
   fontSize?: number;
@@ -182,9 +184,9 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   }, [shapes, currentShape, selectedShape, backgroundColor, showGrid]);
 
   const drawShape = (ctx: CanvasRenderingContext2D, shape: Shape, isSelected: boolean) => {
-    ctx.strokeStyle = isSelected ? '#3b82f6' : shape.color;
+    ctx.strokeStyle = isSelected ? '#3b82f6' : (shape.strokeColor || shape.color);
     ctx.fillStyle = shape.color + '33'; // Add transparency
-    ctx.lineWidth = isSelected ? 3 : 2;
+    ctx.lineWidth = isSelected ? 3 : (shape.strokeWidth || 2);
 
     switch (shape.type) {
       case 'rectangle':
@@ -961,15 +963,37 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                     )}
 
                     {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle') && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground">Fill</span>
-                        <input
-                          type="color"
-                          value={shape.color || '#3b82f6'}
-                          onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
-                          className="h-8 w-12 border rounded cursor-pointer"
-                        />
-                      </div>
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Fill</span>
+                          <input
+                            type="color"
+                            value={shape.color || '#3b82f6'}
+                            onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
+                            className="h-8 w-12 border rounded cursor-pointer"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Stroke</span>
+                          <input
+                            type="color"
+                            value={shape.strokeColor || shape.color || '#000000'}
+                            onChange={(e) => updateShapeProperty(selectedShape, { strokeColor: e.target.value })}
+                            className="h-8 w-12 border rounded cursor-pointer"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Width</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={shape.strokeWidth || 2}
+                            onChange={(e) => updateShapeProperty(selectedShape, { strokeWidth: parseInt(e.target.value) })}
+                            className="h-8 w-16 px-2 text-xs border rounded"
+                          />
+                        </div>
+                      </>
                     )}
                   </>
                 );
