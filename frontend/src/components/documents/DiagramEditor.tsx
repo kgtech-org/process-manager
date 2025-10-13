@@ -2,7 +2,10 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Square,
   Circle,
@@ -13,7 +16,10 @@ import {
   Download,
   MousePointer,
   Undo,
-  Redo
+  Redo,
+  ZoomIn,
+  ZoomOut,
+  Maximize
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -74,6 +80,9 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   const [dragOffset, setDragOffset] = useState<Point | null>(null);
   const [history, setHistory] = useState<Shape[][]>([initialShapes]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [zoom, setZoom] = useState<number>(1);
+  const [canvasSize, setCanvasSize] = useState({ width: 1600, height: 1200 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Draw shapes on canvas
   useEffect(() => {
@@ -257,8 +266,8 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
 
     if (selectedTool === 'select') {
       // Check if clicking on existing shape
@@ -318,8 +327,8 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
 
     // Handle dragging selected shape
     if (isDragging && selectedShape && dragOffset) {
@@ -467,6 +476,27 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     }
   };
 
+  const zoomIn = () => {
+    setZoom((prev) => Math.min(prev + 0.1, 3));
+  };
+
+  const zoomOut = () => {
+    setZoom((prev) => Math.max(prev - 0.1, 0.3));
+  };
+
+  const resetZoom = () => {
+    setZoom(1);
+  };
+
+  const updateShapeProperty = (shapeId: string, updates: Partial<Shape>) => {
+    const newShapes = shapes.map((s) =>
+      s.id === shapeId ? { ...s, ...updates } : s
+    );
+    setShapes(newShapes);
+    updateHistory(newShapes);
+    onChange?.(newShapes);
+  };
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -607,25 +637,193 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
               <Download className="h-4 w-4 mr-2" />
               Export PNG
             </Button>
+
+            <div className="h-6 w-px bg-border mx-2" />
+
+            {/* Zoom Controls */}
+            <Button variant="outline" size="sm" onClick={zoomOut}>
+              <ZoomOut className="h-4 w-4 mr-2" />
+              Zoom Out
+            </Button>
+            <span className="text-sm font-medium px-2">{Math.round(zoom * 100)}%</span>
+            <Button variant="outline" size="sm" onClick={zoomIn}>
+              <ZoomIn className="h-4 w-4 mr-2" />
+              Zoom In
+            </Button>
+            <Button variant="outline" size="sm" onClick={resetZoom}>
+              <Maximize className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
           </div>
         </Card>
       )}
 
+      {/* Property Panel */}
+      {!readOnly && selectedShape && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Shape Properties</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {(() => {
+                const shape = shapes.find((s) => s.id === selectedShape);
+                if (!shape) return null;
+
+                if (shape.type === 'text') {
+                  return (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="textColor" className="text-xs">Text Color</Label>
+                        <Input
+                          id="textColor"
+                          type="color"
+                          value={shape.textColor || '#000000'}
+                          onChange={(e) => updateShapeProperty(selectedShape, { textColor: e.target.value })}
+                          className="h-10 w-full"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fontSize" className="text-xs">Font Size</Label>
+                        <Input
+                          id="fontSize"
+                          type="number"
+                          min="8"
+                          max="72"
+                          value={shape.fontSize || 16}
+                          onChange={(e) => updateShapeProperty(selectedShape, { fontSize: parseInt(e.target.value) })}
+                          className="h-10"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fontWeight" className="text-xs">Font Weight</Label>
+                        <Select
+                          value={shape.fontWeight || 'normal'}
+                          onValueChange={(value) => updateShapeProperty(selectedShape, { fontWeight: value })}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="normal">Normal</SelectItem>
+                            <SelectItem value="bold">Bold</SelectItem>
+                            <SelectItem value="lighter">Light</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fontFamily" className="text-xs">Font Family</Label>
+                        <Select
+                          value={shape.fontFamily || 'Arial'}
+                          onValueChange={(value) => updateShapeProperty(selectedShape, { fontFamily: value })}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Arial">Arial</SelectItem>
+                            <SelectItem value="Helvetica">Helvetica</SelectItem>
+                            <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                            <SelectItem value="Courier New">Courier New</SelectItem>
+                            <SelectItem value="Verdana">Verdana</SelectItem>
+                            <SelectItem value="Georgia">Georgia</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  );
+                } else if (shape.type === 'arrow') {
+                  return (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="arrowColor" className="text-xs">Arrow Color</Label>
+                        <Input
+                          id="arrowColor"
+                          type="color"
+                          value={shape.color || '#000000'}
+                          onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
+                          className="h-10 w-full"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="arrowWidth" className="text-xs">Line Width</Label>
+                        <Input
+                          id="arrowWidth"
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={shape.arrowWidth || 2}
+                          onChange={(e) => updateShapeProperty(selectedShape, { arrowWidth: parseInt(e.target.value) })}
+                          className="h-10"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="arrowStyle" className="text-xs">Arrow Style</Label>
+                        <Select
+                          value={shape.arrowStyle || 'solid'}
+                          onValueChange={(value: ArrowStyle) => updateShapeProperty(selectedShape, { arrowStyle: value })}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="solid">Solid</SelectItem>
+                            <SelectItem value="dashed">Dashed</SelectItem>
+                            <SelectItem value="double">Double</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  );
+                } else {
+                  return (
+                    <div className="space-y-2">
+                      <Label htmlFor="fillColor" className="text-xs">Fill Color</Label>
+                      <Input
+                        id="fillColor"
+                        type="color"
+                        value={shape.color || '#3b82f6'}
+                        onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
+                        className="h-10 w-full"
+                        />
+                    </div>
+                  );
+                }
+              })()}
+
+              <div className="space-y-2">
+                <Label htmlFor="bgColor" className="text-xs">Background Color</Label>
+                <Input
+                  id="bgColor"
+                  type="color"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="h-10 w-full"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Canvas */}
-      <Card className="p-0 overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          width={800}
-          height={600}
-          className={cn(
-            'border bg-white',
-            !readOnly && 'cursor-crosshair'
-          )}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        />
+      <Card className="p-0 overflow-auto max-h-[600px]" ref={containerRef}>
+        <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}>
+          <canvas
+            ref={canvasRef}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            className={cn(
+              'border',
+              !readOnly && 'cursor-crosshair'
+            )}
+            style={{ backgroundColor }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          />
+        </div>
       </Card>
 
       {readOnly && (
