@@ -368,8 +368,8 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
       }}>
         <DialogContent className="max-w-[98vw] w-full h-[98vh] max-h-[98vh] p-0">
           <div className="h-full flex flex-col">
-            <DialogHeader className="p-4 border-b">
-              <DialogTitle className="flex items-center gap-2">
+            <DialogHeader className="px-4 py-2 border-b">
+              <DialogTitle className="flex items-center gap-2 text-base">
                 {currentDiagramAnnex?.title || 'Diagram Editor'}
                 {hasUnsavedChanges && (
                   <Badge variant="secondary" className="text-xs">
@@ -377,11 +377,8 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
                   </Badge>
                 )}
               </DialogTitle>
-              <DialogDescription>
-                Create and edit your diagram with zoom and customization tools. Changes will be saved when you close the modal.
-              </DialogDescription>
             </DialogHeader>
-            <div className="flex-1 overflow-auto p-4">
+            <div className="flex-1 overflow-auto p-3">
               {currentDiagramAnnex && (
                 <DiagramEditor
                   initialShapes={localDiagramShapes}
@@ -390,25 +387,24 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
                 />
               )}
             </div>
-            <div className="p-4 border-t flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
+            <div className="px-4 py-2 border-t flex justify-between items-center">
+              <div className="text-xs text-muted-foreground">
                 {hasUnsavedChanges ? (
                   <span className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
-                    You have unsaved changes
+                    Unsaved changes
                   </span>
                 ) : (
-                  <span>All changes saved</span>
+                  <span>All saved</span>
                 )}
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleDiagramModalClose}
-                >
-                  {hasUnsavedChanges ? 'Save & Close' : 'Close'}
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDiagramModalClose}
+              >
+                {hasUnsavedChanges ? 'Save & Close' : 'Close'}
+              </Button>
             </div>
           </div>
         </DialogContent>
