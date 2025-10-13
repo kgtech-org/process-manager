@@ -745,271 +745,271 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
 
   return (
     <div className="space-y-2">
-      {/* Toolbar */}
+      {/* Toolbar - single row with left/center/right layout */}
       {!readOnly && (
-        <div className="border rounded-lg bg-card">
-          <div className="flex items-center gap-0.5 p-1">
-            {/* Drawing Tools */}
-            <Button
-              variant={selectedTool === 'select' ? 'secondary' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setSelectedTool('select')}
-              title="Select (V)"
-            >
-              <MousePointer className="h-4 w-4" />
-            </Button>
+        <div className="border rounded-lg bg-card px-2 py-1.5">
+          <div className="flex items-center justify-between gap-4">
+            {/* LEFT: Drawing Tools */}
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant={selectedTool === 'select' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('select')}
+                title="Select"
+              >
+                <MousePointer className="h-4 w-4" />
+              </Button>
 
-            <div className="h-6 w-px bg-border mx-0.5" />
+              <div className="h-6 w-px bg-border mx-1" />
 
-            <Button
-              variant={selectedTool === 'rectangle' ? 'secondary' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setSelectedTool('rectangle')}
-              title="Rectangle (R)"
-            >
-              <Square className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={selectedTool === 'circle' ? 'secondary' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setSelectedTool('circle')}
-              title="Circle (C)"
-            >
-              <Circle className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={selectedTool === 'triangle' ? 'secondary' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setSelectedTool('triangle')}
-              title="Triangle (T)"
-            >
-              <Triangle className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={selectedTool === 'arrow' ? 'secondary' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setSelectedTool('arrow')}
-              title="Arrow (A)"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={selectedTool === 'text' ? 'secondary' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setSelectedTool('text')}
-              title="Text (T)"
-            >
-              <Type className="h-4 w-4" />
-            </Button>
+              <Button
+                variant={selectedTool === 'rectangle' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('rectangle')}
+                title="Rectangle"
+              >
+                <Square className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={selectedTool === 'circle' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('circle')}
+                title="Circle"
+              >
+                <Circle className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={selectedTool === 'triangle' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('triangle')}
+                title="Triangle"
+              >
+                <Triangle className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={selectedTool === 'arrow' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('arrow')}
+                title="Arrow"
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={selectedTool === 'text' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('text')}
+                title="Text"
+              >
+                <Type className="h-4 w-4" />
+              </Button>
 
-            <div className="h-6 w-px bg-border mx-0.5" />
+              <div className="h-6 w-px bg-border mx-1" />
 
-            {/* Edit Actions */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={undo}
-              disabled={historyIndex === 0}
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={redo}
-              disabled={historyIndex === history.length - 1}
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={deleteSelected}
-              disabled={!selectedShape}
-              title="Delete (Del)"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={undo}
+                disabled={historyIndex === 0}
+                title="Undo"
+              >
+                <Undo className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={redo}
+                disabled={historyIndex === history.length - 1}
+                title="Redo"
+              >
+                <Redo className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={deleteSelected}
+                disabled={!selectedShape}
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
 
-            <div className="h-6 w-px bg-border mx-0.5" />
+            {/* CENTER: Format Controls (when shape selected) */}
+            <div className="flex items-center gap-3 flex-1 justify-center text-xs">
+              {selectedShape && (() => {
+                const shape = shapes.find((s) => s.id === selectedShape);
+                if (!shape) return null;
 
-            {/* Zoom Controls */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={zoomOut}
-              title="Zoom Out (-)"
-            >
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={resetZoom}
-              title="Reset Zoom"
-            >
-              <Maximize className="h-4 w-4" />
-            </Button>
-            <span className="text-xs font-medium px-1.5 min-w-[50px] text-center tabular-nums">
-              {Math.round(zoom * 100)}%
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={zoomIn}
-              title="Zoom In (+)"
-            >
-              <ZoomIn className="h-4 w-4" />
-            </Button>
+                return (
+                  <>
+                    {shape.type === 'text' && (
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Color</span>
+                          <input
+                            type="color"
+                            value={shape.textColor || '#000000'}
+                            onChange={(e) => updateShapeProperty(selectedShape, { textColor: e.target.value })}
+                            className="h-7 w-10 border rounded cursor-pointer"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Size</span>
+                          <input
+                            type="number"
+                            min="8"
+                            max="72"
+                            value={shape.fontSize || 16}
+                            onChange={(e) => updateShapeProperty(selectedShape, { fontSize: parseInt(e.target.value) })}
+                            className="h-7 w-16 px-2 text-xs border rounded"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Weight</span>
+                          <select
+                            value={shape.fontWeight || 'normal'}
+                            onChange={(e) => updateShapeProperty(selectedShape, { fontWeight: e.target.value })}
+                            className="h-7 px-2 text-xs border rounded bg-background"
+                          >
+                            <option value="normal">Normal</option>
+                            <option value="bold">Bold</option>
+                            <option value="lighter">Light</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Font</span>
+                          <select
+                            value={shape.fontFamily || 'Arial'}
+                            onChange={(e) => updateShapeProperty(selectedShape, { fontFamily: e.target.value })}
+                            className="h-7 px-2 text-xs border rounded bg-background"
+                          >
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times</option>
+                            <option value="Courier New">Courier</option>
+                            <option value="Verdana">Verdana</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
 
-            <div className="h-6 w-px bg-border mx-0.5" />
+                    {shape.type === 'arrow' && (
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Color</span>
+                          <input
+                            type="color"
+                            value={shape.color || '#000000'}
+                            onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
+                            className="h-7 w-10 border rounded cursor-pointer"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Width</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={shape.arrowWidth || 2}
+                            onChange={(e) => updateShapeProperty(selectedShape, { arrowWidth: parseInt(e.target.value) })}
+                            className="h-7 w-16 px-2 text-xs border rounded"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Style</span>
+                          <select
+                            value={shape.arrowStyle || 'solid'}
+                            onChange={(e) => updateShapeProperty(selectedShape, { arrowStyle: e.target.value as ArrowStyle })}
+                            className="h-7 px-2 text-xs border rounded bg-background"
+                          >
+                            <option value="solid">Solid</option>
+                            <option value="dashed">Dashed</option>
+                            <option value="double">Double</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
 
-            {/* File Actions */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={clearCanvas}
-              title="Clear All"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={exportDiagram}
-              title="Export PNG"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Format Bar - integrated below toolbar */}
-          {selectedShape && (() => {
-            const shape = shapes.find((s) => s.id === selectedShape);
-            if (!shape) return null;
-
-            return (
-              <div className="border-t bg-muted/30 px-3 py-2">
-                <div className="flex items-center gap-4 text-xs">
-                  {shape.type === 'text' && (
-                    <>
+                    {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle') && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground font-medium">Color</span>
+                        <span className="text-muted-foreground">Fill</span>
                         <input
                           type="color"
-                          value={shape.textColor || '#000000'}
-                          onChange={(e) => updateShapeProperty(selectedShape, { textColor: e.target.value })}
-                          className="h-6 w-8 border rounded cursor-pointer"
-                        />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground font-medium">Size</span>
-                        <input
-                          type="number"
-                          min="8"
-                          max="72"
-                          value={shape.fontSize || 16}
-                          onChange={(e) => updateShapeProperty(selectedShape, { fontSize: parseInt(e.target.value) })}
-                          className="h-6 w-14 px-1.5 text-xs border rounded"
-                        />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground font-medium">Weight</span>
-                        <select
-                          value={shape.fontWeight || 'normal'}
-                          onChange={(e) => updateShapeProperty(selectedShape, { fontWeight: e.target.value })}
-                          className="h-6 px-1.5 text-xs border rounded bg-background"
-                        >
-                          <option value="normal">Normal</option>
-                          <option value="bold">Bold</option>
-                          <option value="lighter">Light</option>
-                        </select>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground font-medium">Font</span>
-                        <select
-                          value={shape.fontFamily || 'Arial'}
-                          onChange={(e) => updateShapeProperty(selectedShape, { fontFamily: e.target.value })}
-                          className="h-6 px-1.5 text-xs border rounded bg-background"
-                        >
-                          <option value="Arial">Arial</option>
-                          <option value="Helvetica">Helvetica</option>
-                          <option value="Times New Roman">Times</option>
-                          <option value="Courier New">Courier</option>
-                          <option value="Verdana">Verdana</option>
-                        </select>
-                      </div>
-                    </>
-                  )}
-
-                  {shape.type === 'arrow' && (
-                    <>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground font-medium">Color</span>
-                        <input
-                          type="color"
-                          value={shape.color || '#000000'}
+                          value={shape.color || '#3b82f6'}
                           onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
-                          className="h-6 w-8 border rounded cursor-pointer"
+                          className="h-7 w-10 border rounded cursor-pointer"
                         />
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground font-medium">Width</span>
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={shape.arrowWidth || 2}
-                          onChange={(e) => updateShapeProperty(selectedShape, { arrowWidth: parseInt(e.target.value) })}
-                          className="h-6 w-14 px-1.5 text-xs border rounded"
-                        />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground font-medium">Style</span>
-                        <select
-                          value={shape.arrowStyle || 'solid'}
-                          onChange={(e) => updateShapeProperty(selectedShape, { arrowStyle: e.target.value as ArrowStyle })}
-                          className="h-6 px-1.5 text-xs border rounded bg-background"
-                        >
-                          <option value="solid">Solid</option>
-                          <option value="dashed">Dashed</option>
-                          <option value="double">Double</option>
-                        </select>
-                      </div>
-                    </>
-                  )}
+                    )}
+                  </>
+                );
+              })()}
+            </div>
 
-                  {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle') && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-muted-foreground font-medium">Fill</span>
-                      <input
-                        type="color"
-                        value={shape.color || '#3b82f6'}
-                        onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
-                        className="h-6 w-8 border rounded cursor-pointer"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
+            {/* RIGHT: Zoom + Export */}
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={zoomOut}
+                title="Zoom Out"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={resetZoom}
+                title="Fit"
+              >
+                <Maximize className="h-4 w-4" />
+              </Button>
+              <span className="text-xs font-medium px-2 min-w-[50px] text-center tabular-nums">
+                {Math.round(zoom * 100)}%
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={zoomIn}
+                title="Zoom In"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+
+              <div className="h-6 w-px bg-border mx-1" />
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={clearCanvas}
+                title="Clear"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={exportDiagram}
+                title="Export"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
