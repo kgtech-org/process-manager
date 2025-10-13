@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { InvitationResource, CreateInvitationRequest } from '@/lib/resources';
 
@@ -189,6 +190,7 @@ export function InvitationModal({
               {t('invitation.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? t('invitation.sending') : t('invitation.send')}
             </Button>
           </DialogFooter>

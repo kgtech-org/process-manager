@@ -398,3 +398,261 @@ func (h *DocumentHandler) GetDocumentVersions(c *gin.Context) {
 
 	helpers.SendSuccess(c, "Document versions retrieved successfully", responses)
 }
+
+// UpdateMetadata updates document metadata
+// PATCH /api/documents/:id/metadata
+func (h *DocumentHandler) UpdateMetadata(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	var req models.UpdateMetadataRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	// Get current user
+	_, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	fmt.Printf("📝 [DOCUMENT] Updating metadata for document ID: %s\n", id.Hex())
+
+	document, err := h.documentService.UpdateMetadata(ctx, id, &req)
+	if err != nil {
+		fmt.Printf("❌ [DOCUMENT] Failed to update metadata: %v\n", err)
+		if err.Error() == "document not found" {
+			helpers.SendNotFound(c, "Document not found")
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	fmt.Printf("✅ [DOCUMENT] Metadata updated successfully\n")
+
+	// Log activity
+	activityReq := models.ActivityLogRequest{
+		Action:       "metadata_updated",
+		Description:  fmt.Sprintf("Updated metadata for document '%s'", document.Title),
+		ResourceType: "document",
+		ResourceID:   &document.ID,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId": document.ID.Hex(),
+			"reference":  document.Reference,
+			"title":      document.Title,
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log activity: %v\n", logErr)
+	}
+
+	helpers.SendSuccess(c, "Metadata updated successfully", document.ToResponse())
+}
+
+// CreateAnnex creates a new annex for a document
+// POST /api/documents/:id/annexes
+func (h *DocumentHandler) CreateAnnex(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	var req models.CreateAnnexRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	// Get current user
+	_, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	fmt.Printf("📎 [DOCUMENT] Creating annex for document ID: %s\n", id.Hex())
+	fmt.Printf("   - Title: %s\n", req.Title)
+	fmt.Printf("   - Type: %s\n", req.Type)
+
+	annex, err := h.documentService.CreateAnnex(ctx, id, &req)
+	if err != nil {
+		fmt.Printf("❌ [DOCUMENT] Failed to create annex: %v\n", err)
+		if err.Error() == "document not found" {
+			helpers.SendNotFound(c, "Document not found")
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	fmt.Printf("✅ [DOCUMENT] Annex created successfully - ID: %s\n", annex.ID)
+
+	// Log activity
+	document, _ := h.documentService.GetByID(ctx, id)
+	activityReq := models.ActivityLogRequest{
+		Action:       "annex_created",
+		Description:  fmt.Sprintf("Created annex '%s' for document '%s'", annex.Title, document.Title),
+		ResourceType: "document",
+		ResourceID:   &id,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId": id.Hex(),
+			"annexId":    annex.ID,
+			"annexTitle": annex.Title,
+			"annexType":  string(annex.Type),
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log activity: %v\n", logErr)
+	}
+
+	helpers.SendSuccess(c, "Annex created successfully", annex)
+}
+
+// UpdateAnnex updates an existing annex
+// PATCH /api/documents/:id/annexes/:annexId
+func (h *DocumentHandler) UpdateAnnex(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	annexID := c.Param("annexId")
+
+	var req models.UpdateAnnexRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	// Get current user
+	_, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	fmt.Printf("📝 [DOCUMENT] Updating annex %s for document ID: %s\n", annexID, id.Hex())
+
+	annex, err := h.documentService.UpdateAnnex(ctx, id, annexID, &req)
+	if err != nil {
+		fmt.Printf("❌ [DOCUMENT] Failed to update annex: %v\n", err)
+		if err.Error() == "document not found" || err.Error() == "annex not found" {
+			helpers.SendNotFound(c, err.Error())
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	fmt.Printf("✅ [DOCUMENT] Annex updated successfully\n")
+
+	// Log activity
+	document, _ := h.documentService.GetByID(ctx, id)
+	activityReq := models.ActivityLogRequest{
+		Action:       "annex_updated",
+		Description:  fmt.Sprintf("Updated annex '%s' for document '%s'", annex.Title, document.Title),
+		ResourceType: "document",
+		ResourceID:   &id,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId": id.Hex(),
+			"annexId":    annex.ID,
+			"annexTitle": annex.Title,
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log activity: %v\n", logErr)
+	}
+
+	helpers.SendSuccess(c, "Annex updated successfully", annex)
+}
+
+// DeleteAnnex deletes an annex from a document
+// DELETE /api/documents/:id/annexes/:annexId
+func (h *DocumentHandler) DeleteAnnex(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	annexID := c.Param("annexId")
+
+	// Get current user
+	_, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	// Get annex title before deleting
+	document, err := h.documentService.GetByID(ctx, id)
+	if err != nil {
+		helpers.SendNotFound(c, "Document not found")
+		return
+	}
+
+	var annexTitle string
+	for _, annex := range document.Annexes {
+		if annex.ID == annexID {
+			annexTitle = annex.Title
+			break
+		}
+	}
+
+	fmt.Printf("🗑️ [DOCUMENT] Deleting annex %s from document ID: %s\n", annexID, id.Hex())
+
+	err = h.documentService.DeleteAnnex(ctx, id, annexID)
+	if err != nil {
+		fmt.Printf("❌ [DOCUMENT] Failed to delete annex: %v\n", err)
+		if err.Error() == "document not found" || err.Error() == "annex not found" {
+			helpers.SendNotFound(c, err.Error())
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	fmt.Printf("✅ [DOCUMENT] Annex deleted successfully\n")
+
+	// Log activity
+	activityReq := models.ActivityLogRequest{
+		Action:       "annex_deleted",
+		Description:  fmt.Sprintf("Deleted annex '%s' from document '%s'", annexTitle, document.Title),
+		ResourceType: "document",
+		ResourceID:   &id,
+		Success:      true,
+		Details: map[string]interface{}{
+			"documentId": id.Hex(),
+			"annexId":    annexID,
+			"annexTitle": annexTitle,
+		},
+	}
+	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
+		fmt.Printf("Failed to log activity: %v\n", logErr)
+	}
+
+	helpers.SendSuccess(c, "Annex deleted successfully", nil)
+}

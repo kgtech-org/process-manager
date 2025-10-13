@@ -219,3 +219,26 @@ type DocumentFilter struct {
 	Page      int             `json:"page"`
 	Limit     int             `json:"limit"`
 }
+
+// UpdateMetadataRequest represents the request to update document metadata
+type UpdateMetadataRequest struct {
+	Objectives       *[]string `json:"objectives"`
+	ImplicatedActors *[]string `json:"implicatedActors"`
+	ManagementRules  *[]string `json:"managementRules"`
+	Terminology      *[]string `json:"terminology"`
+}
+
+// CreateAnnexRequest represents the request to create an annex
+type CreateAnnexRequest struct {
+	Title   string                 `json:"title" binding:"required"`
+	Type    AnnexType              `json:"type" binding:"required"`
+	Content map[string]interface{} `json:"content"`
+}
+
+// UpdateAnnexRequest represents the request to update an annex
+type UpdateAnnexRequest struct {
+	Title   *string                 `json:"title"`
+	Type    *AnnexType              `json:"type"`
+	Content *map[string]interface{} `json:"content"`
+	Order   *int                    `json:"order"`
+}

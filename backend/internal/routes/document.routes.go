@@ -41,5 +41,13 @@ func SetupDocumentRoutes(
 		// Signatures (require document access)
 		documents.GET("/:id/signatures", documentMiddleware.RequireDocumentAccess(), signatureHandler.GetDocumentSignatures)
 		documents.POST("/:id/signatures", documentMiddleware.RequireDocumentAccess(), signatureHandler.AddDocumentSignature)
+
+		// Metadata (require document access)
+		documents.PATCH("/:id/metadata", documentMiddleware.RequireDocumentAccess(), documentHandler.UpdateMetadata)
+
+		// Annexes (require document access)
+		documents.POST("/:id/annexes", documentMiddleware.RequireDocumentAccess(), documentHandler.CreateAnnex)
+		documents.PATCH("/:id/annexes/:annexId", documentMiddleware.RequireDocumentAccess(), documentHandler.UpdateAnnex)
+		documents.DELETE("/:id/annexes/:annexId", documentMiddleware.RequireDocumentAccess(), documentHandler.DeleteAnnex)
 	}
 }

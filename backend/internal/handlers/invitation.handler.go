@@ -145,7 +145,7 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	}
 	invitation.ID = result.InsertedID.(primitive.ObjectID)
 
-	// Send invitation email
+	// Prepare data for async operations
 	invitedUserName := req.InvitedEmail
 	if invitedUserID != nil {
 		invitedUserName = invitedUser.FirstName + " " + invitedUser.LastName
@@ -160,45 +160,48 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		teamName = "Validators"
 	}
 
-	err = h.emailService.SendInvitationEmail(
-		req.InvitedEmail,
-		invitedUserName,
-		user.FirstName + " " + user.LastName,
-		document.Title,
-		document.Reference,
-		teamName,
-		token,
-	)
-	if err != nil {
-		fmt.Printf("Failed to send invitation email: %v\n", err)
-		// Don't fail the request if email fails
-	}
-
-	// Send push notification if user exists
-	if invitedUserID != nil {
-		notifTitle := fmt.Sprintf("Document Invitation from %s %s", user.FirstName, user.LastName)
-		notifBody := fmt.Sprintf("You have been invited to collaborate on '%s' as a %s", document.Title, teamName)
-
-		notifReq := &models.SendNotificationRequest{
-			UserIDs:  []string{invitedUserID.Hex()},
-			Title:    notifTitle,
-			Body:     notifBody,
-			Category: models.NotificationCategorySystem,
-			Priority: models.NotificationPriorityHigh,
-			Data: map[string]interface{}{
-				"type":       "invitation",
-				"documentId": documentID.Hex(),
-				"team":       string(req.Team),
-			},
+	// Send invitation email and push notification asynchronously (don't block response)
+	go func() {
+		// Send invitation email
+		emailErr := h.emailService.SendInvitationEmail(
+			req.InvitedEmail,
+			invitedUserName,
+			user.FirstName + " " + user.LastName,
+			document.Title,
+			document.Reference,
+			teamName,
+			token,
+		)
+		if emailErr != nil {
+			fmt.Printf("Failed to send invitation email: %v\n", emailErr)
 		}
 
-		_, notifErr := h.notificationService.SendNotification(ctx, notifReq, user.ID)
-		if notifErr != nil {
-			fmt.Printf("Failed to send push notification: %v\n", notifErr)
-		}
-	}
+		// Send push notification if user exists
+		if invitedUserID != nil {
+			notifTitle := fmt.Sprintf("Document Invitation from %s %s", user.FirstName, user.LastName)
+			notifBody := fmt.Sprintf("You have been invited to collaborate on '%s' as a %s", document.Title, teamName)
 
-	// Log activity
+			notifReq := &models.SendNotificationRequest{
+				UserIDs:  []string{invitedUserID.Hex()},
+				Title:    notifTitle,
+				Body:     notifBody,
+				Category: models.NotificationCategorySystem,
+				Priority: models.NotificationPriorityHigh,
+				Data: map[string]interface{}{
+					"type":       "invitation",
+					"documentId": documentID.Hex(),
+					"team":       string(req.Team),
+				},
+			}
+
+			_, notifErr := h.notificationService.SendNotification(ctx, notifReq, user.ID)
+			if notifErr != nil {
+				fmt.Printf("Failed to send push notification: %v\n", notifErr)
+			}
+		}
+	}()
+
+	// Log activity (keep synchronous for now to ensure it's logged before response)
 	activityDescription := fmt.Sprintf("Invited %s to collaborate on document '%s' (%s) as %s",
 		req.InvitedEmail, document.Title, document.Reference, teamName)
 	activityReq := models.ActivityLogRequest{

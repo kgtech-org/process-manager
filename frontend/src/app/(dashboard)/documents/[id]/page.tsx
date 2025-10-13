@@ -5,7 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { DocumentResource, type Document } from '@/lib/resources';
 import { DocumentStatusBadge } from '@/components/documents/DocumentStatusBadge';
 import { ProcessFlowEditor } from '@/components/documents/ProcessFlowEditor';
-import { InvitationModal, PermissionManager, SignaturePanel } from '@/components/collaboration';
+import { ProcessFlowTableView } from '@/components/documents/ProcessFlowTableView';
+import { MetadataEditor } from '@/components/documents/MetadataEditor';
+import { AnnexEditor } from '@/components/documents/AnnexEditor';
+import { InvitationModal, SignaturePanel } from '@/components/collaboration';
 import { DocumentInvitationsList } from '@/components/invitations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +26,8 @@ import {
   Loader2,
   UserPlus,
   Send,
+  FileText as FileTextIcon,
+  Table as TableIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +41,7 @@ export default function DocumentDetailPage() {
   const [document, setDocument] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
   const [invitationModalOpen, setInvitationModalOpen] = useState(false);
+  const [processFlowView, setProcessFlowView] = useState<'document' | 'table'>('document');
 
   useEffect(() => {
     loadDocument();
@@ -132,6 +138,30 @@ export default function DocumentDetailPage() {
     await DocumentResource.update(documentId, { processGroups, isAutosave: true });
     // Update local state to keep parent in sync (ProcessFlowEditor uses ref to prevent loop)
     setDocument((prev) => prev ? { ...prev, processGroups } : null);
+  }, [documentId]);
+
+  const handleMetadataUpdate = useCallback(async (metadata: any) => {
+    await DocumentResource.updateMetadata(documentId, metadata);
+    // Update local state
+    setDocument((prev) => prev ? { ...prev, metadata } : null);
+  }, [documentId]);
+
+  const handleCreateAnnex = useCallback(async (annex: any) => {
+    const createdAnnex = await DocumentResource.createAnnex(documentId, annex);
+    // Reload document to get updated annexes
+    await loadDocument();
+  }, [documentId]);
+
+  const handleUpdateAnnex = useCallback(async (annexId: string, updates: any) => {
+    await DocumentResource.updateAnnex(documentId, annexId, updates);
+    // Reload document to get updated annexes
+    await loadDocument();
+  }, [documentId]);
+
+  const handleDeleteAnnex = useCallback(async (annexId: string) => {
+    await DocumentResource.deleteAnnex(documentId, annexId);
+    // Reload document to get updated annexes
+    await loadDocument();
   }, [documentId]);
 
   if (loading) {
@@ -237,52 +267,92 @@ export default function DocumentDetailPage() {
         </Card>
       </div>
 
-      {document.metadata?.objectives && document.metadata.objectives.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Objectives</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc list-inside space-y-1">
-              {document.metadata.objectives.map((objective, index) => (
-                <li key={index} className="text-sm">
-                  {objective}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Collaboration Section */}
-      <Tabs defaultValue="signatures" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="signatures">Signatures & Contributors</TabsTrigger>
-          <TabsTrigger value="permissions">Permissions</TabsTrigger>
-          <TabsTrigger value="invitations">Invitations</TabsTrigger>
+      {/* Main Document Tabs */}
+      <Tabs defaultValue="process-flow" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="process-flow">Process Flow</TabsTrigger>
+          <TabsTrigger value="metadata">Metadata</TabsTrigger>
+          <TabsTrigger value="annexes">Annexes</TabsTrigger>
+          <TabsTrigger value="activity">Signatures & Contributors</TabsTrigger>
         </TabsList>
-        <TabsContent value="signatures">
+
+        {/* Process Flow Tab */}
+        <TabsContent value="process-flow" className="space-y-4">
+          {/* View Toggle */}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant={processFlowView === 'document' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setProcessFlowView('document')}
+            >
+              <FileTextIcon className="h-4 w-4 mr-2" />
+              Document View
+            </Button>
+            <Button
+              variant={processFlowView === 'table' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setProcessFlowView('table')}
+            >
+              <TableIcon className="h-4 w-4 mr-2" />
+              Table View
+            </Button>
+          </div>
+
+          {/* Conditional View Rendering */}
+          {processFlowView === 'document' ? (
+            <ProcessFlowEditor
+              processGroups={document.processGroups}
+              documentId={documentId}
+              onUpdate={handleProcessFlowUpdate}
+              readOnly={document.status !== 'draft'}
+            />
+          ) : (
+            <ProcessFlowTableView
+              processGroups={document.processGroups}
+            />
+          )}
+        </TabsContent>
+
+        {/* Metadata Tab */}
+        <TabsContent value="metadata" className="space-y-4">
+          <MetadataEditor
+            documentId={documentId}
+            metadata={{
+              objectives: document.metadata?.objectives || [],
+              implicatedActors: document.metadata?.implicatedActors || [],
+              managementRules: document.metadata?.managementRules || [],
+              terminology: document.metadata?.terminology || [],
+            }}
+            onUpdate={handleMetadataUpdate}
+            readOnly={document.status !== 'draft'}
+          />
+        </TabsContent>
+
+        {/* Annexes Tab */}
+        <TabsContent value="annexes" className="space-y-4">
+          <AnnexEditor
+            documentId={documentId}
+            annexes={document.annexes || []}
+            onCreateAnnex={handleCreateAnnex}
+            onUpdateAnnex={handleUpdateAnnex}
+            onDeleteAnnex={handleDeleteAnnex}
+            readOnly={document.status !== 'draft'}
+          />
+        </TabsContent>
+
+        {/* Signatures & Contributors Tab */}
+        <TabsContent value="activity" className="space-y-4">
+          {/* Signatures & Contributors */}
           <SignaturePanel
             documentId={documentId}
             document={document}
             onSignatureAdded={loadDocument}
           />
-        </TabsContent>
-        <TabsContent value="permissions">
-          <PermissionManager documentId={documentId} />
-        </TabsContent>
-        <TabsContent value="invitations">
+
+          {/* Invitations */}
           <DocumentInvitationsList documentId={documentId} />
         </TabsContent>
       </Tabs>
-
-      {/* Process Flow Editor */}
-      <ProcessFlowEditor
-        processGroups={document.processGroups}
-        documentId={documentId}
-        onUpdate={handleProcessFlowUpdate}
-        readOnly={document.status !== 'draft'}
-      />
 
       {/* Invitation Modal */}
       <InvitationModal

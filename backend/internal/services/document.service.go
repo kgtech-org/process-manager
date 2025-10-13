@@ -545,3 +545,182 @@ func (s *DocumentService) createVersion(ctx context.Context, document *models.Do
 
 	return nil
 }
+
+// UpdateMetadata updates document metadata
+func (s *DocumentService) UpdateMetadata(ctx context.Context, id primitive.ObjectID, req *models.UpdateMetadataRequest) (*models.Document, error) {
+	// Get existing document to verify it exists
+	_, err := s.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build update document
+	update := bson.M{}
+	if req.Objectives != nil {
+		update["metadata.objectives"] = *req.Objectives
+	}
+	if req.ImplicatedActors != nil {
+		update["metadata.implicated_actors"] = *req.ImplicatedActors
+	}
+	if req.ManagementRules != nil {
+		update["metadata.management_rules"] = *req.ManagementRules
+	}
+	if req.Terminology != nil {
+		update["metadata.terminology"] = *req.Terminology
+	}
+	update["updated_at"] = time.Now()
+
+	// Update document
+	result := s.collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": id},
+		bson.M{"$set": update},
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	)
+
+	var updatedDocument models.Document
+	if err := result.Decode(&updatedDocument); err != nil {
+		return nil, fmt.Errorf("failed to decode updated document: %w", err)
+	}
+
+	return &updatedDocument, nil
+}
+
+// CreateAnnex creates a new annex for a document
+func (s *DocumentService) CreateAnnex(ctx context.Context, documentID primitive.ObjectID, req *models.CreateAnnexRequest) (*models.Annex, error) {
+	// Get existing document
+	document, err := s.GetByID(ctx, documentID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate new annex ID
+	annexID := primitive.NewObjectID().Hex()
+
+	// Calculate order (last + 1)
+	order := len(document.Annexes) + 1
+
+	// Initialize content if nil
+	content := req.Content
+	if content == nil {
+		content = make(map[string]interface{})
+	}
+
+	// Create annex
+	annex := models.Annex{
+		ID:      annexID,
+		Title:   req.Title,
+		Type:    req.Type,
+		Content: content,
+		Order:   order,
+		Files:   []models.FileAttachment{},
+	}
+
+	// Add to document
+	_, err = s.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": documentID},
+		bson.M{
+			"$push": bson.M{"annexes": annex},
+			"$set":  bson.M{"updated_at": time.Now()},
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create annex: %w", err)
+	}
+
+	return &annex, nil
+}
+
+// UpdateAnnex updates an existing annex
+func (s *DocumentService) UpdateAnnex(ctx context.Context, documentID primitive.ObjectID, annexID string, req *models.UpdateAnnexRequest) (*models.Annex, error) {
+	// Get existing document
+	document, err := s.GetByID(ctx, documentID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find annex
+	annexIndex := -1
+	var annex models.Annex
+	for i, a := range document.Annexes {
+		if a.ID == annexID {
+			annexIndex = i
+			annex = a
+			break
+		}
+	}
+
+	if annexIndex == -1 {
+		return nil, errors.New("annex not found")
+	}
+
+	// Build update
+	update := bson.M{}
+	if req.Title != nil {
+		update[fmt.Sprintf("annexes.%d.title", annexIndex)] = *req.Title
+		annex.Title = *req.Title
+	}
+	if req.Type != nil {
+		update[fmt.Sprintf("annexes.%d.type", annexIndex)] = *req.Type
+		annex.Type = *req.Type
+	}
+	if req.Content != nil {
+		update[fmt.Sprintf("annexes.%d.content", annexIndex)] = *req.Content
+		annex.Content = *req.Content
+	}
+	if req.Order != nil {
+		update[fmt.Sprintf("annexes.%d.order", annexIndex)] = *req.Order
+		annex.Order = *req.Order
+	}
+	update["updated_at"] = time.Now()
+
+	// Update document
+	_, err = s.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": documentID},
+		bson.M{"$set": update},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update annex: %w", err)
+	}
+
+	return &annex, nil
+}
+
+// DeleteAnnex deletes an annex from a document
+func (s *DocumentService) DeleteAnnex(ctx context.Context, documentID primitive.ObjectID, annexID string) error {
+	// Get existing document
+	document, err := s.GetByID(ctx, documentID)
+	if err != nil {
+		return err
+	}
+
+	// Find annex
+	found := false
+	for _, a := range document.Annexes {
+		if a.ID == annexID {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return errors.New("annex not found")
+	}
+
+	// Remove from document
+	_, err = s.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": documentID},
+		bson.M{
+			"$pull": bson.M{"annexes": bson.M{"id": annexID}},
+			"$set":  bson.M{"updated_at": time.Now()},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to delete annex: %w", err)
+	}
+
+	return nil
+}
