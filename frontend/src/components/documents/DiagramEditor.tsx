@@ -22,6 +22,8 @@ interface Point {
   y: number;
 }
 
+type ArrowStyle = 'solid' | 'dashed' | 'double';
+
 interface Shape {
   id: string;
   type: 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text';
@@ -33,6 +35,7 @@ interface Shape {
   endY?: number;
   text?: string;
   color: string;
+  arrowStyle?: ArrowStyle;
 }
 
 interface DiagramEditorProps {
@@ -49,10 +52,16 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [shapes, setShapes] = useState<Shape[]>(initialShapes);
   const [selectedTool, setSelectedTool] = useState<'select' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text'>('select');
+  const [arrowStyle, setArrowStyle] = useState<ArrowStyle>('solid');
+  const [fillColor, setFillColor] = useState<string>('#3b82f6');
+  const [strokeColor, setStrokeColor] = useState<string>('#000000');
+  const [textColor, setTextColor] = useState<string>('#000000');
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [currentShape, setCurrentShape] = useState<Shape | null>(null);
   const [selectedShape, setSelectedShape] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState<Point | null>(null);
   const [history, setHistory] = useState<Shape[][]>([initialShapes]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
@@ -134,17 +143,31 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
         break;
 
       case 'arrow':
+        const arrowStyleType = shape.arrowStyle || 'solid';
+
+        // Set line style
+        if (arrowStyleType === 'dashed') {
+          ctx.setLineDash([10, 5]);
+        } else {
+          ctx.setLineDash([]);
+        }
+
         ctx.beginPath();
         ctx.moveTo(shape.x, shape.y);
         ctx.lineTo(shape.endX || shape.x, shape.endY || shape.y);
         ctx.stroke();
 
-        // Draw arrowhead
+        // Reset line dash
+        ctx.setLineDash([]);
+
+        // Calculate angle for arrowheads
         const angle = Math.atan2(
           (shape.endY || shape.y) - shape.y,
           (shape.endX || shape.x) - shape.x
         );
         const headLength = 15;
+
+        // Draw arrowhead at end
         ctx.beginPath();
         ctx.moveTo(shape.endX || shape.x, shape.endY || shape.y);
         ctx.lineTo(
@@ -157,6 +180,22 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
           (shape.endY || shape.y) - headLength * Math.sin(angle + Math.PI / 6)
         );
         ctx.stroke();
+
+        // Draw arrowhead at start for double arrow
+        if (arrowStyleType === 'double') {
+          ctx.beginPath();
+          ctx.moveTo(shape.x, shape.y);
+          ctx.lineTo(
+            shape.x + headLength * Math.cos(angle - Math.PI / 6),
+            shape.y + headLength * Math.sin(angle - Math.PI / 6)
+          );
+          ctx.moveTo(shape.x, shape.y);
+          ctx.lineTo(
+            shape.x + headLength * Math.cos(angle + Math.PI / 6),
+            shape.y + headLength * Math.sin(angle + Math.PI / 6)
+          );
+          ctx.stroke();
+        }
         break;
 
       case 'text':
@@ -191,7 +230,18 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
           y <= shape.y + (shape.height || 0)
         );
       });
-      setSelectedShape(clickedShape?.id || null);
+
+      if (clickedShape) {
+        setSelectedShape(clickedShape.id);
+        setIsDragging(true);
+        // Calculate offset from shape origin to click point
+        setDragOffset({
+          x: x - clickedShape.x,
+          y: y - clickedShape.y,
+        });
+      } else {
+        setSelectedShape(null);
+      }
     } else {
       setIsDrawing(true);
       setStartPoint({ x, y });
@@ -205,7 +255,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
             x,
             y,
             text,
-            color: '#000000',
+            color: textColor,
           };
           addShape(newShape);
         }
@@ -214,7 +264,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !startPoint || selectedTool === 'text' || readOnly) return;
+    if (readOnly) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -222,6 +272,37 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
+    // Handle dragging selected shape
+    if (isDragging && selectedShape && dragOffset) {
+      const newX = x - dragOffset.x;
+      const newY = y - dragOffset.y;
+
+      const updatedShapes = shapes.map((shape) => {
+        if (shape.id === selectedShape) {
+          if (shape.type === 'arrow') {
+            const deltaX = newX - shape.x;
+            const deltaY = newY - shape.y;
+            return {
+              ...shape,
+              x: newX,
+              y: newY,
+              endX: (shape.endX || shape.x) + deltaX,
+              endY: (shape.endY || shape.y) + deltaY,
+            };
+          } else {
+            return { ...shape, x: newX, y: newY };
+          }
+        }
+        return shape;
+      });
+
+      setShapes(updatedShapes);
+      return;
+    }
+
+    // Handle drawing new shape
+    if (!isDrawing || !startPoint || selectedTool === 'text') return;
 
     const width = x - startPoint.x;
     const height = y - startPoint.y;
@@ -237,6 +318,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
         endX: x,
         endY: y,
         color: '#000000',
+        arrowStyle: arrowStyle,
       };
     } else {
       shape = {
@@ -246,7 +328,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
         y: startPoint.y,
         width,
         height,
-        color: '#3b82f6',
+        color: fillColor,
       };
     }
 
@@ -254,7 +336,19 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   };
 
   const handleMouseUp = () => {
-    if (!isDrawing || !currentShape || readOnly) return;
+    if (readOnly) return;
+
+    // Handle end of dragging
+    if (isDragging) {
+      setIsDragging(false);
+      setDragOffset(null);
+      updateHistory(shapes);
+      onChange?.(shapes);
+      return;
+    }
+
+    // Handle end of drawing
+    if (!isDrawing || !currentShape) return;
 
     addShape(currentShape);
     setIsDrawing(false);
@@ -378,6 +472,53 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
               <Type className="h-4 w-4 mr-2" />
               Text
             </Button>
+
+            <div className="h-6 w-px bg-border mx-2" />
+
+            {/* Arrow Style Selector */}
+            {selectedTool === 'arrow' && (
+              <>
+                <select
+                  value={arrowStyle}
+                  onChange={(e) => setArrowStyle(e.target.value as ArrowStyle)}
+                  className="h-8 px-2 text-sm border rounded"
+                >
+                  <option value="solid">Solid Arrow →</option>
+                  <option value="dashed">Dashed Arrow - - →</option>
+                  <option value="double">Double Arrow ↔</option>
+                </select>
+                <div className="h-6 w-px bg-border mx-2" />
+              </>
+            )}
+
+            {/* Color Pickers */}
+            {(selectedTool === 'rectangle' || selectedTool === 'circle' || selectedTool === 'triangle') && (
+              <>
+                <label className="flex items-center gap-2 text-sm">
+                  Fill:
+                  <input
+                    type="color"
+                    value={fillColor}
+                    onChange={(e) => setFillColor(e.target.value)}
+                    className="h-8 w-12 border rounded cursor-pointer"
+                  />
+                </label>
+              </>
+            )}
+
+            {selectedTool === 'text' && (
+              <>
+                <label className="flex items-center gap-2 text-sm">
+                  Text Color:
+                  <input
+                    type="color"
+                    value={textColor}
+                    onChange={(e) => setTextColor(e.target.value)}
+                    className="h-8 w-12 border rounded cursor-pointer"
+                  />
+                </label>
+              </>
+            )}
 
             <div className="h-6 w-px bg-border mx-2" />
 
