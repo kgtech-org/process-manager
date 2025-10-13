@@ -859,7 +859,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                             type="color"
                             value={shape.textColor || '#000000'}
                             onChange={(e) => updateShapeProperty(selectedShape, { textColor: e.target.value })}
-                            className="h-7 w-10 border rounded cursor-pointer"
+                            className="h-8 w-12 border rounded cursor-pointer"
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -870,7 +870,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                             max="72"
                             value={shape.fontSize || 16}
                             onChange={(e) => updateShapeProperty(selectedShape, { fontSize: parseInt(e.target.value) })}
-                            className="h-7 w-16 px-2 text-xs border rounded"
+                            className="h-8 w-16 px-2 text-xs border rounded"
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -878,7 +878,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                           <select
                             value={shape.fontWeight || 'normal'}
                             onChange={(e) => updateShapeProperty(selectedShape, { fontWeight: e.target.value })}
-                            className="h-7 px-2 text-xs border rounded bg-background"
+                            className="h-8 px-2 py-1 text-xs border rounded bg-background"
                           >
                             <option value="normal">Normal</option>
                             <option value="bold">Bold</option>
@@ -890,7 +890,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                           <select
                             value={shape.fontFamily || 'Arial'}
                             onChange={(e) => updateShapeProperty(selectedShape, { fontFamily: e.target.value })}
-                            className="h-7 px-2 text-xs border rounded bg-background"
+                            className="h-8 px-2 py-1 text-xs border rounded bg-background min-w-[100px]"
                           >
                             <option value="Arial">Arial</option>
                             <option value="Helvetica">Helvetica</option>
@@ -910,7 +910,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                             type="color"
                             value={shape.color || '#000000'}
                             onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
-                            className="h-7 w-10 border rounded cursor-pointer"
+                            className="h-8 w-12 border rounded cursor-pointer"
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -921,7 +921,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                             max="10"
                             value={shape.arrowWidth || 2}
                             onChange={(e) => updateShapeProperty(selectedShape, { arrowWidth: parseInt(e.target.value) })}
-                            className="h-7 w-16 px-2 text-xs border rounded"
+                            className="h-8 w-16 px-2 text-xs border rounded"
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -929,7 +929,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                           <select
                             value={shape.arrowStyle || 'solid'}
                             onChange={(e) => updateShapeProperty(selectedShape, { arrowStyle: e.target.value as ArrowStyle })}
-                            className="h-7 px-2 text-xs border rounded bg-background"
+                            className="h-8 px-2 py-1 text-xs border rounded bg-background"
                           >
                             <option value="solid">Solid</option>
                             <option value="dashed">Dashed</option>
@@ -946,7 +946,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                           type="color"
                           value={shape.color || '#3b82f6'}
                           onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
-                          className="h-7 w-10 border rounded cursor-pointer"
+                          className="h-8 w-12 border rounded cursor-pointer"
                         />
                       </div>
                     )}
