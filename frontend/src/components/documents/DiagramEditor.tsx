@@ -24,7 +24,11 @@ import {
   Pentagon,
   Hexagon,
   Diamond,
-  MoveRight
+  MoveRight,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +57,8 @@ interface Shape {
   arrowWidth?: number;
   fontSize?: number;
   fontWeight?: string;
+  fontStyle?: 'normal' | 'italic';
+  textDecoration?: 'none' | 'underline' | 'line-through';
   fontFamily?: string;
   textColor?: string;
 }
@@ -79,6 +85,8 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   const [arrowWidth, setArrowWidth] = useState<number>(2);
   const [fontSize, setFontSize] = useState<number>(16);
   const [fontWeight, setFontWeight] = useState<string>('normal');
+  const [fontStyle, setFontStyle] = useState<'normal' | 'italic'>('normal');
+  const [textDecoration, setTextDecoration] = useState<'none' | 'underline' | 'line-through'>('none');
   const [fontFamily, setFontFamily] = useState<string>('Arial');
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
@@ -368,19 +376,40 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
       case 'text':
         const textFontSize = shape.fontSize || 16;
         const textFontWeight = shape.fontWeight || 'normal';
+        const textFontStyle = shape.fontStyle || 'normal';
         const textFontFamily = shape.fontFamily || 'Arial';
         const textColorValue = shape.textColor || '#000000';
+        const textDeco = shape.textDecoration || 'none';
 
         ctx.fillStyle = textColorValue;
-        ctx.font = `${textFontWeight} ${textFontSize}px ${textFontFamily}`;
+        ctx.font = `${textFontStyle} ${textFontWeight} ${textFontSize}px ${textFontFamily}`;
         ctx.fillText(shape.text || '', shape.x, shape.y);
+
+        // Draw text decorations
+        const textMetrics = ctx.measureText(shape.text || '');
+        const textWidth = textMetrics.width;
+
+        if (textDeco === 'underline') {
+          ctx.strokeStyle = textColorValue;
+          ctx.lineWidth = Math.max(1, textFontSize * 0.05);
+          ctx.beginPath();
+          ctx.moveTo(shape.x, shape.y + 2);
+          ctx.lineTo(shape.x + textWidth, shape.y + 2);
+          ctx.stroke();
+        } else if (textDeco === 'line-through') {
+          ctx.strokeStyle = textColorValue;
+          ctx.lineWidth = Math.max(1, textFontSize * 0.05);
+          ctx.beginPath();
+          ctx.moveTo(shape.x, shape.y - textFontSize * 0.3);
+          ctx.lineTo(shape.x + textWidth, shape.y - textFontSize * 0.3);
+          ctx.stroke();
+        }
 
         // Draw selection box around text
         if (isSelected) {
-          const textMetrics = ctx.measureText(shape.text || '');
           ctx.strokeStyle = '#3b82f6';
           ctx.lineWidth = 2;
-          ctx.strokeRect(shape.x - 2, shape.y - textFontSize, textMetrics.width + 4, textFontSize + 4);
+          ctx.strokeRect(shape.x - 2, shape.y - textFontSize, textWidth + 4, textFontSize + 4);
         }
         break;
     }
@@ -1017,17 +1046,43 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                             className="h-8 w-16 px-2 text-xs border rounded"
                           />
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-muted-foreground">Weight</span>
-                          <select
-                            value={shape.fontWeight || 'normal'}
-                            onChange={(e) => updateShapeProperty(selectedShape, { fontWeight: e.target.value })}
-                            className="h-8 px-2 py-1 text-xs border rounded bg-background"
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant={(shape.fontWeight === 'bold') ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => updateShapeProperty(selectedShape, { fontWeight: shape.fontWeight === 'bold' ? 'normal' : 'bold' })}
+                            title="Bold"
                           >
-                            <option value="normal">Normal</option>
-                            <option value="bold">Bold</option>
-                            <option value="lighter">Light</option>
-                          </select>
+                            <Bold className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={(shape.fontStyle === 'italic') ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => updateShapeProperty(selectedShape, { fontStyle: shape.fontStyle === 'italic' ? 'normal' : 'italic' })}
+                            title="Italic"
+                          >
+                            <Italic className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={(shape.textDecoration === 'underline') ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => updateShapeProperty(selectedShape, { textDecoration: shape.textDecoration === 'underline' ? 'none' : 'underline' })}
+                            title="Underline"
+                          >
+                            <Underline className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={(shape.textDecoration === 'line-through') ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => updateShapeProperty(selectedShape, { textDecoration: shape.textDecoration === 'line-through' ? 'none' : 'line-through' })}
+                            title="Strikethrough"
+                          >
+                            <Strikethrough className="h-4 w-4" />
+                          </Button>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <span className="text-muted-foreground">Font</span>
