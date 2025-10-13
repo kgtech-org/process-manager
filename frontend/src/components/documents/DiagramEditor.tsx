@@ -111,9 +111,13 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
       }
     };
 
-    updateCanvasSize();
+    // Delay initial measurement to ensure container is rendered
+    const timer = setTimeout(updateCanvasSize, 100);
     window.addEventListener('resize', updateCanvasSize);
-    return () => window.removeEventListener('resize', updateCanvasSize);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateCanvasSize);
+    };
   }, []);
 
   // Draw shapes on canvas
@@ -181,7 +185,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     if (currentShape) {
       drawShape(ctx, currentShape, false);
     }
-  }, [shapes, currentShape, selectedShape, backgroundColor, showGrid]);
+  }, [shapes, currentShape, selectedShape, backgroundColor, showGrid, canvasSize]);
 
   const drawShape = (ctx: CanvasRenderingContext2D, shape: Shape, isSelected: boolean) => {
     ctx.strokeStyle = isSelected ? '#3b82f6' : (shape.strokeColor || shape.color);
