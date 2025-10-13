@@ -86,6 +86,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; shapeId: string } | null>(null);
   const [editingText, setEditingText] = useState<{ shapeId: string; x: number; y: number } | null>(null);
   const [textInput, setTextInput] = useState('');
+  const [resizing, setResizing] = useState<{ handle: string; startX: number; startY: number; originalShape: Shape } | null>(null);
 
   // Sync shapes when initialShapes changes (for modal reopening)
   useEffect(() => {
@@ -126,6 +127,14 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     shapes.forEach((shape) => {
       drawShape(ctx, shape, shape.id === selectedShape);
     });
+
+    // Draw resize handles for selected shape
+    if (selectedShape && !readOnly) {
+      const shape = shapes.find((s) => s.id === selectedShape);
+      if (shape && shape.type !== 'text') {
+        drawResizeHandles(ctx, shape);
+      }
+    }
 
     // Update selected shape properties panel
     if (selectedShape) {
@@ -269,6 +278,76 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     }
   };
 
+  // Draw resize handles
+  const drawResizeHandles = (ctx: CanvasRenderingContext2D, shape: Shape) => {
+    if (shape.type === 'arrow') {
+      // Draw handles at arrow endpoints
+      const handles = [
+        { x: shape.x, y: shape.y },
+        { x: shape.endX || shape.x, y: shape.endY || shape.y },
+      ];
+
+      handles.forEach((handle) => {
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(handle.x - 5, handle.y - 5, 10, 10);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(handle.x - 5, handle.y - 5, 10, 10);
+      });
+    } else {
+      // Draw handles at corners and edges for shapes
+      const handles = [
+        { x: shape.x, y: shape.y, cursor: 'nw' }, // top-left
+        { x: shape.x + (shape.width || 0), y: shape.y, cursor: 'ne' }, // top-right
+        { x: shape.x + (shape.width || 0), y: shape.y + (shape.height || 0), cursor: 'se' }, // bottom-right
+        { x: shape.x, y: shape.y + (shape.height || 0), cursor: 'sw' }, // bottom-left
+        { x: shape.x + (shape.width || 0) / 2, y: shape.y, cursor: 'n' }, // top-middle
+        { x: shape.x + (shape.width || 0) / 2, y: shape.y + (shape.height || 0), cursor: 's' }, // bottom-middle
+        { x: shape.x, y: shape.y + (shape.height || 0) / 2, cursor: 'w' }, // left-middle
+        { x: shape.x + (shape.width || 0), y: shape.y + (shape.height || 0) / 2, cursor: 'e' }, // right-middle
+      ];
+
+      handles.forEach((handle) => {
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(handle.x - 5, handle.y - 5, 10, 10);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(handle.x - 5, handle.y - 5, 10, 10);
+      });
+    }
+  };
+
+  // Check if point is on a resize handle
+  const getResizeHandle = (x: number, y: number, shape: Shape): string | null => {
+    const handleSize = 10;
+    const tolerance = 5;
+
+    if (shape.type === 'arrow') {
+      if (Math.abs(x - shape.x) < tolerance && Math.abs(y - shape.y) < tolerance) return 'start';
+      if (Math.abs(x - (shape.endX || shape.x)) < tolerance && Math.abs(y - (shape.endY || shape.y)) < tolerance) return 'end';
+      return null;
+    }
+
+    const handles = [
+      { x: shape.x, y: shape.y, cursor: 'nw' },
+      { x: shape.x + (shape.width || 0), y: shape.y, cursor: 'ne' },
+      { x: shape.x + (shape.width || 0), y: shape.y + (shape.height || 0), cursor: 'se' },
+      { x: shape.x, y: shape.y + (shape.height || 0), cursor: 'sw' },
+      { x: shape.x + (shape.width || 0) / 2, y: shape.y, cursor: 'n' },
+      { x: shape.x + (shape.width || 0) / 2, y: shape.y + (shape.height || 0), cursor: 's' },
+      { x: shape.x, y: shape.y + (shape.height || 0) / 2, cursor: 'w' },
+      { x: shape.x + (shape.width || 0), y: shape.y + (shape.height || 0) / 2, cursor: 'e' },
+    ];
+
+    for (const handle of handles) {
+      if (Math.abs(x - handle.x) < tolerance && Math.abs(y - handle.y) < tolerance) {
+        return handle.cursor;
+      }
+    }
+
+    return null;
+  };
+
   // Improved hit detection helper
   const isPointInShape = (x: number, y: number, shape: Shape): boolean => {
     if (shape.type === 'arrow') {
@@ -330,6 +409,18 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     setContextMenu(null);
 
     if (selectedTool === 'select') {
+      // Check if clicking on a resize handle first
+      if (selectedShape) {
+        const shape = shapes.find((s) => s.id === selectedShape);
+        if (shape && shape.type !== 'text') {
+          const handle = getResizeHandle(x, y, shape);
+          if (handle) {
+            setResizing({ handle, startX: x, startY: y, originalShape: { ...shape } });
+            return;
+          }
+        }
+      }
+
       // Find clicked shape (reverse order to get topmost)
       const clickedShape = [...shapes].reverse().find((shape) => isPointInShape(x, y, shape));
 
@@ -364,6 +455,50 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) / zoom;
     const y = (e.clientY - rect.top) / zoom;
+
+    // Handle resizing
+    if (resizing && selectedShape) {
+      const shape = shapes.find((s) => s.id === selectedShape);
+      if (!shape) return;
+
+      const dx = x - resizing.startX;
+      const dy = y - resizing.startY;
+      const originalShape = resizing.originalShape;
+
+      let updatedShape: Partial<Shape> = {};
+
+      if (shape.type === 'arrow') {
+        if (resizing.handle === 'start') {
+          updatedShape = { x, y };
+        } else if (resizing.handle === 'end') {
+          updatedShape = { endX: x, endY: y };
+        }
+      } else {
+        // Handle shape resizing based on handle position
+        const handle = resizing.handle;
+
+        if (handle.includes('n')) { // North (top)
+          updatedShape.y = originalShape.y! + dy;
+          updatedShape.height = Math.max(10, (originalShape.height || 0) - dy);
+        }
+        if (handle.includes('s')) { // South (bottom)
+          updatedShape.height = Math.max(10, (originalShape.height || 0) + dy);
+        }
+        if (handle.includes('w')) { // West (left)
+          updatedShape.x = originalShape.x + dx;
+          updatedShape.width = Math.max(10, (originalShape.width || 0) - dx);
+        }
+        if (handle.includes('e')) { // East (right)
+          updatedShape.width = Math.max(10, (originalShape.width || 0) + dx);
+        }
+      }
+
+      const updatedShapes = shapes.map((s) =>
+        s.id === selectedShape ? { ...s, ...updatedShape } : s
+      );
+      setShapes(updatedShapes);
+      return;
+    }
 
     // Handle dragging selected shape
     if (isDragging && selectedShape && dragOffset) {
@@ -430,6 +565,14 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
 
   const handleMouseUp = () => {
     if (readOnly) return;
+
+    // Handle end of resizing
+    if (resizing) {
+      setResizing(null);
+      updateHistory(shapes);
+      onChange?.(shapes);
+      return;
+    }
 
     // Handle end of dragging
     if (isDragging) {
