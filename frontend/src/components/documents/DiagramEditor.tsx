@@ -665,14 +665,12 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
         </Card>
       )}
 
-      {/* Property Panel */}
+      {/* Compact Property Panel - only shows when shape is selected */}
       {!readOnly && selectedShape && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Shape Properties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-muted/50">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-medium text-muted-foreground mr-2">Selected:</span>
               {(() => {
                 const shape = shapes.find((s) => s.id === selectedShape);
                 if (!shape) return null;
@@ -680,134 +678,98 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                 if (shape.type === 'text') {
                   return (
                     <>
-                      <div className="space-y-2">
-                        <Label htmlFor="textColor" className="text-xs">Text Color</Label>
-                        <Input
-                          id="textColor"
-                          type="color"
-                          value={shape.textColor || '#000000'}
-                          onChange={(e) => updateShapeProperty(selectedShape, { textColor: e.target.value })}
-                          className="h-10 w-full"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="fontSize" className="text-xs">Font Size</Label>
-                        <Input
-                          id="fontSize"
-                          type="number"
-                          min="8"
-                          max="72"
-                          value={shape.fontSize || 16}
-                          onChange={(e) => updateShapeProperty(selectedShape, { fontSize: parseInt(e.target.value) })}
-                          className="h-10"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="fontWeight" className="text-xs">Font Weight</Label>
-                        <Select
-                          value={shape.fontWeight || 'normal'}
-                          onValueChange={(value) => updateShapeProperty(selectedShape, { fontWeight: value })}
-                        >
-                          <SelectTrigger className="h-10">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="bold">Bold</SelectItem>
-                            <SelectItem value="lighter">Light</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="fontFamily" className="text-xs">Font Family</Label>
-                        <Select
-                          value={shape.fontFamily || 'Arial'}
-                          onValueChange={(value) => updateShapeProperty(selectedShape, { fontFamily: value })}
-                        >
-                          <SelectTrigger className="h-10">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Arial">Arial</SelectItem>
-                            <SelectItem value="Helvetica">Helvetica</SelectItem>
-                            <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                            <SelectItem value="Courier New">Courier New</SelectItem>
-                            <SelectItem value="Verdana">Verdana</SelectItem>
-                            <SelectItem value="Georgia">Georgia</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <Input
+                        type="color"
+                        value={shape.textColor || '#000000'}
+                        onChange={(e) => updateShapeProperty(selectedShape, { textColor: e.target.value })}
+                        className="h-8 w-16"
+                        title="Text Color"
+                      />
+                      <Input
+                        type="number"
+                        min="8"
+                        max="72"
+                        value={shape.fontSize || 16}
+                        onChange={(e) => updateShapeProperty(selectedShape, { fontSize: parseInt(e.target.value) })}
+                        className="h-8 w-16"
+                        title="Font Size"
+                      />
+                      <Select
+                        value={shape.fontWeight || 'normal'}
+                        onValueChange={(value) => updateShapeProperty(selectedShape, { fontWeight: value })}
+                      >
+                        <SelectTrigger className="h-8 w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="normal">Normal</SelectItem>
+                          <SelectItem value="bold">Bold</SelectItem>
+                          <SelectItem value="lighter">Light</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={shape.fontFamily || 'Arial'}
+                        onValueChange={(value) => updateShapeProperty(selectedShape, { fontFamily: value })}
+                      >
+                        <SelectTrigger className="h-8 w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Arial">Arial</SelectItem>
+                          <SelectItem value="Helvetica">Helvetica</SelectItem>
+                          <SelectItem value="Times New Roman">Times</SelectItem>
+                          <SelectItem value="Courier New">Courier</SelectItem>
+                          <SelectItem value="Verdana">Verdana</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </>
                   );
                 } else if (shape.type === 'arrow') {
                   return (
                     <>
-                      <div className="space-y-2">
-                        <Label htmlFor="arrowColor" className="text-xs">Arrow Color</Label>
-                        <Input
-                          id="arrowColor"
-                          type="color"
-                          value={shape.color || '#000000'}
-                          onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
-                          className="h-10 w-full"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="arrowWidth" className="text-xs">Line Width</Label>
-                        <Input
-                          id="arrowWidth"
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={shape.arrowWidth || 2}
-                          onChange={(e) => updateShapeProperty(selectedShape, { arrowWidth: parseInt(e.target.value) })}
-                          className="h-10"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="arrowStyle" className="text-xs">Arrow Style</Label>
-                        <Select
-                          value={shape.arrowStyle || 'solid'}
-                          onValueChange={(value: ArrowStyle) => updateShapeProperty(selectedShape, { arrowStyle: value })}
-                        >
-                          <SelectTrigger className="h-10">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="solid">Solid</SelectItem>
-                            <SelectItem value="dashed">Dashed</SelectItem>
-                            <SelectItem value="double">Double</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <Input
+                        type="color"
+                        value={shape.color || '#000000'}
+                        onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
+                        className="h-8 w-16"
+                        title="Arrow Color"
+                      />
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={shape.arrowWidth || 2}
+                        onChange={(e) => updateShapeProperty(selectedShape, { arrowWidth: parseInt(e.target.value) })}
+                        className="h-8 w-16"
+                        title="Line Width"
+                      />
+                      <Select
+                        value={shape.arrowStyle || 'solid'}
+                        onValueChange={(value: ArrowStyle) => updateShapeProperty(selectedShape, { arrowStyle: value })}
+                      >
+                        <SelectTrigger className="h-8 w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="solid">Solid</SelectItem>
+                          <SelectItem value="dashed">Dashed</SelectItem>
+                          <SelectItem value="double">Double</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </>
                   );
                 } else {
                   return (
-                    <div className="space-y-2">
-                      <Label htmlFor="fillColor" className="text-xs">Fill Color</Label>
-                      <Input
-                        id="fillColor"
-                        type="color"
-                        value={shape.color || '#3b82f6'}
-                        onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
-                        className="h-10 w-full"
-                        />
-                    </div>
+                    <Input
+                      type="color"
+                      value={shape.color || '#3b82f6'}
+                      onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
+                      className="h-8 w-16"
+                      title="Fill Color"
+                    />
                   );
                 }
               })()}
-
-              <div className="space-y-2">
-                <Label htmlFor="bgColor" className="text-xs">Background Color</Label>
-                <Input
-                  id="bgColor"
-                  type="color"
-                  value={backgroundColor}
-                  onChange={(e) => setBackgroundColor(e.target.value)}
-                  className="h-10 w-full"
-                />
-              </div>
             </div>
           </CardContent>
         </Card>
