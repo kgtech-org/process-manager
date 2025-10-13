@@ -36,6 +36,11 @@ interface Shape {
   text?: string;
   color: string;
   arrowStyle?: ArrowStyle;
+  arrowWidth?: number;
+  fontSize?: number;
+  fontWeight?: string;
+  fontFamily?: string;
+  textColor?: string;
 }
 
 interface DiagramEditorProps {
@@ -56,6 +61,11 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   const [fillColor, setFillColor] = useState<string>('#3b82f6');
   const [strokeColor, setStrokeColor] = useState<string>('#000000');
   const [textColor, setTextColor] = useState<string>('#000000');
+  const [backgroundColor, setBackgroundColor] = useState<string>('#ffffff');
+  const [arrowWidth, setArrowWidth] = useState<number>(2);
+  const [fontSize, setFontSize] = useState<number>(16);
+  const [fontWeight, setFontWeight] = useState<string>('normal');
+  const [fontFamily, setFontFamily] = useState<string>('Arial');
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [currentShape, setCurrentShape] = useState<Shape | null>(null);
@@ -73,8 +83,9 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Clear canvas with background color
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw grid
     ctx.strokeStyle = '#f0f0f0';
@@ -97,11 +108,29 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
       drawShape(ctx, shape, shape.id === selectedShape);
     });
 
+    // Update selected shape properties panel
+    if (selectedShape) {
+      const shape = shapes.find((s) => s.id === selectedShape);
+      if (shape) {
+        if (shape.type === 'arrow') {
+          setArrowWidth(shape.arrowWidth || 2);
+          setStrokeColor(shape.color);
+        } else if (shape.type === 'text') {
+          setTextColor(shape.textColor || '#000000');
+          setFontSize(shape.fontSize || 16);
+          setFontWeight(shape.fontWeight || 'normal');
+          setFontFamily(shape.fontFamily || 'Arial');
+        } else {
+          setFillColor(shape.color);
+        }
+      }
+    }
+
     // Draw current shape being drawn
     if (currentShape) {
       drawShape(ctx, currentShape, false);
     }
-  }, [shapes, currentShape, selectedShape]);
+  }, [shapes, currentShape, selectedShape, backgroundColor]);
 
   const drawShape = (ctx: CanvasRenderingContext2D, shape: Shape, isSelected: boolean) => {
     ctx.strokeStyle = isSelected ? '#3b82f6' : shape.color;
@@ -144,8 +173,10 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
 
       case 'arrow':
         const arrowStyleType = shape.arrowStyle || 'solid';
+        const lineWidth = shape.arrowWidth || 2;
 
-        // Set line style
+        // Set line width and style
+        ctx.lineWidth = isSelected ? lineWidth + 2 : lineWidth;
         if (arrowStyleType === 'dashed') {
           ctx.setLineDash([10, 5]);
         } else {
@@ -199,9 +230,22 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
         break;
 
       case 'text':
-        ctx.fillStyle = shape.color;
-        ctx.font = '16px sans-serif';
+        const textFontSize = shape.fontSize || 16;
+        const textFontWeight = shape.fontWeight || 'normal';
+        const textFontFamily = shape.fontFamily || 'Arial';
+        const textColorValue = shape.textColor || '#000000';
+
+        ctx.fillStyle = textColorValue;
+        ctx.font = `${textFontWeight} ${textFontSize}px ${textFontFamily}`;
         ctx.fillText(shape.text || '', shape.x, shape.y);
+
+        // Draw selection box around text
+        if (isSelected) {
+          const textMetrics = ctx.measureText(shape.text || '');
+          ctx.strokeStyle = '#3b82f6';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(shape.x - 2, shape.y - textFontSize, textMetrics.width + 4, textFontSize + 4);
+        }
         break;
     }
   };
@@ -255,7 +299,11 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
             x,
             y,
             text,
-            color: textColor,
+            color: fillColor,
+            textColor,
+            fontSize,
+            fontWeight,
+            fontFamily,
           };
           addShape(newShape);
         }
@@ -317,8 +365,9 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
         y: startPoint.y,
         endX: x,
         endY: y,
-        color: '#000000',
+        color: strokeColor,
         arrowStyle: arrowStyle,
+        arrowWidth: arrowWidth,
       };
     } else {
       shape = {

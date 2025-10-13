@@ -19,7 +19,7 @@ import {
   Save,
   X,
 } from 'lucide-react';
-import type { ProcessGroup, ProcessStep, ProcessDescription } from '@/types/document';
+import type { ProcessGroup, ProcessStep, ProcessDescription } from '@/lib/resources/document';
 
 interface ProcessFlowVisualizationProps {
   processGroups: ProcessGroup[];

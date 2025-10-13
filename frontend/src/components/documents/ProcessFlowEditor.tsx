@@ -38,7 +38,7 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import type { ProcessGroup, ProcessStep } from '@/types/document';
+import type { ProcessGroup, ProcessStep } from '@/lib/resources/document';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProcessFlowEditorProps {

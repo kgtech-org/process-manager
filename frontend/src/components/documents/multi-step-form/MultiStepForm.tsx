@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Circle, ArrowLeft, ArrowRight, Save, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentResource } from '@/lib/resources';
-import type { CreateDocumentRequest } from '@/types/document';
+import type { CreateDocumentRequest } from '@/lib/resources/document';
 
 interface Step {
   id: number;
