@@ -259,7 +259,7 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
             <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm">No annexes yet</p>
               {!readOnly && (
-                <p className="text-xs mt-1">Click "Add Annex" to create one</p>
+                <p className="text-xs mt-1">Click &quot;Add Annex&quot; to create one</p>
               )}
             </div>
           </CardContent>

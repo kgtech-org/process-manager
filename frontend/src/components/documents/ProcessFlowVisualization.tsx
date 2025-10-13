@@ -19,7 +19,7 @@ import {
   Save,
   X,
 } from 'lucide-react';
-import type { ProcessGroup, ProcessStep, ProcessDescription } from '@/types/document';
+import type { ProcessGroup, ProcessStep, ProcessDescription } from '@/lib/resources/document';
 
 interface ProcessFlowVisualizationProps {
   processGroups: ProcessGroup[];
@@ -85,7 +85,7 @@ export const ProcessFlowVisualization: React.FC<ProcessFlowVisualizationProps> =
       processSteps: [],
     };
     setLocalGroups([...localGroups, newGroup]);
-    setExpandedGroups(new Set([...expandedGroups, newGroup.id]));
+    setExpandedGroups(new Set([...Array.from(expandedGroups), newGroup.id]));
   };
 
   const handleDeleteGroup = (groupId: string) => {

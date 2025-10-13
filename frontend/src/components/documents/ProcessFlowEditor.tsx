@@ -38,7 +38,7 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import type { ProcessGroup, ProcessStep } from '@/types/document';
+import type { ProcessGroup, ProcessStep } from '@/lib/resources/document';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProcessFlowEditorProps {
@@ -272,7 +272,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
       processSteps: [],
     };
     const updated = [...groups, newGroup];
-    setExpandedGroups(new Set([...expandedGroups, newGroup.id]));
+    setExpandedGroups(new Set([...Array.from(expandedGroups), newGroup.id]));
     autoSave(updated);
   };
 
@@ -310,7 +310,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
         ? { ...g, processSteps: [...g.processSteps, newStep] }
         : g
     );
-    setExpandedSteps(new Set([...expandedSteps, newStep.id]));
+    setExpandedSteps(new Set([...Array.from(expandedSteps), newStep.id]));
     autoSave(updated);
   };
 
