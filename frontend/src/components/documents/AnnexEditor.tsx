@@ -47,6 +47,8 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
   const { toast } = useToast();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingAnnexId, setEditingAnnexId] = useState<string | null>(null);
+  const [diagramModalOpen, setDiagramModalOpen] = useState(false);
+  const [currentDiagramAnnex, setCurrentDiagramAnnex] = useState<Annex | null>(null);
   const [newAnnexTitle, setNewAnnexTitle] = useState('');
   const [newAnnexType, setNewAnnexType] = useState<AnnexType>('text');
   const [editContent, setEditContent] = useState<any>(null);
@@ -142,17 +144,50 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
     }
   };
 
+  const openDiagramModal = (annex: Annex) => {
+    setCurrentDiagramAnnex(annex);
+    setDiagramModalOpen(true);
+  };
+
   const renderAnnexContent = (annex: Annex) => {
     const isEditing = editingAnnexId === annex.id;
 
     switch (annex.type) {
       case 'diagram':
+        if (readOnly || !isEditing) {
+          // Read-only preview
+          return (
+            <div className="relative">
+              <DiagramEditor
+                initialShapes={annex.content?.shapes || []}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              {!readOnly && (
+                <Button
+                  onClick={() => {
+                    setEditingAnnexId(annex.id);
+                    openDiagramModal(annex);
+                  }}
+                  className="absolute top-2 right-2"
+                  size="sm"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Diagram
+                </Button>
+              )}
+            </div>
+          );
+        }
         return (
-          <DiagramEditor
-            initialShapes={annex.content?.shapes || []}
-            onChange={(shapes) => handleUpdateContent(annex.id, { shapes })}
-            readOnly={readOnly || !isEditing}
-          />
+          <Button
+            onClick={() => openDiagramModal(annex)}
+            variant="outline"
+            className="w-full"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Open Diagram Editor
+          </Button>
         );
 
       case 'table':
@@ -314,6 +349,39 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
           <CardContent>{renderAnnexContent(annex)}</CardContent>
         </Card>
       ))}
+
+      {/* Full-screen Diagram Editor Modal */}
+      <Dialog open={diagramModalOpen} onOpenChange={setDiagramModalOpen}>
+        <DialogContent className="max-w-[98vw] w-full h-[98vh] max-h-[98vh] p-0">
+          <div className="h-full flex flex-col">
+            <DialogHeader className="p-4 border-b">
+              <DialogTitle>
+                {currentDiagramAnnex?.title || 'Diagram Editor'}
+              </DialogTitle>
+              <DialogDescription>
+                Create and edit your diagram with zoom and customization tools
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 overflow-auto p-4">
+              {currentDiagramAnnex && (
+                <DiagramEditor
+                  initialShapes={currentDiagramAnnex.content?.shapes || []}
+                  onChange={(shapes) => handleUpdateContent(currentDiagramAnnex.id, { shapes })}
+                  readOnly={false}
+                />
+              )}
+            </div>
+            <div className="p-4 border-t flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDiagramModalOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

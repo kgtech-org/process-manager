@@ -807,7 +807,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
       )}
 
       {/* Canvas */}
-      <Card className="p-0 overflow-auto max-h-[600px]" ref={containerRef}>
+      <Card className="p-0 overflow-auto" style={{ maxHeight: '70vh' }} ref={containerRef}>
         <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}>
           <canvas
             ref={canvasRef}
