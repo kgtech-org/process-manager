@@ -77,7 +77,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [shapes, setShapes] = useState<Shape[]>(initialShapes);
-  const [selectedTool, setSelectedTool] = useState<'select' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow-shape'>('select');
+  const [selectedTool, setSelectedTool] = useState<'select' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow-shape' | 'two-way-arrow'>('select');
   const [arrowStyle, setArrowStyle] = useState<ArrowStyle>('solid');
   const [fillColor, setFillColor] = useState<string>('#3b82f6');
   const [strokeColor, setStrokeColor] = useState<string>('#000000');
@@ -361,7 +361,6 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
         const arrowW = shape.width || 0;
         const arrowH = shape.height || 0;
         const arrowTail = arrowW * 0.4; // Tail width
-        const arrowHead = arrowW * 0.6; // Head width
         ctx.moveTo(shape.x, shape.y + arrowH * 0.3); // Top left of tail
         ctx.lineTo(shape.x + arrowTail, shape.y + arrowH * 0.3); // Top right of tail
         ctx.lineTo(shape.x + arrowTail, shape.y); // Top of head
@@ -369,6 +368,28 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
         ctx.lineTo(shape.x + arrowTail, shape.y + arrowH); // Bottom of head
         ctx.lineTo(shape.x + arrowTail, shape.y + arrowH * 0.7); // Bottom right of tail
         ctx.lineTo(shape.x, shape.y + arrowH * 0.7); // Bottom left of tail
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+
+      case 'two-way-arrow':
+        // Draw a two-way arrow shape (polygon)
+        ctx.beginPath();
+        const twoW = shape.width || 0;
+        const twoH = shape.height || 0;
+        const twoTail = twoW * 0.25; // Width from each end
+        const twoMid = twoW * 0.5; // Middle section
+        ctx.moveTo(shape.x, shape.y + twoH / 2); // Left tip
+        ctx.lineTo(shape.x + twoTail, shape.y); // Top of left head
+        ctx.lineTo(shape.x + twoTail, shape.y + twoH * 0.3); // Top of tail start
+        ctx.lineTo(shape.x + twoW - twoTail, shape.y + twoH * 0.3); // Top of tail end
+        ctx.lineTo(shape.x + twoW - twoTail, shape.y); // Top of right head
+        ctx.lineTo(shape.x + twoW, shape.y + twoH / 2); // Right tip
+        ctx.lineTo(shape.x + twoW - twoTail, shape.y + twoH); // Bottom of right head
+        ctx.lineTo(shape.x + twoW - twoTail, shape.y + twoH * 0.7); // Bottom of tail end
+        ctx.lineTo(shape.x + twoTail, shape.y + twoH * 0.7); // Bottom of tail start
+        ctx.lineTo(shape.x + twoTail, shape.y + twoH); // Bottom of left head
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -689,7 +710,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     } else {
       shape = {
         id: `shape-${Date.now()}`,
-        type: selectedTool as 'rectangle' | 'circle' | 'triangle' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow-shape',
+        type: selectedTool as 'rectangle' | 'circle' | 'triangle' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow-shape' | 'two-way-arrow',
         x: startPoint.x,
         y: startPoint.y,
         width,
@@ -965,6 +986,15 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                 <MoveRight className="h-4 w-4" />
               </Button>
               <Button
+                variant={selectedTool === 'two-way-arrow' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('two-way-arrow')}
+                title="Two-Way Arrow"
+              >
+                <ArrowLeftRight className="h-4 w-4" />
+              </Button>
+              <Button
                 variant={selectedTool === 'arrow' ? 'secondary' : 'ghost'}
                 size="sm"
                 className="h-8 w-8 p-0"
@@ -1139,7 +1169,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                       </>
                     )}
 
-                    {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle' || shape.type === 'pentagon' || shape.type === 'hexagon' || shape.type === 'diamond' || shape.type === 'arrow-shape') && (
+                    {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle' || shape.type === 'pentagon' || shape.type === 'hexagon' || shape.type === 'diamond' || shape.type === 'arrow-shape' || shape.type === 'two-way-arrow') && (
                       <>
                         <div className="flex items-center gap-1.5">
                           <span className="text-muted-foreground">Background</span>
