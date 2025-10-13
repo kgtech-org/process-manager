@@ -20,7 +20,11 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
-  Grid3x3
+  Grid3x3,
+  Pentagon,
+  Hexagon,
+  Diamond,
+  MoveRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,7 +37,7 @@ type ArrowStyle = 'solid' | 'dashed' | 'double';
 
 interface Shape {
   id: string;
-  type: 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text';
+  type: 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow-shape';
   x: number;
   y: number;
   width?: number;
@@ -66,7 +70,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [shapes, setShapes] = useState<Shape[]>(initialShapes);
-  const [selectedTool, setSelectedTool] = useState<'select' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text'>('select');
+  const [selectedTool, setSelectedTool] = useState<'select' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow-shape'>('select');
   const [arrowStyle, setArrowStyle] = useState<ArrowStyle>('solid');
   const [fillColor, setFillColor] = useState<string>('#3b82f6');
   const [strokeColor, setStrokeColor] = useState<string>('#000000');
@@ -288,6 +292,77 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
           );
           ctx.stroke();
         }
+        break;
+
+      case 'pentagon':
+        // Draw a pentagon
+        ctx.beginPath();
+        const pentagonSides = 5;
+        const pentagonRadius = Math.min((shape.width || 0), (shape.height || 0)) / 2;
+        const pentagonCenterX = shape.x + (shape.width || 0) / 2;
+        const pentagonCenterY = shape.y + (shape.height || 0) / 2;
+        for (let i = 0; i < pentagonSides; i++) {
+          const angle = (i * 2 * Math.PI) / pentagonSides - Math.PI / 2;
+          const x = pentagonCenterX + pentagonRadius * Math.cos(angle);
+          const y = pentagonCenterY + pentagonRadius * Math.sin(angle);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+
+      case 'hexagon':
+        // Draw a hexagon
+        ctx.beginPath();
+        const hexagonSides = 6;
+        const hexagonRadius = Math.min((shape.width || 0), (shape.height || 0)) / 2;
+        const hexagonCenterX = shape.x + (shape.width || 0) / 2;
+        const hexagonCenterY = shape.y + (shape.height || 0) / 2;
+        for (let i = 0; i < hexagonSides; i++) {
+          const angle = (i * 2 * Math.PI) / hexagonSides;
+          const x = hexagonCenterX + hexagonRadius * Math.cos(angle);
+          const y = hexagonCenterY + hexagonRadius * Math.sin(angle);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+
+      case 'diamond':
+        // Draw a diamond/rhombus
+        ctx.beginPath();
+        const w = shape.width || 0;
+        const h = shape.height || 0;
+        ctx.moveTo(shape.x + w / 2, shape.y); // Top
+        ctx.lineTo(shape.x + w, shape.y + h / 2); // Right
+        ctx.lineTo(shape.x + w / 2, shape.y + h); // Bottom
+        ctx.lineTo(shape.x, shape.y + h / 2); // Left
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+
+      case 'arrow-shape':
+        // Draw an arrow shape (polygon)
+        ctx.beginPath();
+        const arrowW = shape.width || 0;
+        const arrowH = shape.height || 0;
+        const arrowTail = arrowW * 0.4; // Tail width
+        const arrowHead = arrowW * 0.6; // Head width
+        ctx.moveTo(shape.x, shape.y + arrowH * 0.3); // Top left of tail
+        ctx.lineTo(shape.x + arrowTail, shape.y + arrowH * 0.3); // Top right of tail
+        ctx.lineTo(shape.x + arrowTail, shape.y); // Top of head
+        ctx.lineTo(shape.x + arrowW, shape.y + arrowH / 2); // Tip
+        ctx.lineTo(shape.x + arrowTail, shape.y + arrowH); // Bottom of head
+        ctx.lineTo(shape.x + arrowTail, shape.y + arrowH * 0.7); // Bottom right of tail
+        ctx.lineTo(shape.x, shape.y + arrowH * 0.7); // Bottom left of tail
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
         break;
 
       case 'text':
@@ -584,7 +659,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     } else {
       shape = {
         id: `shape-${Date.now()}`,
-        type: selectedTool as 'rectangle' | 'circle' | 'triangle',
+        type: selectedTool as 'rectangle' | 'circle' | 'triangle' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow-shape',
         x: startPoint.x,
         y: startPoint.y,
         width,
@@ -824,11 +899,47 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                 <Triangle className="h-4 w-4" />
               </Button>
               <Button
+                variant={selectedTool === 'pentagon' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('pentagon')}
+                title="Pentagon"
+              >
+                <Pentagon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={selectedTool === 'hexagon' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('hexagon')}
+                title="Hexagon"
+              >
+                <Hexagon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={selectedTool === 'diamond' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('diamond')}
+                title="Diamond"
+              >
+                <Diamond className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={selectedTool === 'arrow-shape' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSelectedTool('arrow-shape')}
+                title="Arrow Shape"
+              >
+                <MoveRight className="h-4 w-4" />
+              </Button>
+              <Button
                 variant={selectedTool === 'arrow' ? 'secondary' : 'ghost'}
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={() => setSelectedTool('arrow')}
-                title="Arrow"
+                title="Arrow Line"
               >
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -972,7 +1083,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                       </>
                     )}
 
-                    {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle') && (
+                    {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle' || shape.type === 'pentagon' || shape.type === 'hexagon' || shape.type === 'diamond' || shape.type === 'arrow-shape') && (
                       <>
                         <div className="flex items-center gap-1.5">
                           <span className="text-muted-foreground">Background</span>
