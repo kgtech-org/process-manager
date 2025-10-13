@@ -42,6 +42,7 @@ interface Shape {
   endY?: number;
   text?: string;
   color: string;
+  opacity?: number;
   strokeColor?: string;
   strokeWidth?: number;
   arrowStyle?: ArrowStyle;
@@ -189,7 +190,12 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
 
   const drawShape = (ctx: CanvasRenderingContext2D, shape: Shape, isSelected: boolean) => {
     ctx.strokeStyle = isSelected ? '#3b82f6' : (shape.strokeColor || shape.color);
-    ctx.fillStyle = shape.color + '33'; // Add transparency
+
+    // Apply opacity to fill color
+    const opacity = shape.opacity !== undefined ? shape.opacity : 0.2; // Default 20% opacity
+    const opacityHex = Math.round(opacity * 255).toString(16).padStart(2, '0');
+    ctx.fillStyle = shape.color + opacityHex;
+
     ctx.lineWidth = isSelected ? 3 : (shape.strokeWidth || 2);
 
     switch (shape.type) {
@@ -969,7 +975,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                     {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle') && (
                       <>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-muted-foreground">Fill</span>
+                          <span className="text-muted-foreground">Background</span>
                           <input
                             type="color"
                             value={shape.color || '#3b82f6'}
@@ -978,7 +984,19 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-muted-foreground">Stroke</span>
+                          <span className="text-muted-foreground">Opacity</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="5"
+                            value={Math.round((shape.opacity !== undefined ? shape.opacity : 0.2) * 100)}
+                            onChange={(e) => updateShapeProperty(selectedShape, { opacity: parseInt(e.target.value) / 100 })}
+                            className="h-8 w-16 px-2 text-xs border rounded"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Border</span>
                           <input
                             type="color"
                             value={shape.strokeColor || shape.color || '#000000'}
