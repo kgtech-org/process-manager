@@ -83,6 +83,9 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   const [zoom, setZoom] = useState<number>(1);
   const [canvasSize, setCanvasSize] = useState({ width: 1600, height: 1200 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; shapeId: string } | null>(null);
+  const [editingText, setEditingText] = useState<{ shapeId: string; x: number; y: number } | null>(null);
+  const [textInput, setTextInput] = useState('');
 
   // Sync shapes when initialShapes changes (for modal reopening)
   useEffect(() => {
@@ -266,6 +269,53 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     }
   };
 
+  // Improved hit detection helper
+  const isPointInShape = (x: number, y: number, shape: Shape): boolean => {
+    if (shape.type === 'arrow') {
+      // Better arrow hit detection - check if point is near the line
+      const x1 = shape.x;
+      const y1 = shape.y;
+      const x2 = shape.endX || x1;
+      const y2 = shape.endY || y1;
+
+      // Distance from point to line segment
+      const lineLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+      if (lineLength === 0) return Math.abs(x - x1) < 10 && Math.abs(y - y1) < 10;
+
+      const t = Math.max(0, Math.min(1, ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / (lineLength ** 2)));
+      const projX = x1 + t * (x2 - x1);
+      const projY = y1 + t * (y2 - y1);
+      const distance = Math.sqrt((x - projX) ** 2 + (y - projY) ** 2);
+
+      return distance < 10; // 10px tolerance
+    } else if (shape.type === 'text') {
+      // Text bounding box hit detection
+      const canvas = canvasRef.current;
+      if (!canvas) return false;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return false;
+
+      const textFontSize = shape.fontSize || 16;
+      ctx.font = `${shape.fontWeight || 'normal'} ${textFontSize}px ${shape.fontFamily || 'Arial'}`;
+      const metrics = ctx.measureText(shape.text || '');
+
+      return (
+        x >= shape.x - 2 &&
+        x <= shape.x + metrics.width + 2 &&
+        y >= shape.y - textFontSize &&
+        y <= shape.y + 4
+      );
+    } else {
+      // Standard bounding box for rectangles, circles, triangles
+      return (
+        x >= shape.x &&
+        x <= shape.x + (shape.width || 0) &&
+        y >= shape.y &&
+        y <= shape.y + (shape.height || 0)
+      );
+    }
+  };
+
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (readOnly) return;
 
@@ -276,25 +326,16 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     const x = (e.clientX - rect.left) / zoom;
     const y = (e.clientY - rect.top) / zoom;
 
+    // Close context menu if open
+    setContextMenu(null);
+
     if (selectedTool === 'select') {
-      // Check if clicking on existing shape
-      const clickedShape = shapes.find((shape) => {
-        if (shape.type === 'arrow') {
-          // Simple hit detection for arrows
-          return Math.abs(shape.x - x) < 10 && Math.abs(shape.y - y) < 10;
-        }
-        return (
-          x >= shape.x &&
-          x <= shape.x + (shape.width || 0) &&
-          y >= shape.y &&
-          y <= shape.y + (shape.height || 0)
-        );
-      });
+      // Find clicked shape (reverse order to get topmost)
+      const clickedShape = [...shapes].reverse().find((shape) => isPointInShape(x, y, shape));
 
       if (clickedShape) {
         setSelectedShape(clickedShape.id);
         setIsDragging(true);
-        // Calculate offset from shape origin to click point
         setDragOffset({
           x: x - clickedShape.x,
           y: y - clickedShape.y,
@@ -307,22 +348,9 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
       setStartPoint({ x, y });
 
       if (selectedTool === 'text') {
-        const text = prompt('Enter text:');
-        if (text) {
-          const newShape: Shape = {
-            id: `shape-${Date.now()}`,
-            type: 'text',
-            x,
-            y,
-            text,
-            color: fillColor,
-            textColor,
-            fontSize,
-            fontWeight,
-            fontFamily,
-          };
-          addShape(newShape);
-        }
+        // Show inline text input instead of prompt
+        setEditingText({ shapeId: `shape-${Date.now()}`, x, y });
+        setTextInput('');
       }
     }
   };
@@ -502,6 +530,74 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     setShapes(newShapes);
     updateHistory(newShapes);
     onChange?.(newShapes);
+  };
+
+  // Z-index management
+  const bringToFront = (shapeId: string) => {
+    const shape = shapes.find((s) => s.id === shapeId);
+    if (!shape) return;
+    const newShapes = shapes.filter((s) => s.id !== shapeId).concat(shape);
+    setShapes(newShapes);
+    updateHistory(newShapes);
+    onChange?.(newShapes);
+  };
+
+  const sendToBack = (shapeId: string) => {
+    const shape = shapes.find((s) => s.id === shapeId);
+    if (!shape) return;
+    const newShapes = [shape].concat(shapes.filter((s) => s.id !== shapeId));
+    setShapes(newShapes);
+    updateHistory(newShapes);
+    onChange?.(newShapes);
+  };
+
+  // Handle right-click context menu
+  const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (readOnly) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
+
+    const clickedShape = [...shapes].reverse().find((shape) => isPointInShape(x, y, shape));
+
+    if (clickedShape) {
+      setSelectedShape(clickedShape.id);
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        shapeId: clickedShape.id,
+      });
+    }
+  };
+
+  // Handle text input submission
+  const handleTextSubmit = () => {
+    if (!editingText || !textInput.trim()) {
+      setEditingText(null);
+      return;
+    }
+
+    const newShape: Shape = {
+      id: editingText.shapeId,
+      type: 'text',
+      x: editingText.x,
+      y: editingText.y,
+      text: textInput,
+      color: fillColor,
+      textColor,
+      fontSize,
+      fontWeight,
+      fontFamily,
+    };
+    addShape(newShape);
+    setEditingText(null);
+    setTextInput('');
+    setSelectedTool('select');
   };
 
   return (
@@ -760,7 +856,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
       )}
 
       {/* Canvas */}
-      <Card className="p-0 overflow-auto" style={{ maxHeight: '70vh' }} ref={containerRef}>
+      <Card className="p-0 overflow-auto relative" style={{ maxHeight: '70vh' }} ref={containerRef}>
         <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}>
           <canvas
             ref={canvasRef}
@@ -775,8 +871,81 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onContextMenu={handleContextMenu}
           />
         </div>
+
+        {/* Inline Text Input */}
+        {editingText && (
+          <div
+            className="absolute bg-white border-2 border-blue-500 rounded shadow-lg"
+            style={{
+              left: `${editingText.x * zoom}px`,
+              top: `${editingText.y * zoom}px`,
+              transform: 'translate(0, -100%)',
+            }}
+          >
+            <input
+              type="text"
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleTextSubmit();
+                } else if (e.key === 'Escape') {
+                  setEditingText(null);
+                  setTextInput('');
+                }
+              }}
+              onBlur={handleTextSubmit}
+              autoFocus
+              placeholder="Enter text..."
+              className="px-2 py-1 text-sm outline-none min-w-[200px]"
+            />
+          </div>
+        )}
+
+        {/* Context Menu */}
+        {contextMenu && (
+          <div
+            className="absolute bg-white border rounded shadow-lg py-1 z-50"
+            style={{
+              left: `${contextMenu.x}px`,
+              top: `${contextMenu.y}px`,
+            }}
+            onMouseLeave={() => setContextMenu(null)}
+          >
+            <button
+              className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+              onClick={() => {
+                bringToFront(contextMenu.shapeId);
+                setContextMenu(null);
+              }}
+            >
+              Bring to Front
+            </button>
+            <button
+              className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+              onClick={() => {
+                sendToBack(contextMenu.shapeId);
+                setContextMenu(null);
+              }}
+            >
+              Send to Back
+            </button>
+            <div className="border-t my-1" />
+            <button
+              className="w-full px-4 py-2 text-left text-sm hover:bg-destructive/10 text-destructive flex items-center gap-2"
+              onClick={() => {
+                deleteSelected();
+                setContextMenu(null);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </button>
+          </div>
+        )}
       </Card>
 
       {readOnly && (
