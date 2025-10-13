@@ -25,6 +25,7 @@ import {
   Hexagon,
   Diamond,
   MoveRight,
+  ArrowLeftRight,
   Bold,
   Italic,
   Underline,
@@ -41,7 +42,7 @@ type ArrowStyle = 'solid' | 'dashed' | 'double';
 
 interface Shape {
   id: string;
-  type: 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow-shape';
+  type: 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'text' | 'pentagon' | 'hexagon' | 'diamond' | 'arrow-shape' | 'two-way-arrow';
   x: number;
   y: number;
   width?: number;
