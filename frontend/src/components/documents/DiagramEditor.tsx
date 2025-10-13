@@ -744,70 +744,77 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Toolbar - draw.io style: single row, icon-only buttons */}
+    <div className="space-y-2">
+      {/* Toolbar */}
       {!readOnly && (
-        <Card className="p-2">
-          <div className="flex items-center gap-1">
+        <div className="border rounded-lg bg-card">
+          <div className="flex items-center gap-0.5 p-1">
             {/* Drawing Tools */}
             <Button
-              variant={selectedTool === 'select' ? 'default' : 'ghost'}
-              size="icon"
+              variant={selectedTool === 'select' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={() => setSelectedTool('select')}
               title="Select (V)"
             >
               <MousePointer className="h-4 w-4" />
             </Button>
 
-            <div className="h-6 w-px bg-border mx-1" />
+            <div className="h-6 w-px bg-border mx-0.5" />
 
             <Button
-              variant={selectedTool === 'rectangle' ? 'default' : 'ghost'}
-              size="icon"
+              variant={selectedTool === 'rectangle' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={() => setSelectedTool('rectangle')}
               title="Rectangle (R)"
             >
               <Square className="h-4 w-4" />
             </Button>
             <Button
-              variant={selectedTool === 'circle' ? 'default' : 'ghost'}
-              size="icon"
+              variant={selectedTool === 'circle' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={() => setSelectedTool('circle')}
               title="Circle (C)"
             >
               <Circle className="h-4 w-4" />
             </Button>
             <Button
-              variant={selectedTool === 'triangle' ? 'default' : 'ghost'}
-              size="icon"
+              variant={selectedTool === 'triangle' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={() => setSelectedTool('triangle')}
               title="Triangle (T)"
             >
               <Triangle className="h-4 w-4" />
             </Button>
             <Button
-              variant={selectedTool === 'arrow' ? 'default' : 'ghost'}
-              size="icon"
+              variant={selectedTool === 'arrow' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={() => setSelectedTool('arrow')}
               title="Arrow (A)"
             >
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button
-              variant={selectedTool === 'text' ? 'default' : 'ghost'}
-              size="icon"
+              variant={selectedTool === 'text' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={() => setSelectedTool('text')}
               title="Text (T)"
             >
               <Type className="h-4 w-4" />
             </Button>
 
-            <div className="h-6 w-px bg-border mx-1" />
+            <div className="h-6 w-px bg-border mx-0.5" />
 
             {/* Edit Actions */}
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={undo}
               disabled={historyIndex === 0}
               title="Undo (Ctrl+Z)"
@@ -816,7 +823,8 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
             </Button>
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={redo}
               disabled={historyIndex === history.length - 1}
               title="Redo (Ctrl+Y)"
@@ -825,7 +833,8 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
             </Button>
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={deleteSelected}
               disabled={!selectedShape}
               title="Delete (Del)"
@@ -833,43 +842,47 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
               <Trash2 className="h-4 w-4" />
             </Button>
 
-            <div className="h-6 w-px bg-border mx-1" />
+            <div className="h-6 w-px bg-border mx-0.5" />
 
             {/* Zoom Controls */}
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={zoomOut}
               title="Zoom Out (-)"
             >
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <span className="text-xs font-medium px-2 min-w-[45px] text-center tabular-nums">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={resetZoom}
+              title="Reset Zoom"
+            >
+              <Maximize className="h-4 w-4" />
+            </Button>
+            <span className="text-xs font-medium px-1.5 min-w-[50px] text-center tabular-nums">
               {Math.round(zoom * 100)}%
             </span>
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={zoomIn}
               title="Zoom In (+)"
             >
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={resetZoom}
-              title="Reset Zoom (Ctrl+0)"
-            >
-              <Maximize className="h-4 w-4" />
-            </Button>
 
-            <div className="h-6 w-px bg-border mx-1" />
+            <div className="h-6 w-px bg-border mx-0.5" />
 
             {/* File Actions */}
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={clearCanvas}
               title="Clear All"
             >
@@ -877,131 +890,128 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
             </Button>
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
+              className="h-8 w-8 p-0"
               onClick={exportDiagram}
               title="Export PNG"
             >
               <Download className="h-4 w-4" />
             </Button>
           </div>
-        </Card>
-      )}
 
-      {/* Format Panel - appears when shape is selected (draw.io style) */}
-      {!readOnly && selectedShape && (() => {
-        const shape = shapes.find((s) => s.id === selectedShape);
-        if (!shape) return null;
+          {/* Format Bar - integrated below toolbar */}
+          {selectedShape && (() => {
+            const shape = shapes.find((s) => s.id === selectedShape);
+            if (!shape) return null;
 
-        return (
-          <Card className="p-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-xs font-semibold text-muted-foreground uppercase">
-                Format
-              </span>
+            return (
+              <div className="border-t bg-muted/30 px-3 py-2">
+                <div className="flex items-center gap-4 text-xs">
+                  {shape.type === 'text' && (
+                    <>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground font-medium">Color</span>
+                        <input
+                          type="color"
+                          value={shape.textColor || '#000000'}
+                          onChange={(e) => updateShapeProperty(selectedShape, { textColor: e.target.value })}
+                          className="h-6 w-8 border rounded cursor-pointer"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground font-medium">Size</span>
+                        <input
+                          type="number"
+                          min="8"
+                          max="72"
+                          value={shape.fontSize || 16}
+                          onChange={(e) => updateShapeProperty(selectedShape, { fontSize: parseInt(e.target.value) })}
+                          className="h-6 w-14 px-1.5 text-xs border rounded"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground font-medium">Weight</span>
+                        <select
+                          value={shape.fontWeight || 'normal'}
+                          onChange={(e) => updateShapeProperty(selectedShape, { fontWeight: e.target.value })}
+                          className="h-6 px-1.5 text-xs border rounded bg-background"
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="bold">Bold</option>
+                          <option value="lighter">Light</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground font-medium">Font</span>
+                        <select
+                          value={shape.fontFamily || 'Arial'}
+                          onChange={(e) => updateShapeProperty(selectedShape, { fontFamily: e.target.value })}
+                          className="h-6 px-1.5 text-xs border rounded bg-background"
+                        >
+                          <option value="Arial">Arial</option>
+                          <option value="Helvetica">Helvetica</option>
+                          <option value="Times New Roman">Times</option>
+                          <option value="Courier New">Courier</option>
+                          <option value="Verdana">Verdana</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
 
-              {shape.type === 'text' && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Color</Label>
-                    <input
-                      type="color"
-                      value={shape.textColor || '#000000'}
-                      onChange={(e) => updateShapeProperty(selectedShape, { textColor: e.target.value })}
-                      className="h-7 w-12 border rounded cursor-pointer"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Size</Label>
-                    <input
-                      type="number"
-                      min="8"
-                      max="72"
-                      value={shape.fontSize || 16}
-                      onChange={(e) => updateShapeProperty(selectedShape, { fontSize: parseInt(e.target.value) })}
-                      className="h-7 w-16 px-2 text-xs border rounded"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Weight</Label>
-                    <select
-                      value={shape.fontWeight || 'normal'}
-                      onChange={(e) => updateShapeProperty(selectedShape, { fontWeight: e.target.value })}
-                      className="h-7 px-2 text-xs border rounded"
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="bold">Bold</option>
-                      <option value="lighter">Light</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Font</Label>
-                    <select
-                      value={shape.fontFamily || 'Arial'}
-                      onChange={(e) => updateShapeProperty(selectedShape, { fontFamily: e.target.value })}
-                      className="h-7 px-2 text-xs border rounded"
-                    >
-                      <option value="Arial">Arial</option>
-                      <option value="Helvetica">Helvetica</option>
-                      <option value="Times New Roman">Times</option>
-                      <option value="Courier New">Courier</option>
-                      <option value="Verdana">Verdana</option>
-                    </select>
-                  </div>
-                </>
-              )}
+                  {shape.type === 'arrow' && (
+                    <>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground font-medium">Color</span>
+                        <input
+                          type="color"
+                          value={shape.color || '#000000'}
+                          onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
+                          className="h-6 w-8 border rounded cursor-pointer"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground font-medium">Width</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={shape.arrowWidth || 2}
+                          onChange={(e) => updateShapeProperty(selectedShape, { arrowWidth: parseInt(e.target.value) })}
+                          className="h-6 w-14 px-1.5 text-xs border rounded"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground font-medium">Style</span>
+                        <select
+                          value={shape.arrowStyle || 'solid'}
+                          onChange={(e) => updateShapeProperty(selectedShape, { arrowStyle: e.target.value as ArrowStyle })}
+                          className="h-6 px-1.5 text-xs border rounded bg-background"
+                        >
+                          <option value="solid">Solid</option>
+                          <option value="dashed">Dashed</option>
+                          <option value="double">Double</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
 
-              {shape.type === 'arrow' && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Color</Label>
-                    <input
-                      type="color"
-                      value={shape.color || '#000000'}
-                      onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
-                      className="h-7 w-12 border rounded cursor-pointer"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Width</Label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={shape.arrowWidth || 2}
-                      onChange={(e) => updateShapeProperty(selectedShape, { arrowWidth: parseInt(e.target.value) })}
-                      className="h-7 w-16 px-2 text-xs border rounded"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Style</Label>
-                    <select
-                      value={shape.arrowStyle || 'solid'}
-                      onChange={(e) => updateShapeProperty(selectedShape, { arrowStyle: e.target.value as ArrowStyle })}
-                      className="h-7 px-2 text-xs border rounded"
-                    >
-                      <option value="solid">Solid →</option>
-                      <option value="dashed">Dashed - -</option>
-                      <option value="double">Double ↔</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle') && (
-                <div className="flex items-center gap-2">
-                  <Label className="text-xs">Fill</Label>
-                  <input
-                    type="color"
-                    value={shape.color || '#3b82f6'}
-                    onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
-                    className="h-7 w-12 border rounded cursor-pointer"
-                  />
+                  {(shape.type === 'rectangle' || shape.type === 'circle' || shape.type === 'triangle') && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-muted-foreground font-medium">Fill</span>
+                      <input
+                        type="color"
+                        value={shape.color || '#3b82f6'}
+                        onChange={(e) => updateShapeProperty(selectedShape, { color: e.target.value })}
+                        className="h-6 w-8 border rounded cursor-pointer"
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </Card>
-        );
-      })()}
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Canvas */}
       <Card className="p-0 overflow-auto relative" style={{ maxHeight: '70vh' }} ref={containerRef}>
