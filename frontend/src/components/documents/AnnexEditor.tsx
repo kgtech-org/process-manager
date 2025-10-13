@@ -49,6 +49,8 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
   const [editingAnnexId, setEditingAnnexId] = useState<string | null>(null);
   const [diagramModalOpen, setDiagramModalOpen] = useState(false);
   const [currentDiagramAnnex, setCurrentDiagramAnnex] = useState<Annex | null>(null);
+  const [localDiagramShapes, setLocalDiagramShapes] = useState<any[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [newAnnexTitle, setNewAnnexTitle] = useState('');
   const [newAnnexType, setNewAnnexType] = useState<AnnexType>('text');
   const [editContent, setEditContent] = useState<any>(null);
@@ -146,7 +148,36 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
 
   const openDiagramModal = (annex: Annex) => {
     setCurrentDiagramAnnex(annex);
+    setLocalDiagramShapes(annex.content?.shapes || []);
+    setHasUnsavedChanges(false);
     setDiagramModalOpen(true);
+  };
+
+  const handleDiagramModalClose = async () => {
+    if (hasUnsavedChanges && currentDiagramAnnex) {
+      try {
+        await handleUpdateContent(currentDiagramAnnex.id, { shapes: localDiagramShapes });
+        toast({
+          title: 'Diagram saved successfully',
+        });
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to save diagram',
+          description: error.message,
+        });
+        return; // Don't close modal if save failed
+      }
+    }
+    setDiagramModalOpen(false);
+    setCurrentDiagramAnnex(null);
+    setLocalDiagramShapes([]);
+    setHasUnsavedChanges(false);
+  };
+
+  const handleLocalDiagramChange = (shapes: any[]) => {
+    setLocalDiagramShapes(shapes);
+    setHasUnsavedChanges(true);
   };
 
   const renderAnnexContent = (annex: Annex) => {
@@ -351,33 +382,54 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
       ))}
 
       {/* Full-screen Diagram Editor Modal */}
-      <Dialog open={diagramModalOpen} onOpenChange={setDiagramModalOpen}>
+      <Dialog open={diagramModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          handleDiagramModalClose();
+        }
+      }}>
         <DialogContent className="max-w-[98vw] w-full h-[98vh] max-h-[98vh] p-0">
           <div className="h-full flex flex-col">
             <DialogHeader className="p-4 border-b">
-              <DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
                 {currentDiagramAnnex?.title || 'Diagram Editor'}
+                {hasUnsavedChanges && (
+                  <Badge variant="secondary" className="text-xs">
+                    Unsaved changes
+                  </Badge>
+                )}
               </DialogTitle>
               <DialogDescription>
-                Create and edit your diagram with zoom and customization tools
+                Create and edit your diagram with zoom and customization tools. Changes will be saved when you close the modal.
               </DialogDescription>
             </DialogHeader>
             <div className="flex-1 overflow-auto p-4">
               {currentDiagramAnnex && (
                 <DiagramEditor
-                  initialShapes={currentDiagramAnnex.content?.shapes || []}
-                  onChange={(shapes) => handleUpdateContent(currentDiagramAnnex.id, { shapes })}
+                  initialShapes={localDiagramShapes}
+                  onChange={handleLocalDiagramChange}
                   readOnly={false}
                 />
               )}
             </div>
-            <div className="p-4 border-t flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setDiagramModalOpen(false)}
-              >
-                Close
-              </Button>
+            <div className="p-4 border-t flex justify-between items-center">
+              <div className="text-sm text-muted-foreground">
+                {hasUnsavedChanges ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    You have unsaved changes
+                  </span>
+                ) : (
+                  <span>All changes saved</span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDiagramModalClose}
+                >
+                  {hasUnsavedChanges ? 'Save & Close' : 'Close'}
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

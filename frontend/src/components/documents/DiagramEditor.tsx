@@ -84,6 +84,13 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   const [canvasSize, setCanvasSize] = useState({ width: 1600, height: 1200 });
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Sync shapes when initialShapes changes (for modal reopening)
+  useEffect(() => {
+    setShapes(initialShapes);
+    setHistory([initialShapes]);
+    setHistoryIndex(0);
+  }, [initialShapes]);
+
   // Draw shapes on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
