@@ -19,7 +19,8 @@ import {
   Redo,
   ZoomIn,
   ZoomOut,
-  Maximize
+  Maximize,
+  Grid3x3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -87,6 +88,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   const [editingText, setEditingText] = useState<{ shapeId: string; x: number; y: number } | null>(null);
   const [textInput, setTextInput] = useState('');
   const [resizing, setResizing] = useState<{ handle: string; startX: number; startY: number; originalShape: Shape } | null>(null);
+  const [showGrid, setShowGrid] = useState<boolean>(true);
 
   // Sync shapes when initialShapes changes (for modal reopening)
   useEffect(() => {
@@ -94,6 +96,23 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     setHistory([initialShapes]);
     setHistoryIndex(0);
   }, [initialShapes]);
+
+  // Auto-resize canvas to fill container
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setCanvasSize({
+          width: Math.max(rect.width - 32, 1200),
+          height: Math.max(rect.height - 32, 800),
+        });
+      }
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, []);
 
   // Draw shapes on canvas
   useEffect(() => {
@@ -107,20 +126,22 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw grid
-    ctx.strokeStyle = '#f0f0f0';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < canvas.width; i += 20) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, canvas.height);
-      ctx.stroke();
-    }
-    for (let i = 0; i < canvas.height; i += 20) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(canvas.width, i);
-      ctx.stroke();
+    // Draw grid (optional)
+    if (showGrid) {
+      ctx.strokeStyle = '#f0f0f0';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < canvas.width; i += 20) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, canvas.height);
+        ctx.stroke();
+      }
+      for (let i = 0; i < canvas.height; i += 20) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(canvas.width, i);
+        ctx.stroke();
+      }
     }
 
     // Draw all shapes
@@ -158,7 +179,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
     if (currentShape) {
       drawShape(ctx, currentShape, false);
     }
-  }, [shapes, currentShape, selectedShape, backgroundColor]);
+  }, [shapes, currentShape, selectedShape, backgroundColor, showGrid]);
 
   const drawShape = (ctx: CanvasRenderingContext2D, shape: Shape, isSelected: boolean) => {
     ctx.strokeStyle = isSelected ? '#3b82f6' : shape.color;
@@ -744,7 +765,7 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col h-full gap-2">
       {/* Toolbar - single row with left/center/right layout */}
       {!readOnly && (
         <div className="border rounded-lg bg-card px-2 py-1.5">
@@ -991,6 +1012,25 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
               <div className="h-6 w-px bg-border mx-1" />
 
               <Button
+                variant={showGrid ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setShowGrid(!showGrid)}
+                title="Toggle Grid"
+              >
+                <Grid3x3 className="h-4 w-4" />
+              </Button>
+              <input
+                type="color"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="h-8 w-8 border rounded cursor-pointer"
+                title="Canvas Background"
+              />
+
+              <div className="h-6 w-px bg-border mx-1" />
+
+              <Button
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0"
@@ -1014,14 +1054,13 @@ export const DiagramEditor: React.FC<DiagramEditorProps> = ({
       )}
 
       {/* Canvas */}
-      <Card className="p-0 overflow-auto relative" style={{ maxHeight: '70vh' }} ref={containerRef}>
+      <Card className="p-0 overflow-auto relative flex-1" ref={containerRef}>
         <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}>
           <canvas
             ref={canvasRef}
             width={canvasSize.width}
             height={canvasSize.height}
             className={cn(
-              'border',
               !readOnly && 'cursor-crosshair'
             )}
             style={{ backgroundColor }}
