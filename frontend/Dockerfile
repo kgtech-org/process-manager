@@ -31,15 +31,23 @@ FROM node:18-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
+ENV DOCKER_ENV true
 
 # Add non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Ensure native deps for sharp are present on Alpine
+RUN apk add --no-cache libc6-compat
+
 # Copy built application
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Ensure sharp is available at runtime in standalone mode
+# (Next.js image optimization requires sharp in the final image)
+COPY --from=builder /app/node_modules/sharp ./node_modules/sharp
 
 USER nextjs
 
