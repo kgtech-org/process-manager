@@ -41,7 +41,7 @@ type BrevoEmailRequest struct {
 	To          []BrevoContact `json:"to"`
 	Subject     string         `json:"subject"`
 	HTMLContent string         `json:"htmlContent"`
-	TextContent string         `json:"textContent"`
+	TextContent string         `json:"textContent,omitempty"`
 }
 
 type BrevoSender struct {
@@ -115,7 +115,7 @@ func NewEmailService() *EmailService {
 
 	// Brevo configuration
 	brevoAPIKey := os.Getenv("BREVO_KEY")
-	brevoAPIURL := "https://api.brevo.com/v3/sendEmail"
+	brevoAPIURL := "https://api.brevo.com/v3/smtp/email"
 
 	return &EmailService{
 		smtpHost:     smtpHost,
@@ -381,6 +381,10 @@ func (e *EmailService) sendEmailViaBrevo(toEmail, toName string, emailTemplate E
 		return fmt.Errorf("failed to marshal Brevo request: %w", err)
 	}
 
+	// Log the request details (without API key)
+	fmt.Printf("📤 [BREVO] Sending request to: %s\n", e.brevoAPIURL)
+	fmt.Printf("📤 [BREVO] Request payload: %s\n", string(jsonData))
+
 	// Create HTTP client with timeout
 	client := &http.Client{
 		Timeout: 30 * time.Second,
@@ -392,7 +396,7 @@ func (e *EmailService) sendEmailViaBrevo(toEmail, toName string, emailTemplate E
 		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	// Set headers
+	// Set headers according to Brevo API documentation
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("api-key", e.brevoAPIKey)
 	req.Header.Set("Accept", "application/json")
