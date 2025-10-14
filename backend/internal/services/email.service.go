@@ -3,12 +3,17 @@ package services
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
+	"net"
+	"net/http"
 	"net/smtp"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type EmailService struct {
@@ -19,12 +24,38 @@ type EmailService struct {
 	fromEmail    string
 	fromName     string
 	appURL       string
+	// Brevo configuration
+	brevoAPIKey string
+	brevoAPIURL string
 }
 
 type EmailTemplate struct {
 	Subject  string
 	HTMLBody string
 	TextBody string
+}
+
+// Brevo API structures
+type BrevoEmailRequest struct {
+	Sender      BrevoSender    `json:"sender"`
+	To          []BrevoContact `json:"to"`
+	Subject     string         `json:"subject"`
+	HTMLContent string         `json:"htmlContent"`
+	TextContent string         `json:"textContent"`
+}
+
+type BrevoSender struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type BrevoContact struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type BrevoResponse struct {
+	MessageID string `json:"messageId"`
 }
 
 type EmailData struct {
@@ -42,12 +73,12 @@ type EmailData struct {
 	CompanyName     string
 	UnsubscribeURL  string
 	// Invitation-specific fields
-	InviterName     string
-	DocumentTitle   string
-	DocumentRef     string
-	InvitationURL   string
-	RoleName        string
-	TeamName        string
+	InviterName   string
+	DocumentTitle string
+	DocumentRef   string
+	InvitationURL string
+	RoleName      string
+	TeamName      string
 }
 
 func NewEmailService() *EmailService {
@@ -82,6 +113,10 @@ func NewEmailService() *EmailService {
 		appURL = "http://localhost:3000"
 	}
 
+	// Brevo configuration
+	brevoAPIKey := os.Getenv("BREVO_KEY")
+	brevoAPIURL := "https://api.brevo.com/v3/sendEmail"
+
 	return &EmailService{
 		smtpHost:     smtpHost,
 		smtpPort:     smtpPort,
@@ -90,6 +125,8 @@ func NewEmailService() *EmailService {
 		fromEmail:    fromEmail,
 		fromName:     fromName,
 		appURL:       appURL,
+		brevoAPIKey:  brevoAPIKey,
+		brevoAPIURL:  brevoAPIURL,
 	}
 }
 
@@ -228,12 +265,170 @@ func (e *EmailService) SendInvitationEmail(userEmail, userName, inviterName, doc
 }
 
 func (e *EmailService) sendEmail(toEmail, toName string, emailTemplate EmailTemplate, data EmailData) error {
-	// Skip sending email if SMTP is not configured
-	if e.smtpUsername == "" || e.smtpPassword == "" {
-		fmt.Printf("⚠️ Email not sent (SMTP not configured): %s to %s\n", emailTemplate.Subject, toEmail)
+	// Log email method configuration
+	fmt.Printf("🔧 Email Configuration - Brevo: %t, SMTP: %t\n",
+		e.brevoAPIKey != "",
+		e.smtpUsername != "" && e.smtpPassword != "")
+
+	// Skip sending email if neither SMTP nor Brevo is configured
+	if (e.smtpUsername == "" || e.smtpPassword == "") && e.brevoAPIKey == "" {
+		fmt.Printf("⚠️ Email not sent (neither SMTP nor Brevo configured): %s to %s\n", emailTemplate.Subject, toEmail)
 		return nil
 	}
 
+	// Force Brevo API in production if available
+	if e.brevoAPIKey != "" {
+		fmt.Printf("📧 [PRODUCTION] Using Brevo API to send email to %s...\n", toEmail)
+		err := e.sendEmailViaBrevo(toEmail, toName, emailTemplate, data)
+		if err != nil {
+			fmt.Printf("❌ [PRODUCTION] Brevo API failed: %v\n", err)
+			// In production, don't fallback to SMTP if Brevo fails
+			return fmt.Errorf("Brevo API failed in production mode: %w", err)
+		}
+		fmt.Printf("✅ [PRODUCTION] Email successfully sent via Brevo API to %s\n", toEmail)
+		return nil
+	}
+
+	// Use SMTP only if Brevo is not available (development mode)
+	if e.smtpUsername != "" && e.smtpPassword != "" {
+		fmt.Printf("📧 [DEVELOPMENT] Using SMTP to send email to %s...\n", toEmail)
+		err := e.sendEmailViaSMTP(toEmail, toName, emailTemplate, data)
+		if err != nil {
+			fmt.Printf("❌ [DEVELOPMENT] SMTP failed: %v\n", err)
+			return err
+		}
+		fmt.Printf("✅ [DEVELOPMENT] Email successfully sent via SMTP to %s\n", toEmail)
+		return nil
+	}
+
+	return fmt.Errorf("no email method available")
+}
+
+// sendEmailViaSMTP sends email using SMTP with retry logic
+func (e *EmailService) sendEmailViaSMTP(toEmail, toName string, emailTemplate EmailTemplate, data EmailData) error {
+	fmt.Printf("🔧 [SMTP] Configuration - Host: %s, Port: %d, Username: %s\n",
+		e.smtpHost, e.smtpPort, e.smtpUsername)
+
+	// Retry logic for SMTP connection
+	maxRetries := 3
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		fmt.Printf("🔄 [SMTP] Attempt %d/%d to send email to %s\n", attempt, maxRetries, toEmail)
+		err := e.attemptSendEmail(toEmail, toName, emailTemplate, data)
+		if err == nil {
+			fmt.Printf("✅ [SMTP] Email sent successfully to %s on attempt %d\n", toEmail, attempt)
+			return nil // Success
+		}
+
+		if attempt < maxRetries {
+			fmt.Printf("⚠️ [SMTP] Attempt %d failed for %s: %v, retrying in 5s...\n", attempt, toEmail, err)
+			time.Sleep(5 * time.Second)
+		} else {
+			fmt.Printf("❌ [SMTP] All %d attempts failed for %s\n", maxRetries, toEmail)
+			return fmt.Errorf("failed to send email via SMTP after %d attempts: %w", maxRetries, err)
+		}
+	}
+
+	return nil // Should never reach here
+}
+
+// sendEmailViaBrevo sends email using Brevo API
+func (e *EmailService) sendEmailViaBrevo(toEmail, toName string, emailTemplate EmailTemplate, data EmailData) error {
+	if e.brevoAPIKey == "" {
+		return fmt.Errorf("Brevo API key not configured")
+	}
+
+	// Parse and execute template
+	htmlTemplate, err := template.New("html").Parse(emailTemplate.HTMLBody)
+	if err != nil {
+		return fmt.Errorf("failed to parse HTML template: %w", err)
+	}
+
+	textTemplate, err := template.New("text").Parse(emailTemplate.TextBody)
+	if err != nil {
+		return fmt.Errorf("failed to parse text template: %w", err)
+	}
+
+	var htmlBuffer, textBuffer bytes.Buffer
+
+	if err := htmlTemplate.Execute(&htmlBuffer, data); err != nil {
+		return fmt.Errorf("failed to execute HTML template: %w", err)
+	}
+
+	if err := textTemplate.Execute(&textBuffer, data); err != nil {
+		return fmt.Errorf("failed to execute text template: %w", err)
+	}
+
+	// Prepare Brevo email request
+	brevoRequest := BrevoEmailRequest{
+		Sender: BrevoSender{
+			Name:  e.fromName,
+			Email: e.fromEmail,
+		},
+		To: []BrevoContact{
+			{
+				Name:  toName,
+				Email: toEmail,
+			},
+		},
+		Subject:     emailTemplate.Subject,
+		HTMLContent: htmlBuffer.String(),
+		TextContent: textBuffer.String(),
+	}
+
+	// Marshal request to JSON
+	jsonData, err := json.Marshal(brevoRequest)
+	if err != nil {
+		return fmt.Errorf("failed to marshal Brevo request: %w", err)
+	}
+
+	// Create HTTP client with timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequest("POST", e.brevoAPIURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("api-key", e.brevoAPIKey)
+	req.Header.Set("Accept", "application/json")
+
+	// Send request
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send HTTP request to Brevo: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read Brevo response: %w", err)
+	}
+
+	// Check response status
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Brevo API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	// Parse response
+	var brevoResponse BrevoResponse
+	if err := json.Unmarshal(body, &brevoResponse); err != nil {
+		fmt.Printf("⚠️ Warning: Failed to parse Brevo response: %v\n", err)
+		fmt.Printf("📄 Raw Brevo response: %s\n", string(body))
+	} else {
+		fmt.Printf("✅ [BREVO] Email sent successfully (MessageID: %s) to %s\n", brevoResponse.MessageID, toEmail)
+	}
+
+	fmt.Printf("📊 [BREVO] Response Status: %d, Response Body: %s\n", resp.StatusCode, string(body))
+	return nil
+}
+
+func (e *EmailService) attemptSendEmail(toEmail, toName string, emailTemplate EmailTemplate, data EmailData) error {
 	// Parse and execute template
 	htmlTemplate, err := template.New("html").Parse(emailTemplate.HTMLBody)
 	if err != nil {
@@ -269,10 +464,15 @@ func (e *EmailService) sendEmail(toEmail, toName string, emailTemplate EmailTemp
 
 	address := fmt.Sprintf("%s:%d", e.smtpHost, e.smtpPort)
 
-	// Connect to server
-	conn, err := tls.Dial("tcp", address, tlsConfig)
+	// Create dialer with timeout
+	dialer := &net.Dialer{
+		Timeout: 30 * time.Second,
+	}
+
+	// Connect to server with timeout
+	conn, err := tls.DialWithDialer(dialer, "tcp", address, tlsConfig)
 	if err != nil {
-		return fmt.Errorf("failed to connect to SMTP server: %w", err)
+		return fmt.Errorf("failed to connect to SMTP server %s: %w", address, err)
 	}
 
 	client, err := smtp.NewClient(conn, e.smtpHost)
