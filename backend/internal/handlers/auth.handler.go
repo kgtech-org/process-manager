@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -42,7 +43,7 @@ func (h *AuthHandler) RequestOTP(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Find user by email
@@ -73,12 +74,14 @@ func (h *AuthHandler) RequestOTP(c *gin.Context) {
 		return
 	}
 
-	// Send OTP via email
+	// Send OTP via email asynchronously to avoid blocking the response
 	fullName := user.FirstName + " " + user.LastName
-	if err := h.emailService.SendOTPEmail(user.Email, fullName, otp); err != nil {
-		helpers.SendInternalError(c, err)
-		return
-	}
+	go func() {
+		if err := h.emailService.SendOTPEmail(user.Email, fullName, otp); err != nil {
+			// Log error but don't block the response
+			fmt.Printf("Failed to send OTP email to %s: %v\n", user.Email, err)
+		}
+	}()
 
 	// Check if development mode
 	isDevelopment := os.Getenv("GIN_MODE") == "debug" || os.Getenv("DEVELOPMENT_MODE") == "true"
@@ -103,7 +106,7 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Get email from temporary token
@@ -185,7 +188,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Validate refresh token in Redis
@@ -248,7 +251,7 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Get user response with populated details
@@ -276,7 +279,7 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	updatedUser, err := h.userService.UpdateUser(ctx, userID, &req)
@@ -304,7 +307,7 @@ func (h *AuthHandler) RevokeAllTokens(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	err := h.otpService.RevokeAllUserRefreshTokens(ctx, userID.Hex())
@@ -329,7 +332,7 @@ func (h *AuthHandler) RegisterStep1(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Check if user already exists
@@ -392,7 +395,7 @@ func (h *AuthHandler) RegisterStep2(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Get email from temporary token
@@ -443,7 +446,7 @@ func (h *AuthHandler) RegisterStep3(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Get email from registration token
@@ -572,8 +575,8 @@ func (h *AuthHandler) UploadAvatar(c *gin.Context) {
 
 	// Return success response
 	response := gin.H{
-		"userId": updatedUser.ID.Hex(),
-		"avatar": avatarURL,
+		"userId":  updatedUser.ID.Hex(),
+		"avatar":  avatarURL,
 		"message": "Profile picture uploaded successfully",
 	}
 
@@ -595,7 +598,7 @@ func (h *AuthHandler) DeleteAvatar(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Delete avatar from MinIO
@@ -623,4 +626,3 @@ func (h *AuthHandler) DeleteAvatar(c *gin.Context) {
 
 	helpers.SendSuccess(c, "Profile picture deleted successfully", response)
 }
-
