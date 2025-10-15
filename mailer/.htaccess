@@ -1,0 +1,11 @@
+RewriteEngine On
+
+# Route root to public/index.php
+RewriteRule ^$ public/index.php [L]
+
+# For non-existent files/dirs not already under /public, route to public/index.php
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . public/index.php [QSA,L]
+

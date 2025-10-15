@@ -114,6 +114,8 @@ services:
       - LOG_LEVEL=info
       - DEVELOPMENT_MODE=true
       - FIREBASE_SERVICE_ACCOUNT_PATH=/app/serviceAccountKey.json
+      - MAILER_API_URL=http://mailer:8085/send
+      - MAILER_API_KEY=dkl1333022nd
     depends_on:
       mongodb:
         condition: service_healthy
@@ -177,6 +179,26 @@ services:
     depends_on:
       - frontend
       - backend
+    networks:
+      - process-manager
+
+  # PHP Mailer microservice
+  mailer:
+    build:
+      context: ./mailer
+      dockerfile: Dockerfile
+    container_name: process-manager-mailer
+    restart: always
+    environment:
+      - MAILER_API_KEY=dkl1333022nd
+      - FROM_EMAIL_NAME=Process Manager
+      - SMTP_HOST=smtp.hostinger.com
+      - SMTP_PORT=465
+      - SMTP_USERNAME=admin@k-j.store
+      - SMTP_PASSWORD=0n3@L1f3@
+      - FROM_EMAIL=Process Manager <admin@k-j.store>
+    ports:
+      - "8085:80"
     networks:
       - process-manager
 

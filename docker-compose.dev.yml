@@ -113,6 +113,7 @@ services:
       - DEVELOPMENT_MODE=true
       - FIREBASE_SERVICE_ACCOUNT_PATH=/app/serviceAccountKey.json
       - GO_ENV=development
+      - MAILER_API_URL=https://mail.k-j.store/send
     depends_on:
       mongodb:
         condition: service_healthy

@@ -1,0 +1,55 @@
+# PHP Mailer Microservice - REST Client Tests
+# Use with VS Code REST Client or similar
+
+@baseUrl = https://mail.k-j.store
+@apiKey = 
+
+### Health Check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+###
+### Send basic HTML email to single recipient
+POST {{baseUrl}}/send
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "to": [
+    { "email": "k0d3.s0n1k@gmail.com", "name": "You" }
+  ],
+  "subject": "Test - Process Manager Mailer",
+  "html": "<h2>Hello from Mailer</h2><p>This is a test email sent via the PHP microservice.</p>",
+  "text": "Hello from Mailer - This is a test email."
+}
+
+###
+### Send to multiple recipients
+POST {{baseUrl}}/send
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "to": [
+    { "email": "first@example.com", "name": "First User" },
+    { "email": "second@example.com", "name": "Second User" }
+  ],
+  "subject": "Group Test - Process Manager Mailer",
+  "html": "<p>Hi team, this is a group test from the Mailer service.</p>",
+  "text": "Hi team, this is a group test from the Mailer service."
+}
+
+###
+### Validation error example (missing html)
+POST {{baseUrl}}/send
+Content-Type: application/json
+X-API-Key: {{apiKey}}
+
+{
+  "to": [
+    { "email": "invalid@example.com" }
+  ],
+  "subject": "This should fail"
+}
+
+

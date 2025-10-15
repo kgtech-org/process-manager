@@ -27,6 +27,10 @@ type EmailService struct {
 	// Brevo configuration
 	brevoAPIKey string
 	brevoAPIURL string
+
+	// External PHP Mailer API
+	mailerAPIURL string
+	mailerAPIKey string
 }
 
 type EmailTemplate struct {
@@ -117,6 +121,10 @@ func NewEmailService() *EmailService {
 	brevoAPIKey := os.Getenv("BREVO_KEY")
 	brevoAPIURL := "https://api.brevo.com/v3/smtp/email"
 
+	// PHP Mailer API configuration
+	mailerAPIURL := os.Getenv("MAILER_API_URL")
+	mailerAPIKey := os.Getenv("MAILER_API_KEY")
+
 	return &EmailService{
 		smtpHost:     smtpHost,
 		smtpPort:     smtpPort,
@@ -127,6 +135,8 @@ func NewEmailService() *EmailService {
 		appURL:       appURL,
 		brevoAPIKey:  brevoAPIKey,
 		brevoAPIURL:  brevoAPIURL,
+		mailerAPIURL: mailerAPIURL,
+		mailerAPIKey: mailerAPIKey,
 	}
 }
 
@@ -266,42 +276,109 @@ func (e *EmailService) SendInvitationEmail(userEmail, userName, inviterName, doc
 
 func (e *EmailService) sendEmail(toEmail, toName string, emailTemplate EmailTemplate, data EmailData) error {
 	// Log email method configuration
-	fmt.Printf("🔧 Email Configuration - Brevo: %t, SMTP: %t\n",
+	fmt.Printf("🔧 Email Configuration - MailerAPI: %t, Brevo: %t, SMTP: %t\n",
+		e.mailerAPIURL != "",
 		e.brevoAPIKey != "",
 		e.smtpUsername != "" && e.smtpPassword != "")
 
-	// Skip sending email if neither SMTP nor Brevo is configured
-	if (e.smtpUsername == "" || e.smtpPassword == "") && e.brevoAPIKey == "" {
-		fmt.Printf("⚠️ Email not sent (neither SMTP nor Brevo configured): %s to %s\n", emailTemplate.Subject, toEmail)
-		return nil
-	}
-
-	// Force Brevo API in production if available
-	if e.brevoAPIKey != "" {
-		fmt.Printf("📧 [PRODUCTION] Using Brevo API to send email to %s...\n", toEmail)
-		err := e.sendEmailViaBrevo(toEmail, toName, emailTemplate, data)
-		if err != nil {
-			fmt.Printf("❌ [PRODUCTION] Brevo API failed: %v\n", err)
-			// In production, don't fallback to SMTP if Brevo fails
-			return fmt.Errorf("Brevo API failed in production mode: %w", err)
-		}
-		fmt.Printf("✅ [PRODUCTION] Email successfully sent via Brevo API to %s\n", toEmail)
-		return nil
-	}
-
-	// Use SMTP only if Brevo is not available (development mode)
-	if e.smtpUsername != "" && e.smtpPassword != "" {
-		fmt.Printf("📧 [DEVELOPMENT] Using SMTP to send email to %s...\n", toEmail)
-		err := e.sendEmailViaSMTP(toEmail, toName, emailTemplate, data)
-		if err != nil {
-			fmt.Printf("❌ [DEVELOPMENT] SMTP failed: %v\n", err)
+	// Prefer external Mailer API if configured
+	if e.mailerAPIURL != "" {
+		fmt.Printf("📧 Using Mailer API to send email to %s...\n", toEmail)
+		if err := e.sendEmailViaMailerAPI(toEmail, toName, emailTemplate, data); err != nil {
+			fmt.Printf("❌ Mailer API failed: %v\n", err)
 			return err
 		}
-		fmt.Printf("✅ [DEVELOPMENT] Email successfully sent via SMTP to %s\n", toEmail)
+		fmt.Printf("✅ Email successfully sent via Mailer API to %s\n", toEmail)
+		return nil
+	}
+
+	// Fallback to Brevo if available
+	if e.brevoAPIKey != "" {
+		fmt.Printf("📧 Using Brevo API to send email to %s...\n", toEmail)
+		if err := e.sendEmailViaBrevo(toEmail, toName, emailTemplate, data); err != nil {
+			fmt.Printf("❌ Brevo API failed: %v\n", err)
+			return err
+		}
+		fmt.Printf("✅ Email successfully sent via Brevo API to %s\n", toEmail)
+		return nil
+	}
+
+	// Finally fallback to SMTP
+	if e.smtpUsername != "" && e.smtpPassword != "" {
+		fmt.Printf("📧 Using SMTP to send email to %s...\n", toEmail)
+		if err := e.sendEmailViaSMTP(toEmail, toName, emailTemplate, data); err != nil {
+			fmt.Printf("❌ SMTP failed: %v\n", err)
+			return err
+		}
+		fmt.Printf("✅ Email successfully sent via SMTP to %s\n", toEmail)
 		return nil
 	}
 
 	return fmt.Errorf("no email method available")
+}
+
+// sendEmailViaMailerAPI sends email using the external PHP mailer API
+func (e *EmailService) sendEmailViaMailerAPI(toEmail, toName string, emailTemplate EmailTemplate, data EmailData) error {
+	if e.mailerAPIURL == "" {
+		return fmt.Errorf("Mailer API URL not configured")
+	}
+
+	// Render templates
+	htmlTemplate, err := template.New("html").Parse(emailTemplate.HTMLBody)
+	if err != nil {
+		return fmt.Errorf("failed to parse HTML template: %w", err)
+	}
+
+	textTemplate, err := template.New("text").Parse(emailTemplate.TextBody)
+	if err != nil {
+		return fmt.Errorf("failed to parse text template: %w", err)
+	}
+
+	var htmlBuffer, textBuffer bytes.Buffer
+	if err := htmlTemplate.Execute(&htmlBuffer, data); err != nil {
+		return fmt.Errorf("failed to execute HTML template: %w", err)
+	}
+	if err := textTemplate.Execute(&textBuffer, data); err != nil {
+		return fmt.Errorf("failed to execute text template: %w", err)
+	}
+
+	// Build payload expected by PHP mailer API
+	payload := map[string]any{
+		"to": []map[string]string{{
+			"email": toEmail,
+			"name":  toName,
+		}},
+		"subject": emailTemplate.Subject,
+		"html":    htmlBuffer.String(),
+		"text":    textBuffer.String(),
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal mailer payload: %w", err)
+	}
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	req, err := http.NewRequest("POST", e.mailerAPIURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create mailer request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if e.mailerAPIKey != "" {
+		req.Header.Set("X-API-KEY", e.mailerAPIKey)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("mailer API request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("mailer API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	return nil
 }
 
 // sendEmailViaSMTP sends email using SMTP with retry logic
