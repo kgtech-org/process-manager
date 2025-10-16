@@ -9,7 +9,7 @@ interface DocumentStatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<DocumentStatus, { variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' }> = {
+const statusConfig: Record<DocumentStatus, { variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'; label?: string }> = {
   draft: {
     variant: 'secondary'
   },
@@ -17,13 +17,15 @@ const statusConfig: Record<DocumentStatus, { variant: 'default' | 'secondary' | 
     variant: 'warning'
   },
   author_signed: {
-    variant: 'outline'
+    variant: 'outline',
+    label: 'In Reviewing'
   },
   verifier_review: {
     variant: 'warning'
   },
   verifier_signed: {
-    variant: 'outline'
+    variant: 'outline',
+    label: 'In Reviewing'
   },
   validator_review: {
     variant: 'warning'
@@ -42,7 +44,7 @@ export function DocumentStatusBadge({ status, className }: DocumentStatusBadgePr
 
   return (
     <Badge variant={config.variant} className={className}>
-      {t(`status.${status}`)}
+      {config.label || t(`status.${status}`)}
     </Badge>
   );
 }
