@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { authService } from '@/lib/auth';
 import {
   Dialog,
   DialogContent,
@@ -62,6 +63,7 @@ export default function DocumentDetailPage() {
   });
   const [documentSwitcherOpen, setDocumentSwitcherOpen] = useState(false);
   const [allDocuments, setAllDocuments] = useState<Document[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [versionsModalOpen, setVersionsModalOpen] = useState(false);
@@ -70,7 +72,17 @@ export default function DocumentDetailPage() {
 
   useEffect(() => {
     loadDocument();
+    loadCurrentUser();
   }, [documentId]);
+
+  const loadCurrentUser = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      setCurrentUserId(user.id);
+    } catch (error) {
+      console.error('Failed to load current user:', error);
+    }
+  };
 
   // Persist active tab to localStorage
   useEffect(() => {
@@ -256,6 +268,24 @@ export default function DocumentDetailPage() {
     document.contributors.authors.length +
     document.contributors.verifiers.length +
     document.contributors.validators.length;
+
+  // Determine which team the current user belongs to
+  const getUserTeam = (): 'authors' | 'verifiers' | 'validators' | undefined => {
+    if (!currentUserId || !document) return undefined;
+
+    if (document.contributors.authors.some(c => c.userId === currentUserId)) {
+      return 'authors';
+    }
+    if (document.contributors.verifiers.some(c => c.userId === currentUserId)) {
+      return 'verifiers';
+    }
+    if (document.contributors.validators.some(c => c.userId === currentUserId)) {
+      return 'validators';
+    }
+    return undefined;
+  };
+
+  const userTeam = getUserTeam();
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -580,6 +610,7 @@ export default function DocumentDetailPage() {
           <SignaturePanel
             documentId={documentId}
             document={document}
+            userTeam={userTeam}
             onSignatureAdded={loadDocument}
           />
 

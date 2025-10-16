@@ -111,10 +111,8 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
   };
 
   const hasUserSigned = (): boolean => {
-    const signatureType = getSignatureType();
-    if (!signatureType) return false;
-
-    return signatures.some((sig) => sig.type === signatureType);
+    if (!currentUserId) return false;
+    return signatures.some((sig) => sig.userId === currentUserId);
   };
 
   const handleSignClick = () => {
@@ -133,12 +131,7 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
   };
 
   const handleSign = async () => {
-    console.log('🖊️ [SIGN] Starting sign process...');
-    console.log('🖊️ [SIGN] User signature:', userSignature);
-    console.log('🖊️ [SIGN] Signature data:', signatureData);
-
     const signatureType = getSignatureType();
-    console.log('🖊️ [SIGN] Signature type:', signatureType);
 
     if (!signatureType) {
       toast({
@@ -151,7 +144,6 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
 
     // Validate that we have signature data (should be pre-filled from userSignature)
     if (!userSignature || !signatureData.signatureData) {
-      console.error('❌ [SIGN] Missing signature data!', { userSignature, signatureData });
       toast({
         title: t('signatures.error'),
         description: 'Signature data is missing',
@@ -163,13 +155,11 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
     setSigning(true);
 
     try {
-      console.log('🖊️ [SIGN] Sending signature request...');
       const result = await SignatureResource.add(documentId, {
         type: signatureType,
         signatureData: signatureData.signatureData,
         comments: signatureData.comments,
       });
-      console.log('✅ [SIGN] Signature added successfully:', result);
 
       toast({
         title: t('signatures.success'),
@@ -235,17 +225,39 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
     }
   };
 
+  const renderSignature = (signature: Signature) => {
+    // Parse signature data to determine type
+    const isImageOrDrawn = signature.signatureData.startsWith('data:image/');
+
+    return (
+      <div className="border rounded-lg p-3 bg-gray-50 flex items-center justify-center min-h-[80px]">
+        {isImageOrDrawn ? (
+          <img
+            src={signature.signatureData}
+            alt="Signature"
+            className="max-h-[60px] max-w-full object-contain"
+          />
+        ) : (
+          <p className="text-xl" style={{ fontFamily: 'cursive' }}>
+            {signature.signatureData}
+          </p>
+        )}
+      </div>
+    );
+  };
+
   const renderContributorWithSignature = (contributor: Contributor, type: SignatureType) => {
     const signature = getSignatureForContributor(contributor);
     const isCurrentUser = currentUserId === contributor.userId;
     const canSign = isCurrentUser && contributor.status === 'pending' && !signature;
+    const hasSigned = signature !== null;
 
     return (
       <div
         key={contributor.userId}
-        className={`p-3 border rounded-lg space-y-2 ${isCurrentUser ? 'bg-blue-50/50 border-blue-200' : ''}`}
+        className={`p-3 border rounded-lg ${isCurrentUser ? 'bg-blue-50/50 border-blue-200' : ''}`}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <p className="font-medium">{contributor.name}</p>
@@ -259,8 +271,32 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {canSign ? (
+
+          {/* Signature or Action */}
+          <div className="flex items-center gap-3">
+            {signature ? (
+              <div className="flex items-center gap-3">
+                {/* Inline signature preview */}
+                <div className="border rounded p-2 bg-gray-50 flex items-center justify-center h-12 w-32">
+                  {signature.signatureData.startsWith('data:image/') ? (
+                    <img
+                      src={signature.signatureData}
+                      alt="Signature"
+                      className="max-h-10 max-w-full object-contain"
+                    />
+                  ) : (
+                    <p className="text-sm" style={{ fontFamily: 'cursive' }}>
+                      {signature.signatureData}
+                    </p>
+                  )}
+                </div>
+                {/* Date */}
+                <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
+                  <CheckCircle2 className="h-3 w-3 text-green-600" />
+                  <span>{new Date(signature.signedAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ) : canSign ? (
               <Button
                 size="sm"
                 onClick={handleSignClick}
@@ -270,22 +306,19 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
                 Sign
               </Button>
             ) : (
-              <>
+              <div className="flex items-center gap-2">
                 {getSignatureStatusIcon(contributor.status)}
                 <span className="text-sm capitalize">{contributor.status}</span>
-              </>
+              </div>
             )}
           </div>
         </div>
 
-        {signature && (
-          <div className="pl-4 border-l-2 border-green-500 space-y-1">
-            <p className="text-xs text-muted-foreground">
-              Signed: {new Date(signature.signedAt).toLocaleString()}
-            </p>
-            {signature.comments && (
-              <p className="text-sm text-gray-600">{signature.comments}</p>
-            )}
+        {/* Comments on separate line if exists */}
+        {signature && signature.comments && (
+          <div className="mt-2 pl-4 border-l-2 border-blue-400 text-sm text-gray-700">
+            <span className="text-xs text-muted-foreground">Comment: </span>
+            {signature.comments}
           </div>
         )}
       </div>
