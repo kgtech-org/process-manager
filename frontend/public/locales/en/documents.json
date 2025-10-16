@@ -25,9 +25,9 @@
   "status": {
     "draft": "Draft",
     "author_review": "Author Review",
-    "author_signed": "Author Signed",
+    "author_signed": "In Reviewing",
     "verifier_review": "Verifier Review",
-    "verifier_signed": "Verifier Signed",
+    "verifier_signed": "In Reviewing",
     "validator_review": "Validator Review",
     "approved": "Approved",
     "archived": "Archived"

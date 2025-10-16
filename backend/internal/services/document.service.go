@@ -397,37 +397,47 @@ func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*
 		return nil, err
 	}
 
-	// Check if document is in draft status
-	if document.Status != models.DocumentStatusDraft {
-		return nil, errors.New("only draft documents can be published")
-	}
-
-	// Update all contributors with 'joined' status to 'pending'
 	now := time.Now()
+	var newStatus models.DocumentStatus
 
-	// Update authors status
-	for i := range document.Contributors.Authors {
-		if document.Contributors.Authors[i].Status == models.SignatureStatusJoined {
-			document.Contributors.Authors[i].Status = models.SignatureStatusPending
+	// Determine next status based on current status
+	switch document.Status {
+	case models.DocumentStatusDraft:
+		// Publish for author signatures
+		newStatus = models.DocumentStatusAuthorReview
+		// Update authors with 'joined' status to 'pending'
+		for i := range document.Contributors.Authors {
+			if document.Contributors.Authors[i].Status == models.SignatureStatusJoined {
+				document.Contributors.Authors[i].Status = models.SignatureStatusPending
+			}
 		}
-	}
 
-	// Update verifiers status
-	for i := range document.Contributors.Verifiers {
-		if document.Contributors.Verifiers[i].Status == models.SignatureStatusJoined {
-			document.Contributors.Verifiers[i].Status = models.SignatureStatusPending
+	case models.DocumentStatusAuthorSigned:
+		// All authors have signed, publish for verifiers
+		newStatus = models.DocumentStatusVerifierReview
+		// Update verifiers with 'joined' status to 'pending'
+		for i := range document.Contributors.Verifiers {
+			if document.Contributors.Verifiers[i].Status == models.SignatureStatusJoined {
+				document.Contributors.Verifiers[i].Status = models.SignatureStatusPending
+			}
 		}
-	}
 
-	// Update validators status
-	for i := range document.Contributors.Validators {
-		if document.Contributors.Validators[i].Status == models.SignatureStatusJoined {
-			document.Contributors.Validators[i].Status = models.SignatureStatusPending
+	case models.DocumentStatusVerifierSigned:
+		// All verifiers have signed, publish for validators
+		newStatus = models.DocumentStatusValidatorReview
+		// Update validators with 'joined' status to 'pending'
+		for i := range document.Contributors.Validators {
+			if document.Contributors.Validators[i].Status == models.SignatureStatusJoined {
+				document.Contributors.Validators[i].Status = models.SignatureStatusPending
+			}
 		}
+
+	default:
+		return nil, fmt.Errorf("document cannot be published from status: %s", document.Status)
 	}
 
 	// Update document status and timestamp
-	document.Status = models.DocumentStatusAuthorReview
+	document.Status = newStatus
 	document.UpdatedAt = now
 
 	// Replace the entire document to avoid validation issues
