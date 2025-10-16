@@ -285,6 +285,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     ],
     content,
     editable: !readOnly,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onChange?.(editor.getHTML());
     },
