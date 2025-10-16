@@ -291,9 +291,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     },
   });
 
+  const contentRef = React.useRef(content);
+
   React.useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+    // Only update content if it changed externally, not from user typing
+    if (editor && content !== contentRef.current) {
+      const editorContent = editor.getHTML();
+      if (content !== editorContent) {
+        editor.commands.setContent(content);
+        contentRef.current = content;
+      }
     }
   }, [content, editor]);
 
