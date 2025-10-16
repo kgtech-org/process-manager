@@ -22,8 +22,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Signature, SignatureResource, SignatureType, Document, Contributor } from '@/lib/resources';
-import { CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Signature, SignatureResource, SignatureType, Document, Contributor, UserResource } from '@/lib/resources';
+import { CheckCircle2, XCircle, Clock, PenTool } from 'lucide-react';
 
 interface SignaturePanelProps {
   documentId: string;
@@ -43,10 +43,21 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
     signatureData: '',
   });
   const [signing, setSigning] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadSignatures();
+    loadCurrentUser();
   }, [documentId]);
+
+  const loadCurrentUser = async () => {
+    try {
+      const user = await UserResource.getCurrentUser();
+      setCurrentUserId(user.id);
+    } catch (error) {
+      console.error('Failed to load current user:', error);
+    }
+  };
 
   const loadSignatures = async () => {
     try {
@@ -181,15 +192,22 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
 
   const renderContributorWithSignature = (contributor: Contributor, type: SignatureType) => {
     const signature = getSignatureForContributor(contributor);
+    const isCurrentUser = currentUserId === contributor.userId;
+    const canSign = isCurrentUser && contributor.status === 'pending' && !signature;
 
     return (
       <div
         key={contributor.userId}
-        className="p-3 border rounded-lg space-y-2"
+        className={`p-3 border rounded-lg space-y-2 ${isCurrentUser ? 'bg-blue-50/50 border-blue-200' : ''}`}
       >
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="font-medium">{contributor.name}</p>
+            <p className="font-medium">
+              {contributor.name}
+              {isCurrentUser && (
+                <Badge variant="outline" className="ml-2 text-xs">You</Badge>
+              )}
+            </p>
             {(contributor.title || contributor.department) && (
               <p className="text-sm text-muted-foreground">
                 {[contributor.title, contributor.department].filter(Boolean).join(' • ')}
@@ -197,8 +215,21 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
             )}
           </div>
           <div className="flex items-center gap-2">
-            {getSignatureStatusIcon(contributor.status)}
-            <span className="text-sm capitalize">{contributor.status}</span>
+            {canSign ? (
+              <Button
+                size="sm"
+                onClick={() => setSignDialogOpen(true)}
+                className="gap-2"
+              >
+                <PenTool className="h-4 w-4" />
+                Sign
+              </Button>
+            ) : (
+              <>
+                {getSignatureStatusIcon(contributor.status)}
+                <span className="text-sm capitalize">{contributor.status}</span>
+              </>
+            )}
           </div>
         </div>
 
