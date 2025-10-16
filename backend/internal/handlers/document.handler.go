@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kodesonik/process-manager/internal/helpers"
@@ -13,14 +14,18 @@ import (
 )
 
 type DocumentHandler struct {
-	documentService     *services.DocumentService
-	activityLogService  *services.ActivityLogService
+	documentService      *services.DocumentService
+	activityLogService   *services.ActivityLogService
+	minioService         *services.MinIOService
+	notificationService  *services.NotificationService
 }
 
-func NewDocumentHandler(documentService *services.DocumentService, activityLogService *services.ActivityLogService) *DocumentHandler {
+func NewDocumentHandler(documentService *services.DocumentService, activityLogService *services.ActivityLogService, minioService *services.MinIOService, notificationService *services.NotificationService) *DocumentHandler {
 	return &DocumentHandler{
-		documentService:    documentService,
-		activityLogService: activityLogService,
+		documentService:     documentService,
+		activityLogService:  activityLogService,
+		minioService:        minioService,
+		notificationService: notificationService,
 	}
 }
 
@@ -337,9 +342,20 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 		return
 	}
 
+	// Get current user
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
 	ctx := c.Request.Context()
+
+	fmt.Printf("📤 [PUBLISH] Publishing document ID: %s\n", id.Hex())
+
 	document, err := h.documentService.Publish(ctx, id)
 	if err != nil {
+		fmt.Printf("❌ [PUBLISH] Error: %v\n", err)
 		if err.Error() == "document not found" {
 			helpers.SendNotFound(c, "Document not found")
 			return
@@ -351,6 +367,8 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 		helpers.SendInternalError(c, err)
 		return
 	}
+
+	fmt.Printf("✅ [PUBLISH] Document published successfully, status: %s\n", document.Status)
 
 	// Log activity
 	activityReq := models.ActivityLogRequest{
@@ -369,6 +387,53 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
 		fmt.Printf("Failed to log activity: %v\n", logErr)
 	}
+
+	// Send notifications to all contributors who need to sign
+	go func() {
+		// Collect all contributor user IDs as strings
+		var userIDStrings []string
+
+		for _, author := range document.Contributors.Authors {
+			if author.Status == models.SignatureStatusPending {
+				userIDStrings = append(userIDStrings, author.UserID.Hex())
+			}
+		}
+		for _, verifier := range document.Contributors.Verifiers {
+			if verifier.Status == models.SignatureStatusPending {
+				userIDStrings = append(userIDStrings, verifier.UserID.Hex())
+			}
+		}
+		for _, validator := range document.Contributors.Validators {
+			if validator.Status == models.SignatureStatusPending {
+				userIDStrings = append(userIDStrings, validator.UserID.Hex())
+			}
+		}
+
+		if len(userIDStrings) == 0 {
+			return
+		}
+
+		// Send notification
+		notificationReq := &models.SendNotificationRequest{
+			UserIDs:  userIDStrings,
+			Title:    "Document Ready for Signature",
+			Body:     fmt.Sprintf("Document '%s' (%s) has been published and is ready for your signature.", document.Title, document.Reference),
+			Category: "document",
+			Data: map[string]interface{}{
+				"documentId": document.ID.Hex(),
+				"reference":  document.Reference,
+				"title":      document.Title,
+				"action":     "signature_required",
+			},
+		}
+
+		_, err := h.notificationService.SendNotification(ctx, notificationReq, user.ID)
+		if err != nil {
+			fmt.Printf("⚠️  Failed to send notifications for published document: %v\n", err)
+		} else {
+			fmt.Printf("✅ Sent signature notifications to %d contributors\n", len(userIDStrings))
+		}
+	}()
 
 	helpers.SendSuccess(c, "Document published successfully", document.ToResponse())
 }
@@ -655,4 +720,224 @@ func (h *DocumentHandler) DeleteAnnex(c *gin.Context) {
 	}
 
 	helpers.SendSuccess(c, "Annex deleted successfully", nil)
+}
+
+// UploadAnnexFiles handles file uploads for an annex
+// POST /api/documents/:id/annexes/:annexId/files
+func (h *DocumentHandler) UploadAnnexFiles(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	annexID := c.Param("annexId")
+
+	// Get current user
+	_, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	// Get the multipart form
+	form, err := c.MultipartForm()
+	if err != nil {
+		helpers.SendBadRequest(c, "Failed to parse multipart form")
+		return
+	}
+
+	files := form.File["files"]
+	if len(files) == 0 {
+		helpers.SendBadRequest(c, "No files uploaded")
+		return
+	}
+
+	fmt.Printf("📎 [UPLOAD] Uploading %d files for annex %s\n", len(files), annexID)
+
+	uploadedFiles := []map[string]interface{}{}
+
+	for _, fileHeader := range files {
+		// Open the uploaded file
+		file, err := fileHeader.Open()
+		if err != nil {
+			helpers.SendBadRequest(c, fmt.Sprintf("Failed to open file %s: %v", fileHeader.Filename, err))
+			return
+		}
+		defer file.Close()
+
+		// Generate unique file ID
+		fileID := primitive.NewObjectID().Hex()
+
+		// Upload to MinIO
+		fileURL, err := h.minioService.UploadAnnexFile(
+			ctx,
+			id.Hex(),
+			annexID,
+			fileID,
+			file,
+			fileHeader.Size,
+			fileHeader.Header.Get("Content-Type"),
+			fileHeader.Filename,
+		)
+		if err != nil {
+			helpers.SendInternalError(c, fmt.Errorf("failed to upload file %s: %w", fileHeader.Filename, err))
+			return
+		}
+
+		uploadedFile := map[string]interface{}{
+			"id":         fileID,
+			"name":       fileHeader.Filename,
+			"type":       fileHeader.Header.Get("Content-Type"),
+			"size":       fileHeader.Size,
+			"url":        fileURL,
+			"uploadedAt": time.Now().Format(time.RFC3339),
+		}
+		uploadedFiles = append(uploadedFiles, uploadedFile)
+	}
+
+	// Get current annex content
+	document, err := h.documentService.GetByID(ctx, id)
+	if err != nil {
+		helpers.SendNotFound(c, "Document not found")
+		return
+	}
+
+	// Find the annex and update its files
+	var annexFound bool
+	for i, annex := range document.Annexes {
+		if annex.ID == annexID {
+			annexFound = true
+
+			// Get existing files or initialize empty array
+			existingFiles, ok := annex.Content["files"].([]interface{})
+			if !ok {
+				existingFiles = []interface{}{}
+			}
+
+			// Append new files
+			for _, file := range uploadedFiles {
+				existingFiles = append(existingFiles, file)
+			}
+
+			// Update annex content
+			document.Annexes[i].Content["files"] = existingFiles
+			break
+		}
+	}
+
+	if !annexFound {
+		helpers.SendNotFound(c, "Annex not found")
+		return
+	}
+
+	// Update the document with new files
+	_, err = h.documentService.UpdateAnnex(ctx, id, annexID, &models.UpdateAnnexRequest{
+		Content: &document.Annexes[0].Content,
+	})
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	fmt.Printf("✅ [UPLOAD] Files uploaded successfully\n")
+
+	c.JSON(http.StatusOK, uploadedFiles)
+}
+
+// DeleteAnnexFile handles file deletion from an annex
+// DELETE /api/documents/:id/annexes/:annexId/files/:fileId
+func (h *DocumentHandler) DeleteAnnexFile(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	annexID := c.Param("annexId")
+	fileID := c.Param("fileId")
+
+	// Get current user
+	_, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	fmt.Printf("🗑️ [DELETE] Deleting file %s from annex %s\n", fileID, annexID)
+
+	// Get current document
+	document, err := h.documentService.GetByID(ctx, id)
+	if err != nil {
+		helpers.SendNotFound(c, "Document not found")
+		return
+	}
+
+	// Find the annex and remove the file
+	var annexFound bool
+	var fileURL string
+	for i, annex := range document.Annexes {
+		if annex.ID == annexID {
+			annexFound = true
+
+			// Get existing files
+			existingFiles, ok := annex.Content["files"].([]interface{})
+			if !ok {
+				existingFiles = []interface{}{}
+			}
+
+			// Remove the file with matching ID and get its URL for MinIO deletion
+			updatedFiles := []interface{}{}
+			for _, file := range existingFiles {
+				fileMap, ok := file.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if fileMap["id"] == fileID {
+					// Store the URL for MinIO deletion
+					if url, ok := fileMap["url"].(string); ok {
+						fileURL = url
+					}
+				} else {
+					updatedFiles = append(updatedFiles, file)
+				}
+			}
+
+			// Update annex content
+			document.Annexes[i].Content["files"] = updatedFiles
+			break
+		}
+	}
+
+	if !annexFound {
+		helpers.SendNotFound(c, "Annex not found")
+		return
+	}
+
+	// Delete file from MinIO if URL exists
+	if fileURL != "" {
+		if err := h.minioService.DeleteAnnexFile(ctx, fileURL); err != nil {
+			// Log the error but don't fail the request
+			fmt.Printf("⚠️  [WARNING] Failed to delete file from MinIO: %v\n", err)
+		}
+	}
+
+	// Update the document
+	_, err = h.documentService.UpdateAnnex(ctx, id, annexID, &models.UpdateAnnexRequest{
+		Content: &document.Annexes[0].Content,
+	})
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	fmt.Printf("✅ [DELETE] File deleted successfully\n")
+
+	helpers.SendSuccess(c, "File deleted successfully", nil)
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,18 +35,22 @@ export function DocumentSearch({ onSearch, initialFilters = {} }: DocumentSearch
   const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
   const [status, setStatus] = useState<DocumentStatus | 'all'>(initialFilters.status || 'all');
 
-  const handleSearch = () => {
-    const filters: DocumentFilter = {
-      search: searchQuery || undefined,
-      status: status !== 'all' ? status : undefined,
-    };
-    onSearch(filters);
-  };
+  // Debounced search - triggers automatically after 500ms of no typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const filters: DocumentFilter = {
+        search: searchQuery || undefined,
+        status: status !== 'all' ? status : undefined,
+      };
+      onSearch(filters);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, status, onSearch]);
 
   const handleReset = () => {
     setSearchQuery('');
     setStatus('all');
-    onSearch({});
   };
 
   const hasActiveFilters = searchQuery || status !== 'all';
@@ -59,7 +63,6 @@ export function DocumentSearch({ onSearch, initialFilters = {} }: DocumentSearch
           placeholder={t('searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           className="pl-9"
         />
       </div>
@@ -76,18 +79,12 @@ export function DocumentSearch({ onSearch, initialFilters = {} }: DocumentSearch
           ))}
         </SelectContent>
       </Select>
-      <div className="flex gap-2">
-        <Button onClick={handleSearch} className="flex-1 sm:flex-none">
-          <Search className="h-4 w-4 mr-2" />
-          {t('search')}
+      {hasActiveFilters && (
+        <Button onClick={handleReset} variant="outline">
+          <X className="h-4 w-4 mr-2" />
+          {t('reset')}
         </Button>
-        {hasActiveFilters && (
-          <Button onClick={handleReset} variant="outline" className="flex-1 sm:flex-none">
-            <X className="h-4 w-4 mr-2" />
-            {t('reset')}
-          </Button>
-        )}
-      </div>
+      )}
     </div>
   );
 }

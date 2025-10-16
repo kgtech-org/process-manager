@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { authService } from '@/lib/auth';
 import {
   Dialog,
   DialogContent,
@@ -62,6 +63,7 @@ export default function DocumentDetailPage() {
   });
   const [documentSwitcherOpen, setDocumentSwitcherOpen] = useState(false);
   const [allDocuments, setAllDocuments] = useState<Document[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [versionsModalOpen, setVersionsModalOpen] = useState(false);
@@ -70,7 +72,17 @@ export default function DocumentDetailPage() {
 
   useEffect(() => {
     loadDocument();
+    loadCurrentUser();
   }, [documentId]);
+
+  const loadCurrentUser = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      setCurrentUserId(user.id);
+    } catch (error) {
+      console.error('Failed to load current user:', error);
+    }
+  };
 
   // Persist active tab to localStorage
   useEffect(() => {
@@ -222,8 +234,16 @@ export default function DocumentDetailPage() {
 
   const handleUpdateAnnex = useCallback(async (annexId: string, updates: any) => {
     await DocumentResource.updateAnnex(documentId, annexId, updates);
-    // Reload document to get updated annexes
-    await loadDocument();
+    // Don't reload the entire document - just update local state
+    setDocument((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        annexes: prev.annexes.map((annex) =>
+          annex.id === annexId ? { ...annex, ...updates } : annex
+        ),
+      };
+    });
   }, [documentId]);
 
   const handleDeleteAnnex = useCallback(async (annexId: string) => {
@@ -248,6 +268,24 @@ export default function DocumentDetailPage() {
     document.contributors.authors.length +
     document.contributors.verifiers.length +
     document.contributors.validators.length;
+
+  // Determine which team the current user belongs to
+  const getUserTeam = (): 'authors' | 'verifiers' | 'validators' | undefined => {
+    if (!currentUserId || !document) return undefined;
+
+    if (document.contributors.authors.some(c => c.userId === currentUserId)) {
+      return 'authors';
+    }
+    if (document.contributors.verifiers.some(c => c.userId === currentUserId)) {
+      return 'verifiers';
+    }
+    if (document.contributors.validators.some(c => c.userId === currentUserId)) {
+      return 'validators';
+    }
+    return undefined;
+  };
+
+  const userTeam = getUserTeam();
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -355,18 +393,22 @@ export default function DocumentDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Created</CardTitle>
+            <CardTitle className="text-sm font-medium">Document Info</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-2">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">
                 {new Date(document.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
+                  month: 'short',
                   day: 'numeric',
+                  year: 'numeric',
                 })}
               </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">v{document.version}</span>
             </div>
           </CardContent>
         </Card>
@@ -399,117 +441,95 @@ export default function DocumentDetailPage() {
           <CardHeader>
             <CardTitle className="text-sm font-medium">Content</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1">
-            <div className="flex items-center gap-2 text-sm">
-              <span>{document.annexes?.length || 0} annexes</span>
+          <CardContent className="space-y-2">
+            <div className="text-sm">
+              {document.annexes?.length || 0} annexes
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span>
-                {(document.metadata?.objectives?.length || 0) +
-                  (document.metadata?.implicatedActors?.length || 0) +
-                  (document.metadata?.managementRules?.length || 0) +
-                  (document.metadata?.terminology?.length || 0)}{' '}
-                metadata items
-              </span>
+            <div className="text-sm text-muted-foreground">
+              {(document.metadata?.objectives?.length || 0) +
+                (document.metadata?.implicatedActors?.length || 0) +
+                (document.metadata?.managementRules?.length || 0) +
+                (document.metadata?.terminology?.length || 0)}{' '}
+              metadata items
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="md:col-span-2 lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Versions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Dialog open={versionsModalOpen} onOpenChange={setVersionsModalOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    if (versions.length === 0) {
-                      loadVersions();
-                    }
-                  }}
-                >
-                  View History
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[600px]">
-                <DialogHeader>
-                  <DialogTitle>Document Versions</DialogTitle>
-                  <DialogDescription>
-                    View all versions of this document
-                  </DialogDescription>
-                </DialogHeader>
-                {versionsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {versions.map((version) => {
-                      const versionData = version.data || version;
-                      return (
-                        <Card key={version.id}>
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Badge variant="secondary">v{version.version}</Badge>
-                                  <DocumentStatusBadge status={versionData.status} />
-                                  {version.documentId === documentId && (
-                                    <Badge variant="outline">Current</Badge>
-                                  )}
-                                </div>
-                                <h3 className="font-semibold">{versionData.title}</h3>
-                                <p className="text-sm text-muted-foreground">
-                                  {versionData.reference}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Created: {new Date(version.createdAt).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
-                                </p>
-                                {version.changeNote && (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Note: {version.changeNote}
-                                  </p>
-                                )}
-                              </div>
-                              {version.documentId !== documentId && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    router.push(`/documents/${version.documentId}`);
-                                    setVersionsModalOpen(false);
-                                  }}
-                                >
-                                  View
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                    {versions.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        No version history available
-                      </div>
-                    )}
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
           </CardContent>
         </Card>
       </div>
+
+      {/* Versions Dialog (hidden by default) */}
+      <Dialog open={versionsModalOpen} onOpenChange={setVersionsModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[600px]">
+          <DialogHeader>
+            <DialogTitle>Document Versions</DialogTitle>
+            <DialogDescription>
+              View all versions of this document
+            </DialogDescription>
+          </DialogHeader>
+          {versionsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {versions.map((version) => {
+                const versionData = version.data || version;
+                return (
+                  <Card key={version.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="secondary">v{version.version}</Badge>
+                            <DocumentStatusBadge status={versionData.status} />
+                            {version.documentId === documentId && (
+                              <Badge variant="outline">Current</Badge>
+                            )}
+                          </div>
+                          <h3 className="font-semibold">{versionData.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {versionData.reference}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Created: {new Date(version.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                          {version.changeNote && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Note: {version.changeNote}
+                            </p>
+                          )}
+                        </div>
+                        {version.documentId !== documentId && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              router.push(`/documents/${version.documentId}`);
+                              setVersionsModalOpen(false);
+                            }}
+                          >
+                            View
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              {versions.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No version history available
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Main Document Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -590,6 +610,7 @@ export default function DocumentDetailPage() {
           <SignaturePanel
             documentId={documentId}
             document={document}
+            userTeam={userTeam}
             onSignatureAdded={loadDocument}
           />
 

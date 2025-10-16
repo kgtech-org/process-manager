@@ -49,5 +49,9 @@ func SetupDocumentRoutes(
 		documents.POST("/:id/annexes", documentMiddleware.RequireDocumentAccess(), documentHandler.CreateAnnex)
 		documents.PATCH("/:id/annexes/:annexId", documentMiddleware.RequireDocumentAccess(), documentHandler.UpdateAnnex)
 		documents.DELETE("/:id/annexes/:annexId", documentMiddleware.RequireDocumentAccess(), documentHandler.DeleteAnnex)
+
+		// Annex Files (require document access)
+		documents.POST("/:id/annexes/:annexId/files", documentMiddleware.RequireDocumentAccess(), documentHandler.UploadAnnexFiles)
+		documents.DELETE("/:id/annexes/:annexId/files/:fileId", documentMiddleware.RequireDocumentAccess(), documentHandler.DeleteAnnexFile)
 	}
 }

@@ -285,14 +285,22 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     ],
     content,
     editable: !readOnly,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onChange?.(editor.getHTML());
     },
   });
 
+  const contentRef = React.useRef(content);
+
   React.useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+    // Only update content if it changed externally, not from user typing
+    if (editor && content !== contentRef.current) {
+      const editorContent = editor.getHTML();
+      if (content !== editorContent) {
+        editor.commands.setContent(content);
+        contentRef.current = content;
+      }
     }
   }, [content, editor]);
 
@@ -309,10 +317,20 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         editor={editor}
         className={cn(
           'prose prose-sm max-w-none p-4',
-          readOnly ? 'bg-muted/50' : '',
+          'focus-within:outline-none',
+          '[&_.ProseMirror]:outline-none',
+          '[&_.ProseMirror]:focus:outline-none',
+          '[&_.ProseMirror]:focus-visible:outline-none',
+          '[&_.ProseMirror]:min-h-full',
+          readOnly ? 'bg-muted/50' : 'cursor-text',
           `min-h-[${minHeight}]`
         )}
         style={{ minHeight }}
+        onClick={() => {
+          if (!readOnly && editor) {
+            editor.commands.focus();
+          }
+        }}
       />
     </div>
   );

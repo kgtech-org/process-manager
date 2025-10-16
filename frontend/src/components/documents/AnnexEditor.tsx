@@ -24,6 +24,7 @@ import { Plus, Edit, Trash2, FileText, Table as TableIcon, Image, File } from 'l
 import { DiagramEditor } from './DiagramEditor';
 import { TextEditor } from './TextEditor';
 import { TableEditor } from './TableEditor';
+import { FileUploadEditor } from './FileUploadEditor';
 import type { Annex, AnnexType } from '@/lib/resources/document';
 import { useToast } from '@/hooks/use-toast';
 
@@ -138,7 +139,7 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
       case 'table':
         return { headers: [], rows: [] };
       case 'text':
-        return { text: '', sections: [] };
+        return { text: '' };
       case 'file':
         return { files: [] };
       default:
@@ -211,7 +212,6 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
           <TextEditor
             initialContent={{
               text: annex.content?.text || '',
-              sections: annex.content?.sections || [],
             }}
             onChange={(content) => handleUpdateContent(annex.id, content)}
             readOnly={readOnly || !isEditing}
@@ -220,9 +220,13 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
 
       case 'file':
         return (
-          <div className="text-sm text-muted-foreground">
-            File upload functionality coming soon
-          </div>
+          <FileUploadEditor
+            documentId={documentId}
+            annexId={annex.id}
+            initialFiles={annex.content?.files || []}
+            onChange={(files) => handleUpdateContent(annex.id, { files })}
+            readOnly={readOnly || !isEditing}
+          />
         );
 
       default:
