@@ -22,9 +22,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Signature, SignatureResource, SignatureType, Document, Contributor } from '@/lib/resources';
+import { Signature, SignatureResource, SignatureType, Document, Contributor, UserSignatureResource, UserSignature } from '@/lib/resources';
 import { authService } from '@/lib/auth';
-import { CheckCircle2, XCircle, Clock, PenTool } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, PenTool, AlertCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
 
 interface SignaturePanelProps {
   documentId: string;
@@ -36,6 +42,7 @@ interface SignaturePanelProps {
 export function SignaturePanel({ documentId, document, userTeam, onSignatureAdded }: SignaturePanelProps) {
   const { t } = useTranslation('collaboration');
   const { toast } = useToast();
+  const router = useRouter();
   const [signatures, setSignatures] = useState<Signature[]>([]);
   const [loading, setLoading] = useState(true);
   const [signDialogOpen, setSignDialogOpen] = useState(false);
@@ -45,10 +52,13 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
   });
   const [signing, setSigning] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userSignature, setUserSignature] = useState<UserSignature | null>(null);
+  const [showNoSignatureDialog, setShowNoSignatureDialog] = useState(false);
 
   useEffect(() => {
     loadSignatures();
     loadCurrentUser();
+    loadUserSignature();
   }, [documentId]);
 
   const loadCurrentUser = async () => {
@@ -57,6 +67,15 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
       setCurrentUserId(user.id);
     } catch (error) {
       console.error('Failed to load current user:', error);
+    }
+  };
+
+  const loadUserSignature = async () => {
+    try {
+      const signature = await UserSignatureResource.get();
+      setUserSignature(signature);
+    } catch (error) {
+      console.error('Failed to load user signature:', error);
     }
   };
 
@@ -96,6 +115,21 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
     if (!signatureType) return false;
 
     return signatures.some((sig) => sig.type === signatureType);
+  };
+
+  const handleSignClick = () => {
+    // Check if user has a signature first
+    if (!userSignature) {
+      setShowNoSignatureDialog(true);
+      return;
+    }
+
+    // Pre-fill with user's signature
+    setSignatureData({
+      comments: '',
+      signatureData: userSignature.data,
+    });
+    setSignDialogOpen(true);
   };
 
   const handleSign = async () => {
@@ -219,7 +253,7 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
             {canSign ? (
               <Button
                 size="sm"
-                onClick={() => setSignDialogOpen(true)}
+                onClick={handleSignClick}
                 className="gap-2"
               >
                 <PenTool className="h-4 w-4" />
@@ -273,7 +307,7 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
               <CardDescription>{t('signatures.description')}</CardDescription>
             </div>
             {userTeam && !hasUserSigned() && (
-              <Button onClick={() => setSignDialogOpen(true)}>
+              <Button onClick={handleSignClick}>
                 {t('signatures.signDocument')}
               </Button>
             )}
@@ -377,6 +411,42 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
             </Button>
             <Button onClick={handleSign} disabled={signing}>
               {signing ? t('signatures.signing') : t('signatures.sign')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* No Signature Dialog */}
+      <Dialog open={showNoSignatureDialog} onOpenChange={setShowNoSignatureDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              Signature Required
+            </DialogTitle>
+            <DialogDescription>
+              You need to create your signature before you can sign documents.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>No Signature Found</AlertTitle>
+            <AlertDescription>
+              Please go to your profile page to create your digital signature.
+              You can upload an image, draw your signature, or type it.
+            </AlertDescription>
+          </Alert>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNoSignatureDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              setShowNoSignatureDialog(false);
+              router.push('/profile');
+            }}>
+              Go to Profile
             </Button>
           </DialogFooter>
         </DialogContent>
