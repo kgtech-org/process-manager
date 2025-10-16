@@ -384,31 +384,32 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 
 	// Send notifications to all contributors who need to sign
 	go func() {
-		// Collect all contributor user IDs
-		var contributorIDs []primitive.ObjectID
+		// Collect all contributor user IDs as strings
+		var userIDStrings []string
 
 		for _, author := range document.Contributors.Authors {
 			if author.Status == models.SignatureStatusPending {
-				contributorIDs = append(contributorIDs, author.UserID)
+				userIDStrings = append(userIDStrings, author.UserID.Hex())
 			}
 		}
 		for _, verifier := range document.Contributors.Verifiers {
 			if verifier.Status == models.SignatureStatusPending {
-				contributorIDs = append(contributorIDs, verifier.UserID)
+				userIDStrings = append(userIDStrings, verifier.UserID.Hex())
 			}
 		}
 		for _, validator := range document.Contributors.Validators {
 			if validator.Status == models.SignatureStatusPending {
-				contributorIDs = append(contributorIDs, validator.UserID)
+				userIDStrings = append(userIDStrings, validator.UserID.Hex())
 			}
 		}
 
-		if len(contributorIDs) == 0 {
+		if len(userIDStrings) == 0 {
 			return
 		}
 
 		// Send notification
 		notificationReq := &models.SendNotificationRequest{
+			UserIDs:  userIDStrings,
 			Title:    "Document Ready for Signature",
 			Body:     fmt.Sprintf("Document '%s' (%s) has been published and is ready for your signature.", document.Title, document.Reference),
 			Category: "document",
@@ -418,16 +419,13 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 				"title":      document.Title,
 				"action":     "signature_required",
 			},
-			Targets: &models.NotificationTargets{
-				UserIDs: contributorIDs,
-			},
 		}
 
 		_, err := h.notificationService.SendNotification(ctx, notificationReq, user.ID)
 		if err != nil {
 			fmt.Printf("⚠️  Failed to send notifications for published document: %v\n", err)
 		} else {
-			fmt.Printf("✅ Sent signature notifications to %d contributors\n", len(contributorIDs))
+			fmt.Printf("✅ Sent signature notifications to %d contributors\n", len(userIDStrings))
 		}
 	}()
 
