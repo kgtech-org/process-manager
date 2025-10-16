@@ -63,7 +63,7 @@ db.createCollection('documents', {
         version: { bsonType: 'string' },
         status: {
           bsonType: 'string',
-          enum: ['draft', 'review', 'approved', 'archived']
+          enum: ['draft', 'author_review', 'author_signed', 'verifier_review', 'verifier_signed', 'validator_review', 'approved', 'archived']
         },
         created_by: { bsonType: 'objectId' },
         created_at: { bsonType: 'date' },

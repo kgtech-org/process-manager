@@ -405,49 +405,43 @@ func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*
 	// Update all contributors with 'joined' status to 'pending'
 	now := time.Now()
 
-	// Update authors
+	// Update authors status
 	for i := range document.Contributors.Authors {
 		if document.Contributors.Authors[i].Status == models.SignatureStatusJoined {
 			document.Contributors.Authors[i].Status = models.SignatureStatusPending
 		}
 	}
 
-	// Update verifiers
+	// Update verifiers status
 	for i := range document.Contributors.Verifiers {
 		if document.Contributors.Verifiers[i].Status == models.SignatureStatusJoined {
 			document.Contributors.Verifiers[i].Status = models.SignatureStatusPending
 		}
 	}
 
-	// Update validators
+	// Update validators status
 	for i := range document.Contributors.Validators {
 		if document.Contributors.Validators[i].Status == models.SignatureStatusJoined {
 			document.Contributors.Validators[i].Status = models.SignatureStatusPending
 		}
 	}
 
-	// Update document
-	update := bson.M{
-		"$set": bson.M{
-			"contributors": document.Contributors,
-			"status":       models.DocumentStatusAuthorReview,
-			"updated_at":   now,
-		},
-	}
+	// Update document status and timestamp
+	document.Status = models.DocumentStatusAuthorReview
+	document.UpdatedAt = now
 
-	result := s.collection.FindOneAndUpdate(
+	// Replace the entire document to avoid validation issues
+	_, err = s.collection.ReplaceOne(
 		ctx,
 		bson.M{"_id": id},
-		update,
-		options.FindOneAndUpdate().SetReturnDocument(options.After),
+		document,
 	)
 
-	var updatedDocument models.Document
-	if err := result.Decode(&updatedDocument); err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("failed to publish document: %w", err)
 	}
 
-	return &updatedDocument, nil
+	return document, nil
 }
 
 // Delete deletes a document

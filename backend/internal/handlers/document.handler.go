@@ -350,8 +350,12 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
+
+	fmt.Printf("📤 [PUBLISH] Publishing document ID: %s\n", id.Hex())
+
 	document, err := h.documentService.Publish(ctx, id)
 	if err != nil {
+		fmt.Printf("❌ [PUBLISH] Error: %v\n", err)
 		if err.Error() == "document not found" {
 			helpers.SendNotFound(c, "Document not found")
 			return
@@ -363,6 +367,8 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 		helpers.SendInternalError(c, err)
 		return
 	}
+
+	fmt.Printf("✅ [PUBLISH] Document published successfully, status: %s\n", document.Status)
 
 	// Log activity
 	activityReq := models.ActivityLogRequest{
