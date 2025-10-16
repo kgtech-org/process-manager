@@ -25,9 +25,9 @@
   "status": {
     "draft": "Brouillon",
     "author_review": "Révision Auteur",
-    "author_signed": "Signé Auteur",
+    "author_signed": "En révision",
     "verifier_review": "Révision Vérificateur",
-    "verifier_signed": "Signé Vérificateur",
+    "verifier_signed": "En révision",
     "validator_review": "Révision Validateur",
     "approved": "Approuvé",
     "archived": "Archivé"
