@@ -203,12 +203,12 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
       >
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="font-medium">
-              {contributor.name}
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{contributor.name}</p>
               {isCurrentUser && (
-                <Badge variant="outline" className="ml-2 text-xs">You</Badge>
+                <Badge variant="outline" className="text-xs">You</Badge>
               )}
-            </p>
+            </div>
             {(contributor.title || contributor.department) && (
               <p className="text-sm text-muted-foreground">
                 {[contributor.title, contributor.department].filter(Boolean).join(' • ')}
