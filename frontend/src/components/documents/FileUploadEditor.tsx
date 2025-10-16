@@ -72,11 +72,16 @@ export const FileUploadEditor: React.FC<FileUploadEditorProps> = ({
         formData.append('files', file);
       });
 
-      // TODO: Replace with actual API call
+      // Get access token from localStorage
+      const accessToken = localStorage.getItem('access_token');
+
       const response = await fetch(`/api/documents/${documentId}/annexes/${annexId}/files`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
       });
 
       if (!response.ok) {
@@ -111,10 +116,15 @@ export const FileUploadEditor: React.FC<FileUploadEditorProps> = ({
     if (!confirm('Are you sure you want to remove this file?')) return;
 
     try {
-      // TODO: Replace with actual API call
+      // Get access token from localStorage
+      const accessToken = localStorage.getItem('access_token');
+
       await fetch(`/api/documents/${documentId}/annexes/${annexId}/files/${fileId}`, {
         method: 'DELETE',
         credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
       });
 
       const updatedFiles = files.filter((f) => f.id !== fileId);
