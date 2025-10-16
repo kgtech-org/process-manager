@@ -22,7 +22,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Signature, SignatureResource, SignatureType, Document, Contributor, UserResource } from '@/lib/resources';
+import { Signature, SignatureResource, SignatureType, Document, Contributor } from '@/lib/resources';
+import { authService } from '@/lib/auth';
 import { CheckCircle2, XCircle, Clock, PenTool } from 'lucide-react';
 
 interface SignaturePanelProps {
@@ -52,7 +53,7 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
 
   const loadCurrentUser = async () => {
     try {
-      const user = await UserResource.getCurrentUser();
+      const user = await authService.getCurrentUser();
       setCurrentUserId(user.id);
     } catch (error) {
       console.error('Failed to load current user:', error);
