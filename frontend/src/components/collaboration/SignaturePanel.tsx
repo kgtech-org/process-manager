@@ -377,16 +377,33 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="signature">{t('signatures.signatureField')}</Label>
-              <Textarea
-                id="signature"
-                placeholder={t('signatures.signaturePlaceholder')}
-                value={signatureData.signatureData}
-                onChange={(e) =>
-                  setSignatureData({ ...signatureData, signatureData: e.target.value })
+
+              {/* Display signature preview */}
+              {userSignature && (
+                <div className="border rounded-lg p-4 bg-gray-50 flex items-center justify-center min-h-[120px]">
+                  {userSignature.type === 'image' || userSignature.type === 'drawn' ? (
+                    <img
+                      src={userSignature.data}
+                      alt="Your signature"
+                      className="max-h-[100px] max-w-full object-contain"
+                    />
+                  ) : (
+                    <p
+                      className="text-2xl"
+                      style={{ fontFamily: userSignature.font || 'cursive' }}
+                    >
+                      {userSignature.data}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <p className="text-xs text-gray-500">
+                {userSignature
+                  ? 'This signature will be applied to the document'
+                  : t('signatures.signatureHelp')
                 }
-                rows={3}
-              />
-              <p className="text-xs text-gray-500">{t('signatures.signatureHelp')}</p>
+              </p>
             </div>
 
             <div className="grid gap-2">
