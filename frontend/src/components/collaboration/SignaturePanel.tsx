@@ -133,7 +133,13 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
   };
 
   const handleSign = async () => {
+    console.log('🖊️ [SIGN] Starting sign process...');
+    console.log('🖊️ [SIGN] User signature:', userSignature);
+    console.log('🖊️ [SIGN] Signature data:', signatureData);
+
     const signatureType = getSignatureType();
+    console.log('🖊️ [SIGN] Signature type:', signatureType);
+
     if (!signatureType) {
       toast({
         title: t('signatures.error'),
@@ -143,10 +149,12 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
       return;
     }
 
-    if (!signatureData.signatureData.trim()) {
+    // Validate that we have signature data (should be pre-filled from userSignature)
+    if (!userSignature || !signatureData.signatureData) {
+      console.error('❌ [SIGN] Missing signature data!', { userSignature, signatureData });
       toast({
         title: t('signatures.error'),
-        description: t('signatures.signatureRequired'),
+        description: 'Signature data is missing',
         variant: 'destructive',
       });
       return;
@@ -155,11 +163,13 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
     setSigning(true);
 
     try {
-      await SignatureResource.add(documentId, {
+      console.log('🖊️ [SIGN] Sending signature request...');
+      const result = await SignatureResource.add(documentId, {
         type: signatureType,
         signatureData: signatureData.signatureData,
         comments: signatureData.comments,
       });
+      console.log('✅ [SIGN] Signature added successfully:', result);
 
       toast({
         title: t('signatures.success'),
