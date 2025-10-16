@@ -14,16 +14,18 @@ import (
 )
 
 type DocumentHandler struct {
-	documentService     *services.DocumentService
-	activityLogService  *services.ActivityLogService
-	minioService        *services.MinIOService
+	documentService      *services.DocumentService
+	activityLogService   *services.ActivityLogService
+	minioService         *services.MinIOService
+	notificationService  *services.NotificationService
 }
 
-func NewDocumentHandler(documentService *services.DocumentService, activityLogService *services.ActivityLogService, minioService *services.MinIOService) *DocumentHandler {
+func NewDocumentHandler(documentService *services.DocumentService, activityLogService *services.ActivityLogService, minioService *services.MinIOService, notificationService *services.NotificationService) *DocumentHandler {
 	return &DocumentHandler{
-		documentService:    documentService,
-		activityLogService: activityLogService,
-		minioService:       minioService,
+		documentService:     documentService,
+		activityLogService:  activityLogService,
+		minioService:        minioService,
+		notificationService: notificationService,
 	}
 }
 
@@ -340,6 +342,13 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 		return
 	}
 
+	// Get current user
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
 	ctx := c.Request.Context()
 	document, err := h.documentService.Publish(ctx, id)
 	if err != nil {
@@ -372,6 +381,55 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 	if logErr := h.activityLogService.LogActivity(ctx, activityReq, c); logErr != nil {
 		fmt.Printf("Failed to log activity: %v\n", logErr)
 	}
+
+	// Send notifications to all contributors who need to sign
+	go func() {
+		// Collect all contributor user IDs
+		var contributorIDs []primitive.ObjectID
+
+		for _, author := range document.Contributors.Authors {
+			if author.Status == models.SignatureStatusPending {
+				contributorIDs = append(contributorIDs, author.UserID)
+			}
+		}
+		for _, verifier := range document.Contributors.Verifiers {
+			if verifier.Status == models.SignatureStatusPending {
+				contributorIDs = append(contributorIDs, verifier.UserID)
+			}
+		}
+		for _, validator := range document.Contributors.Validators {
+			if validator.Status == models.SignatureStatusPending {
+				contributorIDs = append(contributorIDs, validator.UserID)
+			}
+		}
+
+		if len(contributorIDs) == 0 {
+			return
+		}
+
+		// Send notification
+		notificationReq := &models.SendNotificationRequest{
+			Title:    "Document Ready for Signature",
+			Body:     fmt.Sprintf("Document '%s' (%s) has been published and is ready for your signature.", document.Title, document.Reference),
+			Category: "document",
+			Data: map[string]interface{}{
+				"documentId": document.ID.Hex(),
+				"reference":  document.Reference,
+				"title":      document.Title,
+				"action":     "signature_required",
+			},
+			Targets: &models.NotificationTargets{
+				UserIDs: contributorIDs,
+			},
+		}
+
+		_, err := h.notificationService.SendNotification(ctx, notificationReq, user.ID)
+		if err != nil {
+			fmt.Printf("⚠️  Failed to send notifications for published document: %v\n", err)
+		} else {
+			fmt.Printf("✅ Sent signature notifications to %d contributors\n", len(contributorIDs))
+		}
+	}()
 
 	helpers.SendSuccess(c, "Document published successfully", document.ToResponse())
 }
