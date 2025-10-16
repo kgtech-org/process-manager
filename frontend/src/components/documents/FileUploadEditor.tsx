@@ -144,21 +144,36 @@ export const FileUploadEditor: React.FC<FileUploadEditorProps> = ({
   };
 
   const handlePreview = (file: FileItem) => {
-    if (file.type.startsWith('image/') || file.type.includes('pdf')) {
-      setPreviewFile(file);
-    } else {
-      // For non-previewable files, trigger download
-      window.open(file.url, '_blank');
-    }
+    // Note: File storage integration pending - MinIO URLs not yet implemented
+    toast({
+      variant: 'default',
+      title: 'Preview not available',
+      description: 'File storage integration is pending. Files are saved but preview is not yet available.',
+    });
+
+    // TODO: Once MinIO integration is complete, uncomment:
+    // if (file.type.startsWith('image/') || file.type.includes('pdf')) {
+    //   setPreviewFile(file);
+    // } else {
+    //   window.open(file.url, '_blank');
+    // }
   };
 
   const handleDownload = (file: FileItem) => {
-    const link = document.createElement('a');
-    link.href = file.url;
-    link.download = file.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Note: File storage integration pending
+    toast({
+      variant: 'default',
+      title: 'Download not available',
+      description: 'File storage integration is pending. Files metadata is saved but download is not yet available.',
+    });
+
+    // TODO: Once MinIO integration is complete, uncomment:
+    // const link = document.createElement('a');
+    // link.href = file.url;
+    // link.download = file.name;
+    // document.body.appendChild(link);
+    // link.click();
+    // document.body.removeChild(link);
   };
 
   return (
