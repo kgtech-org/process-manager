@@ -99,7 +99,7 @@ func InitMinIOService() (*MinIOService, error) {
 		}
 		log.Printf("✅ MinIO bucket '%s' created successfully", bucketName)
 
-		// Set bucket policy to allow public read access for avatars
+		// Set bucket policy to allow public read access for avatars and documents
 		policy := fmt.Sprintf(`{
 			"Version": "2012-10-17",
 			"Statement": [
@@ -108,9 +108,15 @@ func InitMinIOService() (*MinIOService, error) {
 					"Principal": "*",
 					"Action": "s3:GetObject",
 					"Resource": "arn:aws:s3:::%s/avatars/*"
+				},
+				{
+					"Effect": "Allow",
+					"Principal": "*",
+					"Action": "s3:GetObject",
+					"Resource": "arn:aws:s3:::%s/documents/*"
 				}
 			]
-		}`, bucketName)
+		}`, bucketName, bucketName)
 
 		err = client.SetBucketPolicy(ctx, bucketName, policy)
 		if err != nil {
@@ -266,14 +272,72 @@ func (s *MinIOService) GetUploadLimits() (int64, []string) {
 	if envSize := os.Getenv("MAX_AVATAR_SIZE_MB"); envSize != "" {
 		// Could parse this from environment if needed
 	}
-	
+
 	allowedTypes := []string{
 		"image/jpeg",
-		"image/jpg", 
+		"image/jpg",
 		"image/png",
 		"image/gif",
 		"image/webp",
 	}
-	
+
 	return maxSize, allowedTypes
+}
+
+// UploadAnnexFile uploads a file for a document annex to MinIO
+func (s *MinIOService) UploadAnnexFile(ctx context.Context, documentID string, annexID string, fileID string, reader io.Reader, size int64, contentType string, filename string) (string, error) {
+	// Generate object key for annex file
+	fileExt := filepath.Ext(filename)
+	baseName := strings.TrimSuffix(filename, fileExt)
+
+	// Clean filename to make it URL-safe
+	baseName = strings.ReplaceAll(baseName, " ", "_")
+
+	objectKey := fmt.Sprintf("documents/%s/annexes/%s/%s%s", documentID, annexID, fileID, fileExt)
+
+	// Upload options
+	opts := minio.PutObjectOptions{
+		ContentType: contentType,
+		UserMetadata: map[string]string{
+			"document-id": documentID,
+			"annex-id":    annexID,
+			"file-id":     fileID,
+			"filename":    filename,
+			"upload-time": time.Now().Format(time.RFC3339),
+		},
+	}
+
+	// Upload the file
+	info, err := s.client.PutObject(ctx, s.bucketName, objectKey, reader, size, opts)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload annex file: %w", err)
+	}
+
+	log.Printf("✅ Annex file uploaded successfully: %s (size: %d bytes)", info.Key, info.Size)
+
+	// Return the public URL
+	fileURL := fmt.Sprintf("%s/%s/%s", s.publicURL, s.bucketName, objectKey)
+	return fileURL, nil
+}
+
+// DeleteAnnexFile removes an annex file from MinIO
+func (s *MinIOService) DeleteAnnexFile(ctx context.Context, fileURL string) error {
+	if fileURL == "" {
+		return nil // Nothing to delete
+	}
+
+	// Extract object key from URL
+	objectKey, err := s.extractObjectKeyFromURL(fileURL)
+	if err != nil {
+		return fmt.Errorf("failed to extract object key from URL: %w", err)
+	}
+
+	// Delete the object
+	err = s.client.RemoveObject(ctx, s.bucketName, objectKey, minio.RemoveObjectOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete annex file: %w", err)
+	}
+
+	log.Printf("✅ Annex file deleted successfully: %s", objectKey)
+	return nil
 }

@@ -16,12 +16,14 @@ import (
 type DocumentHandler struct {
 	documentService     *services.DocumentService
 	activityLogService  *services.ActivityLogService
+	minioService        *services.MinIOService
 }
 
-func NewDocumentHandler(documentService *services.DocumentService, activityLogService *services.ActivityLogService) *DocumentHandler {
+func NewDocumentHandler(documentService *services.DocumentService, activityLogService *services.ActivityLogService, minioService *services.MinIOService) *DocumentHandler {
 	return &DocumentHandler{
 		documentService:    documentService,
 		activityLogService: activityLogService,
+		minioService:       minioService,
 	}
 }
 
@@ -697,14 +699,39 @@ func (h *DocumentHandler) UploadAnnexFiles(c *gin.Context) {
 	uploadedFiles := []map[string]interface{}{}
 
 	for _, fileHeader := range files {
-		// TODO: Implement actual file upload to MinIO
-		// For now, return mock data
+		// Open the uploaded file
+		file, err := fileHeader.Open()
+		if err != nil {
+			helpers.SendBadRequest(c, fmt.Sprintf("Failed to open file %s: %v", fileHeader.Filename, err))
+			return
+		}
+		defer file.Close()
+
+		// Generate unique file ID
+		fileID := primitive.NewObjectID().Hex()
+
+		// Upload to MinIO
+		fileURL, err := h.minioService.UploadAnnexFile(
+			ctx,
+			id.Hex(),
+			annexID,
+			fileID,
+			file,
+			fileHeader.Size,
+			fileHeader.Header.Get("Content-Type"),
+			fileHeader.Filename,
+		)
+		if err != nil {
+			helpers.SendInternalError(c, fmt.Errorf("failed to upload file %s: %w", fileHeader.Filename, err))
+			return
+		}
+
 		uploadedFile := map[string]interface{}{
-			"id":         primitive.NewObjectID().Hex(),
+			"id":         fileID,
 			"name":       fileHeader.Filename,
 			"type":       fileHeader.Header.Get("Content-Type"),
 			"size":       fileHeader.Size,
-			"url":        fmt.Sprintf("/uploads/%s/%s", id.Hex(), fileHeader.Filename),
+			"url":        fileURL,
 			"uploadedAt": time.Now().Format(time.RFC3339),
 		}
 		uploadedFiles = append(uploadedFiles, uploadedFile)
@@ -792,6 +819,7 @@ func (h *DocumentHandler) DeleteAnnexFile(c *gin.Context) {
 
 	// Find the annex and remove the file
 	var annexFound bool
+	var fileURL string
 	for i, annex := range document.Annexes {
 		if annex.ID == annexID {
 			annexFound = true
@@ -802,14 +830,19 @@ func (h *DocumentHandler) DeleteAnnexFile(c *gin.Context) {
 				existingFiles = []interface{}{}
 			}
 
-			// Remove the file with matching ID
+			// Remove the file with matching ID and get its URL for MinIO deletion
 			updatedFiles := []interface{}{}
 			for _, file := range existingFiles {
 				fileMap, ok := file.(map[string]interface{})
 				if !ok {
 					continue
 				}
-				if fileMap["id"] != fileID {
+				if fileMap["id"] == fileID {
+					// Store the URL for MinIO deletion
+					if url, ok := fileMap["url"].(string); ok {
+						fileURL = url
+					}
+				} else {
 					updatedFiles = append(updatedFiles, file)
 				}
 			}
@@ -823,6 +856,14 @@ func (h *DocumentHandler) DeleteAnnexFile(c *gin.Context) {
 	if !annexFound {
 		helpers.SendNotFound(c, "Annex not found")
 		return
+	}
+
+	// Delete file from MinIO if URL exists
+	if fileURL != "" {
+		if err := h.minioService.DeleteAnnexFile(ctx, fileURL); err != nil {
+			// Log the error but don't fail the request
+			fmt.Printf("⚠️  [WARNING] Failed to delete file from MinIO: %v\n", err)
+		}
 	}
 
 	// Update the document
