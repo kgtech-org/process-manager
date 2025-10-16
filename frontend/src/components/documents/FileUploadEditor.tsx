@@ -192,52 +192,71 @@ export const FileUploadEditor: React.FC<FileUploadEditorProps> = ({
         </div>
       )}
 
-      {/* Files List */}
+      {/* Files Grid */}
       {files.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {files.map((file) => (
-            <Card key={file.id} className="p-3">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-1">{getFileIcon(file.type)}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" title={file.name}>
-                    {file.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatFileSize(file.size)} • {new Date(file.uploadedAt).toLocaleDateString()}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2"
-                      onClick={() => handlePreview(file)}
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      Preview
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2"
-                      onClick={() => handleDownload(file)}
-                    >
-                      <Download className="h-3 w-3 mr-1" />
-                      Download
-                    </Button>
-                    {!readOnly && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-destructive hover:text-destructive"
-                        onClick={() => handleRemoveFile(file.id)}
-                      >
-                        <X className="h-3 w-3 mr-1" />
-                        Remove
-                      </Button>
-                    )}
+            <Card key={file.id} className="overflow-hidden group">
+              {/* File Preview/Thumbnail */}
+              <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                {file.type.startsWith('image/') ? (
+                  <img
+                    src={file.url}
+                    alt={file.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : file.type.includes('pdf') ? (
+                  <div className="flex flex-col items-center justify-center text-muted-foreground">
+                    <FileText className="h-12 w-12 mb-2" />
+                    <span className="text-xs">PDF Document</span>
                   </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-muted-foreground">
+                    <FileIcon className="h-12 w-12 mb-2" />
+                    <span className="text-xs">File</span>
+                  </div>
+                )}
+
+                {/* Hover Overlay */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => handlePreview(file)}
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Preview
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => handleDownload(file)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  {!readOnly && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-8"
+                      onClick={() => handleRemoveFile(file.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
+              </div>
+
+              {/* File Info */}
+              <div className="p-3">
+                <p className="text-sm font-medium truncate" title={file.name}>
+                  {file.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatFileSize(file.size)} • {new Date(file.uploadedAt).toLocaleDateString()}
+                </p>
               </div>
             </Card>
           ))}
