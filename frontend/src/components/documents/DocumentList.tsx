@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { DocumentCard } from './DocumentCard';
 import { DocumentSearch } from './DocumentSearch';
-import { Button } from '@/components/ui/button';
 import { DocumentResource, type Document, type DocumentFilter } from '@/lib/resources';
-import { ChevronLeft, ChevronRight, Loader2, FileText } from 'lucide-react';
+import { Loader2, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/lib/i18n';
 
@@ -18,28 +17,50 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
   const { t } = useTranslation('documents');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filters, setFilters] = useState<DocumentFilter>(initialFilters);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const limit = 12;
 
+  // Load initial documents or when filters change
   useEffect(() => {
-    loadDocuments();
-  }, [filters, currentPage]);
+    loadDocuments(true);
+  }, [filters]);
 
-  const loadDocuments = async () => {
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          loadMoreDocuments();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, currentPage, filters]);
+
+  const loadDocuments = async (reset = false) => {
     try {
       setLoading(true);
       const response = await DocumentResource.getPaginated({
         ...filters,
-        page: currentPage,
+        page: 1,
         limit,
       });
       setDocuments(response.data);
-      setTotalPages(response.pagination.totalPages);
+      setCurrentPage(1);
       setTotal(response.pagination.total);
+      setHasMore(response.data.length === limit && response.pagination.totalPages > 1);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -51,10 +72,37 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
     }
   };
 
-  const handleSearch = (newFilters: DocumentFilter) => {
+  const loadMoreDocuments = async () => {
+    if (!hasMore || loadingMore) return;
+
+    try {
+      setLoadingMore(true);
+      const nextPage = currentPage + 1;
+      const response = await DocumentResource.getPaginated({
+        ...filters,
+        page: nextPage,
+        limit,
+      });
+
+      setDocuments((prev) => [...prev, ...response.data]);
+      setCurrentPage(nextPage);
+      setHasMore(response.data.length === limit && nextPage < response.pagination.totalPages);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.loadFailed'),
+        description: error.message || t('messages.loadError'),
+      });
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const handleSearch = useCallback((newFilters: DocumentFilter) => {
     setFilters(newFilters);
     setCurrentPage(1);
-  };
+    setHasMore(true);
+  }, []);
 
   const handleDuplicate = async (id: string) => {
     try {
@@ -87,18 +135,6 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
         title: t('messages.deleteFailed'),
         description: error.message || t('messages.error'),
       });
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -137,33 +173,20 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4">
-              <div className="text-sm text-muted-foreground">
-                {t('showing')} {(currentPage - 1) * limit + 1} {t('to')} {Math.min(currentPage * limit, total)} {t('of')} {total} {t('documents')}
+          {/* Infinite scroll trigger */}
+          <div ref={observerTarget} className="flex items-center justify-center py-4">
+            {loadingMore && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-sm">{t('loadingMore') || 'Loading more...'}</span>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1 || loading}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  {t('previous')}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages || loading}
-                >
-                  {t('next')}
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+            {!hasMore && documents.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {t('allLoaded') || `All ${total} documents loaded`}
+              </p>
+            )}
+          </div>
         </>
       )}
     </div>
