@@ -98,32 +98,32 @@ func InitMinIOService() (*MinIOService, error) {
 			return nil, fmt.Errorf("failed to create bucket: %w", err)
 		}
 		log.Printf("✅ MinIO bucket '%s' created successfully", bucketName)
+	}
 
-		// Set bucket policy to allow public read access for avatars and documents
-		policy := fmt.Sprintf(`{
-			"Version": "2012-10-17",
-			"Statement": [
-				{
-					"Effect": "Allow",
-					"Principal": "*",
-					"Action": "s3:GetObject",
-					"Resource": "arn:aws:s3:::%s/avatars/*"
-				},
-				{
-					"Effect": "Allow",
-					"Principal": "*",
-					"Action": "s3:GetObject",
-					"Resource": "arn:aws:s3:::%s/documents/*"
-				}
-			]
-		}`, bucketName, bucketName)
+	// Always set/update bucket policy to allow public read access for avatars and documents
+	policy := fmt.Sprintf(`{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Principal": "*",
+				"Action": "s3:GetObject",
+				"Resource": "arn:aws:s3:::%s/avatars/*"
+			},
+			{
+				"Effect": "Allow",
+				"Principal": "*",
+				"Action": "s3:GetObject",
+				"Resource": "arn:aws:s3:::%s/documents/*"
+			}
+		]
+	}`, bucketName, bucketName)
 
-		err = client.SetBucketPolicy(ctx, bucketName, policy)
-		if err != nil {
-			log.Printf("Warning: Failed to set bucket policy: %v", err)
-		} else {
-			log.Printf("✅ MinIO bucket policy set for public avatar access")
-		}
+	err = client.SetBucketPolicy(ctx, bucketName, policy)
+	if err != nil {
+		log.Printf("⚠️  Warning: Failed to set bucket policy: %v", err)
+	} else {
+		log.Printf("✅ MinIO bucket policy updated for public access (avatars & documents)")
 	}
 
 	log.Printf("✅ MinIO service initialized successfully")
