@@ -16,6 +16,15 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
   ArrowLeft,
   Calendar,
   User,
@@ -28,6 +37,8 @@ import {
   Send,
   FileText as FileTextIcon,
   Table as TableIcon,
+  ChevronDown,
+  Search,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -42,10 +53,67 @@ export default function DocumentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [invitationModalOpen, setInvitationModalOpen] = useState(false);
   const [processFlowView, setProcessFlowView] = useState<'document' | 'table'>('document');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    // Load active tab from localStorage
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`document-${documentId}-activeTab`) || 'process-flow';
+    }
+    return 'process-flow';
+  });
+  const [documentSwitcherOpen, setDocumentSwitcherOpen] = useState(false);
+  const [allDocuments, setAllDocuments] = useState<Document[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [versionsModalOpen, setVersionsModalOpen] = useState(false);
+  const [versions, setVersions] = useState<any[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
 
   useEffect(() => {
     loadDocument();
   }, [documentId]);
+
+  // Persist active tab to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`document-${documentId}-activeTab`, activeTab);
+    }
+  }, [activeTab, documentId]);
+
+  // Load documents for switcher when modal opens
+  useEffect(() => {
+    if (documentSwitcherOpen && allDocuments.length === 0) {
+      loadAllDocuments();
+    }
+  }, [documentSwitcherOpen]);
+
+  const loadAllDocuments = async () => {
+    try {
+      setDocumentsLoading(true);
+      const docs = await DocumentResource.getAll({ limit: 100 });
+      setAllDocuments(docs);
+    } catch (error) {
+      console.error('Failed to load documents:', error);
+    } finally {
+      setDocumentsLoading(false);
+    }
+  };
+
+  const loadVersions = async () => {
+    try {
+      setVersionsLoading(true);
+      const versionsList = await DocumentResource.getVersions(documentId);
+      setVersions(versionsList);
+    } catch (error) {
+      console.error('Failed to load versions:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to load versions',
+        description: 'An error occurred',
+      });
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
 
   const loadDocument = async () => {
     try {
@@ -190,7 +258,68 @@ export default function DocumentDetailPage() {
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">{document.title}</h1>
+          <Dialog open={documentSwitcherOpen} onOpenChange={setDocumentSwitcherOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2 hover:bg-muted p-0">
+                <h1 className="text-3xl font-bold tracking-tight">{document.title}</h1>
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[600px]">
+              <DialogHeader>
+                <DialogTitle>Switch Document</DialogTitle>
+                <DialogDescription>
+                  Select a document to navigate to
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                {/* Search input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by title or reference..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                {/* Document list */}
+                {documentsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {allDocuments
+                      .filter(doc =>
+                        doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        doc.reference.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map((doc) => (
+                        <Button
+                          key={doc.id}
+                          variant={doc.id === documentId ? "secondary" : "ghost"}
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push(`/documents/${doc.id}`);
+                            setDocumentSwitcherOpen(false);
+                          }}
+                        >
+                          <div className="flex-1 text-left">
+                            <div className="font-semibold">{doc.title}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {doc.reference} • v{doc.version}
+                            </div>
+                          </div>
+                          <DocumentStatusBadge status={doc.status} />
+                        </Button>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
           <p className="text-muted-foreground">
             {document.reference} • Version {document.version}
           </p>
@@ -223,7 +352,7 @@ export default function DocumentDetailPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Created</CardTitle>
@@ -265,10 +394,125 @@ export default function DocumentDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Content</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="flex items-center gap-2 text-sm">
+              <span>{document.annexes?.length || 0} annexes</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span>
+                {(document.metadata?.objectives?.length || 0) +
+                  (document.metadata?.implicatedActors?.length || 0) +
+                  (document.metadata?.managementRules?.length || 0) +
+                  (document.metadata?.terminology?.length || 0)}{' '}
+                metadata items
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2 lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Versions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Dialog open={versionsModalOpen} onOpenChange={setVersionsModalOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    if (versions.length === 0) {
+                      loadVersions();
+                    }
+                  }}
+                >
+                  View History
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Document Versions</DialogTitle>
+                  <DialogDescription>
+                    View all versions of this document
+                  </DialogDescription>
+                </DialogHeader>
+                {versionsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {versions.map((version) => {
+                      const versionData = version.data || version;
+                      return (
+                        <Card key={version.id}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Badge variant="secondary">v{version.version}</Badge>
+                                  <DocumentStatusBadge status={versionData.status} />
+                                  {version.documentId === documentId && (
+                                    <Badge variant="outline">Current</Badge>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold">{versionData.title}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {versionData.reference}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Created: {new Date(version.createdAt).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
+                                {version.changeNote && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Note: {version.changeNote}
+                                  </p>
+                                )}
+                              </div>
+                              {version.documentId !== documentId && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    router.push(`/documents/${version.documentId}`);
+                                    setVersionsModalOpen(false);
+                                  }}
+                                >
+                                  View
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                    {versions.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No version history available
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Document Tabs */}
-      <Tabs defaultValue="process-flow" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="process-flow">Process Flow</TabsTrigger>
           <TabsTrigger value="metadata">Metadata</TabsTrigger>

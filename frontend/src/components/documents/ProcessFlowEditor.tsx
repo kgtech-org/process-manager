@@ -697,7 +697,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                                               value=""
                                               onSave={(value) => addArrayItem(group.id, step.id, 'outputs', value)}
                                               placeholder={t('processFlow.outputPlaceholder')}
-                                              autoSave={true}
+                                              autoSave={false}
                                             />
                                           )}
                                         </div>
@@ -734,7 +734,7 @@ export const ProcessFlowEditor: React.FC<ProcessFlowEditorProps> = ({
                                               value=""
                                               onSave={(value) => addArrayItem(group.id, step.id, 'durations', value)}
                                               placeholder={t('processFlow.durationPlaceholder')}
-                                              autoSave={true}
+                                              autoSave={false}
                                             />
                                           )}
                                         </div>

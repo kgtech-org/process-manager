@@ -47,6 +47,10 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
   const { toast } = useToast();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingAnnexId, setEditingAnnexId] = useState<string | null>(null);
+  const [diagramModalOpen, setDiagramModalOpen] = useState(false);
+  const [currentDiagramAnnex, setCurrentDiagramAnnex] = useState<Annex | null>(null);
+  const [localDiagramShapes, setLocalDiagramShapes] = useState<any[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [newAnnexTitle, setNewAnnexTitle] = useState('');
   const [newAnnexType, setNewAnnexType] = useState<AnnexType>('text');
   const [editContent, setEditContent] = useState<any>(null);
@@ -142,16 +146,51 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
     }
   };
 
+  const openDiagramModal = (annex: Annex) => {
+    setCurrentDiagramAnnex(annex);
+    setLocalDiagramShapes(annex.content?.shapes || []);
+    setHasUnsavedChanges(false);
+    setDiagramModalOpen(true);
+  };
+
+  const handleDiagramModalClose = async () => {
+    if (hasUnsavedChanges && currentDiagramAnnex) {
+      try {
+        await handleUpdateContent(currentDiagramAnnex.id, { shapes: localDiagramShapes });
+        toast({
+          title: 'Diagram saved successfully',
+        });
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to save diagram',
+          description: error.message,
+        });
+        return; // Don't close modal if save failed
+      }
+    }
+    setDiagramModalOpen(false);
+    setCurrentDiagramAnnex(null);
+    setLocalDiagramShapes([]);
+    setHasUnsavedChanges(false);
+  };
+
+  const handleLocalDiagramChange = (shapes: any[]) => {
+    setLocalDiagramShapes(shapes);
+    setHasUnsavedChanges(true);
+  };
+
   const renderAnnexContent = (annex: Annex) => {
     const isEditing = editingAnnexId === annex.id;
 
     switch (annex.type) {
       case 'diagram':
+        // Always show preview, clicking Edit in header will open modal
         return (
           <DiagramEditor
             initialShapes={annex.content?.shapes || []}
-            onChange={(shapes) => handleUpdateContent(annex.id, { shapes })}
-            readOnly={readOnly || !isEditing}
+            onChange={() => {}}
+            readOnly={true}
           />
         );
 
@@ -294,7 +333,13 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditingAnnexId(annex.id)}
+                      onClick={() => {
+                        setEditingAnnexId(annex.id);
+                        // Open modal directly for diagrams
+                        if (annex.type === 'diagram') {
+                          openDiagramModal(annex);
+                        }
+                      }}
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
@@ -314,6 +359,56 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
           <CardContent>{renderAnnexContent(annex)}</CardContent>
         </Card>
       ))}
+
+      {/* Full-screen Diagram Editor Modal */}
+      <Dialog open={diagramModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          handleDiagramModalClose();
+        }
+      }}>
+        <DialogContent className="max-w-[98vw] w-full h-[98vh] max-h-[98vh] p-0">
+          <div className="h-full flex flex-col">
+            <DialogHeader className="px-4 py-2 border-b">
+              <DialogTitle className="flex items-center gap-2 text-base">
+                {currentDiagramAnnex?.title || 'Diagram Editor'}
+                {hasUnsavedChanges && (
+                  <Badge variant="secondary" className="text-xs">
+                    Unsaved changes
+                  </Badge>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-auto p-3">
+              {currentDiagramAnnex && (
+                <DiagramEditor
+                  initialShapes={localDiagramShapes}
+                  onChange={handleLocalDiagramChange}
+                  readOnly={false}
+                />
+              )}
+            </div>
+            <div className="px-4 py-2 border-t flex justify-between items-center">
+              <div className="text-xs text-muted-foreground">
+                {hasUnsavedChanges ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    Unsaved changes
+                  </span>
+                ) : (
+                  <span>All saved</span>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDiagramModalClose}
+              >
+                {hasUnsavedChanges ? 'Save & Close' : 'Close'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
