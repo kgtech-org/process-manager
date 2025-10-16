@@ -360,7 +360,8 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 			helpers.SendNotFound(c, "Document not found")
 			return
 		}
-		if err.Error() == "only draft documents can be published" {
+		// Handle status validation errors
+		if strings.Contains(err.Error(), "document cannot be published from status") {
 			helpers.SendBadRequest(c, err.Error())
 			return
 		}
@@ -392,20 +393,30 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 	go func() {
 		// Collect all contributor user IDs as strings
 		var userIDStrings []string
+		var roleTitle string
 
-		for _, author := range document.Contributors.Authors {
-			if author.Status == models.SignatureStatusPending {
-				userIDStrings = append(userIDStrings, author.UserID.Hex())
+		// Determine which role needs to sign based on document status
+		switch document.Status {
+		case models.DocumentStatusAuthorReview:
+			roleTitle = "Authors"
+			for _, author := range document.Contributors.Authors {
+				if author.Status == models.SignatureStatusPending {
+					userIDStrings = append(userIDStrings, author.UserID.Hex())
+				}
 			}
-		}
-		for _, verifier := range document.Contributors.Verifiers {
-			if verifier.Status == models.SignatureStatusPending {
-				userIDStrings = append(userIDStrings, verifier.UserID.Hex())
+		case models.DocumentStatusVerifierReview:
+			roleTitle = "Verifiers"
+			for _, verifier := range document.Contributors.Verifiers {
+				if verifier.Status == models.SignatureStatusPending {
+					userIDStrings = append(userIDStrings, verifier.UserID.Hex())
+				}
 			}
-		}
-		for _, validator := range document.Contributors.Validators {
-			if validator.Status == models.SignatureStatusPending {
-				userIDStrings = append(userIDStrings, validator.UserID.Hex())
+		case models.DocumentStatusValidatorReview:
+			roleTitle = "Validators"
+			for _, validator := range document.Contributors.Validators {
+				if validator.Status == models.SignatureStatusPending {
+					userIDStrings = append(userIDStrings, validator.UserID.Hex())
+				}
 			}
 		}
 
@@ -416,7 +427,7 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 		// Send notification
 		notificationReq := &models.SendNotificationRequest{
 			UserIDs:  userIDStrings,
-			Title:    "Document Ready for Signature",
+			Title:    fmt.Sprintf("Document Ready for %s Signature", roleTitle),
 			Body:     fmt.Sprintf("Document '%s' (%s) has been published and is ready for your signature.", document.Title, document.Reference),
 			Category: "document",
 			Data: map[string]interface{}{
@@ -424,6 +435,7 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 				"reference":  document.Reference,
 				"title":      document.Title,
 				"action":     "signature_required",
+				"role":       roleTitle,
 			},
 		}
 
@@ -431,7 +443,7 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 		if err != nil {
 			fmt.Printf("⚠️  Failed to send notifications for published document: %v\n", err)
 		} else {
-			fmt.Printf("✅ Sent signature notifications to %d contributors\n", len(userIDStrings))
+			fmt.Printf("✅ Sent signature notifications to %d %s\n", len(userIDStrings), roleTitle)
 		}
 	}()
 

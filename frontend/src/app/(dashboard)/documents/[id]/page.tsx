@@ -372,6 +372,18 @@ export default function DocumentDetailPage() {
             Publish for Signature
           </Button>
         )}
+        {document.status === 'author_signed' && (
+          <Button onClick={handlePublish}>
+            <Send className="h-4 w-4 mr-2" />
+            Publish for Verification
+          </Button>
+        )}
+        {document.status === 'verifier_signed' && (
+          <Button onClick={handlePublish}>
+            <Send className="h-4 w-4 mr-2" />
+            Publish for Validation
+          </Button>
+        )}
         <Button onClick={() => setInvitationModalOpen(true)} variant={document.status === 'draft' ? 'outline' : 'default'}>
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Collaborator
