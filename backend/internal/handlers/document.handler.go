@@ -656,3 +656,184 @@ func (h *DocumentHandler) DeleteAnnex(c *gin.Context) {
 
 	helpers.SendSuccess(c, "Annex deleted successfully", nil)
 }
+
+// UploadAnnexFiles handles file uploads for an annex
+// POST /api/documents/:id/annexes/:annexId/files
+func (h *DocumentHandler) UploadAnnexFiles(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	annexID := c.Param("annexId")
+
+	// Get current user
+	_, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	// Get the multipart form
+	form, err := c.MultipartForm()
+	if err != nil {
+		helpers.SendBadRequest(c, "Failed to parse multipart form")
+		return
+	}
+
+	files := form.File["files"]
+	if len(files) == 0 {
+		helpers.SendBadRequest(c, "No files uploaded")
+		return
+	}
+
+	fmt.Printf("📎 [UPLOAD] Uploading %d files for annex %s\n", len(files), annexID)
+
+	uploadedFiles := []map[string]interface{}{}
+
+	for _, fileHeader := range files {
+		// TODO: Implement actual file upload to MinIO
+		// For now, return mock data
+		uploadedFile := map[string]interface{}{
+			"id":         primitive.NewObjectID().Hex(),
+			"name":       fileHeader.Filename,
+			"type":       fileHeader.Header.Get("Content-Type"),
+			"size":       fileHeader.Size,
+			"url":        fmt.Sprintf("/uploads/%s/%s", id.Hex(), fileHeader.Filename),
+			"uploadedAt": time.Now().Format(time.RFC3339),
+		}
+		uploadedFiles = append(uploadedFiles, uploadedFile)
+	}
+
+	// Get current annex content
+	document, err := h.documentService.GetByID(ctx, id)
+	if err != nil {
+		helpers.SendNotFound(c, "Document not found")
+		return
+	}
+
+	// Find the annex and update its files
+	var annexFound bool
+	for i, annex := range document.Annexes {
+		if annex.ID == annexID {
+			annexFound = true
+
+			// Get existing files or initialize empty array
+			existingFiles, ok := annex.Content["files"].([]interface{})
+			if !ok {
+				existingFiles = []interface{}{}
+			}
+
+			// Append new files
+			for _, file := range uploadedFiles {
+				existingFiles = append(existingFiles, file)
+			}
+
+			// Update annex content
+			document.Annexes[i].Content["files"] = existingFiles
+			break
+		}
+	}
+
+	if !annexFound {
+		helpers.SendNotFound(c, "Annex not found")
+		return
+	}
+
+	// Update the document with new files
+	_, err = h.documentService.UpdateAnnex(ctx, id, annexID, &models.UpdateAnnexRequest{
+		Content: &document.Annexes[0].Content,
+	})
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	fmt.Printf("✅ [UPLOAD] Files uploaded successfully\n")
+
+	c.JSON(http.StatusOK, uploadedFiles)
+}
+
+// DeleteAnnexFile handles file deletion from an annex
+// DELETE /api/documents/:id/annexes/:annexId/files/:fileId
+func (h *DocumentHandler) DeleteAnnexFile(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	annexID := c.Param("annexId")
+	fileID := c.Param("fileId")
+
+	// Get current user
+	_, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not found in context", "UNAUTHORIZED")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	fmt.Printf("🗑️ [DELETE] Deleting file %s from annex %s\n", fileID, annexID)
+
+	// Get current document
+	document, err := h.documentService.GetByID(ctx, id)
+	if err != nil {
+		helpers.SendNotFound(c, "Document not found")
+		return
+	}
+
+	// Find the annex and remove the file
+	var annexFound bool
+	for i, annex := range document.Annexes {
+		if annex.ID == annexID {
+			annexFound = true
+
+			// Get existing files
+			existingFiles, ok := annex.Content["files"].([]interface{})
+			if !ok {
+				existingFiles = []interface{}{}
+			}
+
+			// Remove the file with matching ID
+			updatedFiles := []interface{}{}
+			for _, file := range existingFiles {
+				fileMap, ok := file.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if fileMap["id"] != fileID {
+					updatedFiles = append(updatedFiles, file)
+				}
+			}
+
+			// Update annex content
+			document.Annexes[i].Content["files"] = updatedFiles
+			break
+		}
+	}
+
+	if !annexFound {
+		helpers.SendNotFound(c, "Annex not found")
+		return
+	}
+
+	// Update the document
+	_, err = h.documentService.UpdateAnnex(ctx, id, annexID, &models.UpdateAnnexRequest{
+		Content: &document.Annexes[0].Content,
+	})
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	fmt.Printf("✅ [DELETE] File deleted successfully\n")
+
+	helpers.SendSuccess(c, "File deleted successfully", nil)
+}
