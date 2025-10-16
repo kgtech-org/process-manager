@@ -222,8 +222,16 @@ export default function DocumentDetailPage() {
 
   const handleUpdateAnnex = useCallback(async (annexId: string, updates: any) => {
     await DocumentResource.updateAnnex(documentId, annexId, updates);
-    // Reload document to get updated annexes
-    await loadDocument();
+    // Don't reload the entire document - just update local state
+    setDocument((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        annexes: prev.annexes.map((annex) =>
+          annex.id === annexId ? { ...annex, ...updates } : annex
+        ),
+      };
+    });
   }, [documentId]);
 
   const handleDeleteAnnex = useCallback(async (annexId: string) => {

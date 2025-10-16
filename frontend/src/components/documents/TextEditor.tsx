@@ -17,20 +17,36 @@ export const TextEditor: React.FC<TextEditorProps> = ({
   readOnly = false,
 }) => {
   const [text, setText] = useState(initialContent.text || '');
-  const isInitialMount = useRef(true);
+  const initialTextRef = useRef(initialContent.text || '');
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
+  // Only update from initialContent on mount
   useEffect(() => {
-    // Only update if initial content actually changes from outside
-    if (!isInitialMount.current && initialContent.text !== text) {
-      setText(initialContent.text || '');
-    }
-    isInitialMount.current = false;
-  }, [initialContent.text]);
+    initialTextRef.current = initialContent.text || '';
+    setText(initialContent.text || '');
+  }, []);
 
   const handleTextChange = useCallback((value: string) => {
     setText(value);
-    onChange?.({ text: value });
+
+    // Debounce the onChange callback to prevent too many updates
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      onChange?.({ text: value });
+    }, 1000); // Save after 1 second of no typing
   }, [onChange]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
