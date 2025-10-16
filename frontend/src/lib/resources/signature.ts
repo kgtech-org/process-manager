@@ -31,7 +31,15 @@ export class SignatureResource {
     const response = await apiClient.get<{ data: Signature[] }>(
       `/documents/${documentId}/signatures`
     );
-    return response.data?.data || [];
+    console.log('🔍 [API] Full response object:', response);
+    console.log('🔍 [API] response.data:', response.data);
+    console.log('🔍 [API] response.data.data:', (response.data as any)?.data);
+
+    // Try to access data from the response
+    const signatures = (response.data as any)?.data || response.data || [];
+    console.log('🔍 [API] Extracted signatures:', signatures);
+
+    return signatures;
   }
 
   /**
