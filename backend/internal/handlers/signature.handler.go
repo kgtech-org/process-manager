@@ -256,6 +256,7 @@ func (h *SignatureHandler) AddDocumentSignature(c *gin.Context) {
 }
 
 // updateDocumentStatus updates the document status based on signatures
+// Implements automatic workflow transitions for Issue #47
 func (h *SignatureHandler) updateDocumentStatus(ctx context.Context, documentID primitive.ObjectID) {
 	// Get document
 	var document models.Document
@@ -283,32 +284,81 @@ func (h *SignatureHandler) updateDocumentStatus(ctx context.Context, documentID 
 	verifiersCount := len(document.Contributors.Verifiers)
 	validatorsCount := len(document.Contributors.Validators)
 
-	// Update status based on signature progress
+	// Determine new status based on current status and signature completion
 	var newStatus models.DocumentStatus
+	shouldUpdate := false
 
-	if validatorSigs >= int64(validatorsCount) && validatorsCount > 0 {
-		newStatus = models.DocumentStatusApproved
-		now := time.Now()
-		h.documentCollection.UpdateOne(ctx,
+	switch document.Status {
+	case models.DocumentStatusAuthorReview:
+		// All authors have signed -> automatically transition to verifier_signed or verifier_review
+		if authorSigs >= int64(authorsCount) && authorsCount > 0 {
+			if verifiersCount > 0 {
+				newStatus = models.DocumentStatusVerifierReview
+				// Set verifiers to pending
+				for i := range document.Contributors.Verifiers {
+					if document.Contributors.Verifiers[i].Status == models.SignatureStatusJoined {
+						document.Contributors.Verifiers[i].Status = models.SignatureStatusPending
+					}
+				}
+			} else {
+				// No verifiers, go straight to author_signed
+				newStatus = models.DocumentStatusAuthorSigned
+			}
+			shouldUpdate = true
+		}
+
+	case models.DocumentStatusVerifierReview:
+		// All verifiers have signed -> automatically transition to validator_signed or validator_review
+		if verifierSigs >= int64(verifiersCount) && verifiersCount > 0 {
+			if validatorsCount > 0 {
+				newStatus = models.DocumentStatusValidatorReview
+				// Set validators to pending
+				for i := range document.Contributors.Validators {
+					if document.Contributors.Validators[i].Status == models.SignatureStatusJoined {
+						document.Contributors.Validators[i].Status = models.SignatureStatusPending
+					}
+				}
+			} else {
+				// No validators, go straight to verifier_signed
+				newStatus = models.DocumentStatusVerifierSigned
+			}
+			shouldUpdate = true
+		}
+
+	case models.DocumentStatusValidatorReview:
+		// All validators have signed -> approve document
+		if validatorSigs >= int64(validatorsCount) && validatorsCount > 0 {
+			newStatus = models.DocumentStatusApproved
+			shouldUpdate = true
+		}
+	}
+
+	// Update document status if needed
+	if shouldUpdate {
+		updateDoc := bson.M{
+			"status": newStatus,
+		}
+
+		// Update contributor arrays if they were modified
+		if newStatus == models.DocumentStatusVerifierReview || newStatus == models.DocumentStatusValidatorReview {
+			if newStatus == models.DocumentStatusVerifierReview {
+				updateDoc["contributors.verifiers"] = document.Contributors.Verifiers
+			} else {
+				updateDoc["contributors.validators"] = document.Contributors.Validators
+			}
+		}
+
+		// Set approved_at timestamp if document is approved
+		if newStatus == models.DocumentStatusApproved {
+			updateDoc["approved_at"] = time.Now()
+		}
+
+		_, err = h.documentCollection.UpdateOne(ctx,
 			bson.M{"_id": documentID},
-			bson.M{
-				"$set": bson.M{
-					"status":      newStatus,
-					"approved_at": now,
-				},
-			},
+			bson.M{"$set": updateDoc},
 		)
-	} else if verifierSigs >= int64(verifiersCount) && verifiersCount > 0 {
-		newStatus = models.DocumentStatusVerifierSigned
-		h.documentCollection.UpdateOne(ctx,
-			bson.M{"_id": documentID},
-			bson.M{"$set": bson.M{"status": newStatus}},
-		)
-	} else if authorSigs >= int64(authorsCount) && authorsCount > 0 {
-		newStatus = models.DocumentStatusAuthorSigned
-		h.documentCollection.UpdateOne(ctx,
-			bson.M{"_id": documentID},
-			bson.M{"$set": bson.M{"status": newStatus}},
-		)
+		if err != nil {
+			println("Warning: Failed to update document status:", err.Error())
+		}
 	}
 }

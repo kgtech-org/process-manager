@@ -51,6 +51,33 @@ func generateInvitationToken() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
+// getAllowedTeamsForStatus returns which teams can be invited based on document status
+func getAllowedTeamsForStatus(status models.DocumentStatus) []models.ContributorTeam {
+	switch status {
+	case models.DocumentStatusDraft:
+		// Draft: can invite anyone
+		return []models.ContributorTeam{
+			models.ContributorTeamAuthors,
+			models.ContributorTeamVerifiers,
+			models.ContributorTeamValidators,
+		}
+	case models.DocumentStatusAuthorReview, models.DocumentStatusAuthorSigned:
+		// Authors already assigned, can only invite verifiers and validators
+		return []models.ContributorTeam{
+			models.ContributorTeamVerifiers,
+			models.ContributorTeamValidators,
+		}
+	case models.DocumentStatusVerifierReview, models.DocumentStatusVerifierSigned:
+		// Authors and verifiers already assigned, can only invite validators
+		return []models.ContributorTeam{
+			models.ContributorTeamValidators,
+		}
+	default:
+		// No invitations allowed for approved/archived documents
+		return []models.ContributorTeam{}
+	}
+}
+
 // CreateInvitation sends an invitation to collaborate on a document
 // POST /api/invitations
 func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
@@ -95,6 +122,24 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 	}
 	if !models.IsValidTeam(req.Team) {
 		helpers.SendBadRequest(c, "Invalid team")
+		return
+	}
+
+	// Validate team based on document status (role-based restrictions)
+	allowedTeams := getAllowedTeamsForStatus(document.Status)
+	if len(allowedTeams) == 0 {
+		helpers.SendBadRequest(c, "No invitations are allowed for documents in this status")
+		return
+	}
+	teamAllowed := false
+	for _, team := range allowedTeams {
+		if team == req.Team {
+			teamAllowed = true
+			break
+		}
+	}
+	if !teamAllowed {
+		helpers.SendBadRequest(c, fmt.Sprintf("Cannot invite %s for documents in %s status", req.Team, document.Status))
 		return
 	}
 

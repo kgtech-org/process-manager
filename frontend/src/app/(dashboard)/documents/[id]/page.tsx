@@ -366,22 +366,11 @@ export default function DocumentDetailPage() {
       </div>
 
       <div className="flex gap-2">
+        {/* Only show publish button for draft status - automatic transitions handle the rest */}
         {document.status === 'draft' && (
           <Button onClick={handlePublish}>
             <Send className="h-4 w-4 mr-2" />
             Publish for Signature
-          </Button>
-        )}
-        {document.status === 'author_signed' && (
-          <Button onClick={handlePublish}>
-            <Send className="h-4 w-4 mr-2" />
-            Publish for Verification
-          </Button>
-        )}
-        {document.status === 'verifier_signed' && (
-          <Button onClick={handlePublish}>
-            <Send className="h-4 w-4 mr-2" />
-            Publish for Validation
           </Button>
         )}
         <Button onClick={() => setInvitationModalOpen(true)} variant={document.status === 'draft' ? 'outline' : 'default'}>
@@ -634,6 +623,7 @@ export default function DocumentDetailPage() {
       {/* Invitation Modal */}
       <InvitationModal
         documentId={documentId}
+        documentStatus={document.status}
         open={invitationModalOpen}
         onOpenChange={setInvitationModalOpen}
         onSuccess={loadDocument}
