@@ -17,6 +17,7 @@ import (
 type SignatureHandler struct {
 	signatureCollection *mongo.Collection
 	documentCollection  *mongo.Collection
+	versionCollection   *mongo.Collection
 	userCollection      *mongo.Collection
 }
 
@@ -24,6 +25,7 @@ func NewSignatureHandler(db *mongo.Database) *SignatureHandler {
 	return &SignatureHandler{
 		signatureCollection: db.Collection("signatures"),
 		documentCollection:  db.Collection("documents"),
+		versionCollection:   db.Collection("document_versions"),
 		userCollection:      db.Collection("users"),
 	}
 }
@@ -351,6 +353,12 @@ func (h *SignatureHandler) updateDocumentStatus(ctx context.Context, documentID 
 		// Set approved_at timestamp if document is approved
 		if newStatus == models.DocumentStatusApproved {
 			updateDoc["approved_at"] = time.Now()
+
+			// Create immutable version snapshot when document is approved
+			err = h.createVersionSnapshot(ctx, &document, "Approved version snapshot")
+			if err != nil {
+				println("Warning: Failed to create version snapshot:", err.Error())
+			}
 		}
 
 		_, err = h.documentCollection.UpdateOne(ctx,
@@ -361,4 +369,24 @@ func (h *SignatureHandler) updateDocumentStatus(ctx context.Context, documentID 
 			println("Warning: Failed to update document status:", err.Error())
 		}
 	}
+}
+
+// createVersionSnapshot creates an immutable snapshot of the document
+func (h *SignatureHandler) createVersionSnapshot(ctx context.Context, document *models.Document, changeNote string) error {
+	version := &models.DocumentVersion{
+		ID:         primitive.NewObjectID(),
+		DocumentID: document.ID,
+		Version:    document.Version,
+		Data:       *document,
+		CreatedBy:  document.CreatedBy,
+		CreatedAt:  time.Now(),
+		ChangeNote: changeNote,
+	}
+
+	_, err := h.versionCollection.InsertOne(ctx, version)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

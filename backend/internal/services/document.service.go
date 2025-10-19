@@ -330,6 +330,12 @@ func (s *DocumentService) Update(ctx context.Context, id primitive.ObjectID, req
 		return nil, err
 	}
 
+	// Document locking: Prevent editing approved or archived documents
+	// Only allow draft and review statuses to be edited
+	if document.Status == models.DocumentStatusApproved || document.Status == models.DocumentStatusArchived {
+		return nil, fmt.Errorf("cannot modify document in '%s' status - document is locked", document.Status)
+	}
+
 	// Build update fields
 	update := bson.M{
 		"updated_at": time.Now(),
@@ -553,9 +559,14 @@ func (s *DocumentService) createVersion(ctx context.Context, document *models.Do
 // UpdateMetadata updates document metadata
 func (s *DocumentService) UpdateMetadata(ctx context.Context, id primitive.ObjectID, req *models.UpdateMetadataRequest) (*models.Document, error) {
 	// Get existing document to verify it exists
-	_, err := s.GetByID(ctx, id)
+	document, err := s.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	// Document locking: Prevent editing approved or archived documents
+	if document.Status == models.DocumentStatusApproved || document.Status == models.DocumentStatusArchived {
+		return nil, fmt.Errorf("cannot modify document in '%s' status - document is locked", document.Status)
 	}
 
 	// Build update document
@@ -596,6 +607,11 @@ func (s *DocumentService) CreateAnnex(ctx context.Context, documentID primitive.
 	document, err := s.GetByID(ctx, documentID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Document locking: Prevent editing approved or archived documents
+	if document.Status == models.DocumentStatusApproved || document.Status == models.DocumentStatusArchived {
+		return nil, fmt.Errorf("cannot add annexes to document in '%s' status - document is locked", document.Status)
 	}
 
 	// Generate new annex ID
@@ -642,6 +658,11 @@ func (s *DocumentService) UpdateAnnex(ctx context.Context, documentID primitive.
 	document, err := s.GetByID(ctx, documentID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Document locking: Prevent editing approved or archived documents
+	if document.Status == models.DocumentStatusApproved || document.Status == models.DocumentStatusArchived {
+		return nil, fmt.Errorf("cannot update annexes in document with '%s' status - document is locked", document.Status)
 	}
 
 	// Find annex
@@ -698,6 +719,11 @@ func (s *DocumentService) DeleteAnnex(ctx context.Context, documentID primitive.
 	document, err := s.GetByID(ctx, documentID)
 	if err != nil {
 		return err
+	}
+
+	// Document locking: Prevent editing approved or archived documents
+	if document.Status == models.DocumentStatusApproved || document.Status == models.DocumentStatusArchived {
+		return fmt.Errorf("cannot delete annexes from document in '%s' status - document is locked", document.Status)
 	}
 
 	// Find annex
