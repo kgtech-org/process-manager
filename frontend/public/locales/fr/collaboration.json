@@ -67,6 +67,7 @@
     "description": "Afficher et ajouter des signatures numériques",
     "loading": "Chargement des signatures...",
     "noSignatures": "Aucune signature pour le moment",
+    "noContributors": "Aucun contributeur assigné pour cette équipe",
     "signDocument": "Signer le document",
     "signDescription": "Ajouter votre signature numérique à ce document",
     "signatureField": "Signature",

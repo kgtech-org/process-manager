@@ -26,23 +26,23 @@ const (
 
 // Invitation represents an invitation to collaborate on a document
 type Invitation struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	DocumentID     primitive.ObjectID `bson:"document_id" json:"documentId"`
-	InvitedBy      primitive.ObjectID `bson:"inviter_id" json:"invitedBy"`
-	InvitedEmail   string             `bson:"invitee_email" json:"invitedEmail"`
+	ID             primitive.ObjectID  `bson:"_id,omitempty" json:"id,omitempty"`
+	DocumentID     primitive.ObjectID  `bson:"document_id" json:"documentId"`
+	InvitedBy      primitive.ObjectID  `bson:"inviter_id" json:"invitedBy"`
+	InvitedEmail   string              `bson:"invitee_email" json:"invitedEmail"`
 	InvitedUserID  *primitive.ObjectID `bson:"invited_user_id,omitempty" json:"invitedUserId,omitempty"`
-	Token          string             `bson:"token" json:"-"` // Never expose token in JSON
-	Type           InvitationType     `bson:"type" json:"type"`
-	Team           ContributorTeam    `bson:"team" json:"team"` // authors, verifiers, validators
-	Status         InvitationStatus   `bson:"status" json:"status"`
-	Message        string             `bson:"message,omitempty" json:"message,omitempty"`
-	ExpiresAt      time.Time          `bson:"expires_at" json:"expiresAt"`
-	SentAt         time.Time          `bson:"sent_at" json:"sentAt"`
-	AcceptedAt     *time.Time         `bson:"accepted_at,omitempty" json:"acceptedAt,omitempty"`
-	DeclinedAt     *time.Time         `bson:"declined_at,omitempty" json:"declinedAt,omitempty"`
-	DeclineReason  string             `bson:"decline_reason,omitempty" json:"declineReason,omitempty"`
-	CreatedAt      time.Time          `bson:"created_at" json:"createdAt"`
-	UpdatedAt      time.Time          `bson:"updated_at" json:"updatedAt"`
+	Token          string              `bson:"token" json:"-"` // Never expose token in JSON
+	Type           InvitationType      `bson:"type,omitempty" json:"type,omitempty"` // Deprecated, kept for backwards compatibility
+	Team           ContributorTeam     `bson:"team" json:"team"` // authors, verifiers, validators
+	Status         InvitationStatus    `bson:"status" json:"status"`
+	Message        string              `bson:"message,omitempty" json:"message,omitempty"`
+	ExpiresAt      time.Time           `bson:"expires_at" json:"expiresAt"`
+	SentAt         time.Time           `bson:"sent_at" json:"sentAt"`
+	AcceptedAt     *time.Time          `bson:"accepted_at,omitempty" json:"acceptedAt,omitempty"`
+	DeclinedAt     *time.Time          `bson:"declined_at,omitempty" json:"declinedAt,omitempty"`
+	DeclineReason  string              `bson:"decline_reason,omitempty" json:"declineReason,omitempty"`
+	CreatedAt      time.Time           `bson:"created_at" json:"createdAt"`
+	UpdatedAt      time.Time           `bson:"updated_at" json:"updatedAt"`
 }
 
 // InvitationResponse represents the API response for an invitation
@@ -54,7 +54,7 @@ type InvitationResponse struct {
 	InvitedByName string             `json:"invitedByName,omitempty"`
 	InvitedEmail  string             `json:"invitedEmail"`
 	InvitedUserID *string            `json:"invitedUserId,omitempty"`
-	Type          InvitationType     `json:"type"`
+	Type          InvitationType     `json:"type,omitempty"` // Deprecated
 	Team          ContributorTeam    `json:"team"`
 	Status        InvitationStatus   `json:"status"`
 	Message       string             `json:"message,omitempty"`
@@ -70,7 +70,6 @@ type InvitationResponse struct {
 type CreateInvitationRequest struct {
 	DocumentID   string          `json:"documentId" binding:"required"`
 	InvitedEmail string          `json:"invitedEmail" binding:"required,email"`
-	Type         InvitationType  `json:"type" binding:"required"`
 	Team         ContributorTeam `json:"team" binding:"required"`
 	Message      string          `json:"message"`
 }
@@ -91,7 +90,6 @@ type InvitationFilter struct {
 	DocumentID   *string           `json:"documentId"`
 	InvitedEmail *string           `json:"invitedEmail"`
 	Status       *InvitationStatus `json:"status"`
-	Type         *InvitationType   `json:"type"`
 	Page         int               `json:"page"`
 	Limit        int               `json:"limit"`
 }

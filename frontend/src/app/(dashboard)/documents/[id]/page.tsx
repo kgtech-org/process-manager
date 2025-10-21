@@ -40,6 +40,7 @@ import {
   Table as TableIcon,
   ChevronDown,
   Search,
+  Rocket,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -196,13 +197,21 @@ export default function DocumentDetailPage() {
   };
 
   const handlePublish = async () => {
-    if (!confirm('Are you sure you want to publish this document? All contributors will be notified to sign.')) return;
+    // Check if document is approved (for final publication) or draft (for signature)
+    const isApproved = document?.status === 'approved';
+    const confirmMessage = isApproved
+      ? 'Are you sure you want to publish this approved document? It will be made available to the organization.'
+      : 'Are you sure you want to publish this document? All contributors will be notified to sign.';
+
+    if (!confirm(confirmMessage)) return;
 
     try {
       await DocumentResource.publish(documentId);
       toast({
         title: 'Document published successfully',
-        description: 'All contributors have been notified to sign the document.',
+        description: isApproved
+          ? 'The document has been published to the organization.'
+          : 'All contributors have been notified to sign the document.',
       });
       loadDocument(); // Reload to show updated status
     } catch (error: any) {
@@ -366,25 +375,13 @@ export default function DocumentDetailPage() {
       </div>
 
       <div className="flex gap-2">
-        {document.status === 'draft' && (
+        {document.status === 'approved' && (
           <Button onClick={handlePublish}>
-            <Send className="h-4 w-4 mr-2" />
-            Publish for Signature
+            <Rocket className="h-4 w-4 mr-2" />
+            Publish
           </Button>
         )}
-        {document.status === 'author_signed' && (
-          <Button onClick={handlePublish}>
-            <Send className="h-4 w-4 mr-2" />
-            Publish for Verification
-          </Button>
-        )}
-        {document.status === 'verifier_signed' && (
-          <Button onClick={handlePublish}>
-            <Send className="h-4 w-4 mr-2" />
-            Publish for Validation
-          </Button>
-        )}
-        <Button onClick={() => setInvitationModalOpen(true)} variant={document.status === 'draft' ? 'outline' : 'default'}>
+        <Button onClick={() => setInvitationModalOpen(true)} variant="outline">
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Collaborator
         </Button>
@@ -624,6 +621,7 @@ export default function DocumentDetailPage() {
             document={document}
             userTeam={userTeam}
             onSignatureAdded={loadDocument}
+            onInviteClick={() => setInvitationModalOpen(true)}
           />
 
           {/* Invitations */}
@@ -634,6 +632,7 @@ export default function DocumentDetailPage() {
       {/* Invitation Modal */}
       <InvitationModal
         documentId={documentId}
+        documentStatus={document.status}
         open={invitationModalOpen}
         onOpenChange={setInvitationModalOpen}
         onSuccess={loadDocument}

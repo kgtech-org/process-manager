@@ -24,7 +24,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Signature, SignatureResource, SignatureType, Document, Contributor, UserSignatureResource, UserSignature } from '@/lib/resources';
 import { authService } from '@/lib/auth';
-import { CheckCircle2, XCircle, Clock, PenTool, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, PenTool, AlertCircle, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   Alert,
@@ -37,9 +37,10 @@ interface SignaturePanelProps {
   document: Document;
   userTeam?: 'authors' | 'verifiers' | 'validators';
   onSignatureAdded?: () => void;
+  onInviteClick?: () => void;
 }
 
-export function SignaturePanel({ documentId, document, userTeam, onSignatureAdded }: SignaturePanelProps) {
+export function SignaturePanel({ documentId, document, userTeam, onSignatureAdded, onInviteClick }: SignaturePanelProps) {
   const { t } = useTranslation('collaboration');
   const { toast } = useToast();
   const router = useRouter();
@@ -113,6 +114,28 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
   const hasUserSigned = (): boolean => {
     if (!currentUserId) return false;
     return signatures.some((sig) => sig.userId === currentUserId);
+  };
+
+  // Determine if the current user's role is in the active signing phase
+  const canUserSignNow = (): boolean => {
+    if (!userTeam || hasUserSigned()) return false;
+
+    // Authors can sign in both draft and author_review
+    if (userTeam === 'authors' && (document.status === 'draft' || document.status === 'author_review')) {
+      return true;
+    }
+
+    // Verifiers can only sign in verifier_review
+    if (userTeam === 'verifiers' && document.status === 'verifier_review') {
+      return true;
+    }
+
+    // Validators can only sign in validator_review
+    if (userTeam === 'validators' && document.status === 'validator_review') {
+      return true;
+    }
+
+    return false;
   };
 
   const handleSignClick = () => {
@@ -249,7 +272,28 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
   const renderContributorWithSignature = (contributor: Contributor, type: SignatureType) => {
     const signature = getSignatureForContributor(contributor);
     const isCurrentUser = currentUserId === contributor.userId;
-    const canSign = isCurrentUser && contributor.status === 'pending' && !signature;
+
+    // Check if it's the user's turn to sign based on document status
+    const isActivePhaseForRole = () => {
+      // Authors can sign in draft and author_review
+      if (type === 'author' && (document.status === 'draft' || document.status === 'author_review')) {
+        return true;
+      }
+
+      // Verifiers can only sign in verifier_review
+      if (type === 'verifier' && document.status === 'verifier_review') {
+        return true;
+      }
+
+      // Validators can only sign in validator_review
+      if (type === 'validator' && document.status === 'validator_review') {
+        return true;
+      }
+
+      return false;
+    };
+
+    const canSign = isCurrentUser && contributor.status === 'pending' && !signature && isActivePhaseForRole();
     const hasSigned = signature !== null;
 
     return (
@@ -349,11 +393,20 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
               <CardTitle>{t('signatures.title')}</CardTitle>
               <CardDescription>{t('signatures.description')}</CardDescription>
             </div>
-            {userTeam && !hasUserSigned() && (
-              <Button onClick={handleSignClick}>
-                {t('signatures.signDocument')}
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {onInviteClick && (
+                <Button variant="outline" onClick={onInviteClick}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {t('invitation.title')}
+                </Button>
+              )}
+              {canUserSignNow() && (
+                <Button onClick={handleSignClick}>
+                  <PenTool className="h-4 w-4 mr-2" />
+                  {t('signatures.signDocument')}
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>

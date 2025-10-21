@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 type SignatureHandler struct {
 	signatureCollection *mongo.Collection
 	documentCollection  *mongo.Collection
+	versionCollection   *mongo.Collection
 	userCollection      *mongo.Collection
 }
 
@@ -24,6 +26,7 @@ func NewSignatureHandler(db *mongo.Database) *SignatureHandler {
 	return &SignatureHandler{
 		signatureCollection: db.Collection("signatures"),
 		documentCollection:  db.Collection("documents"),
+		versionCollection:   db.Collection("document_versions"),
 		userCollection:      db.Collection("users"),
 	}
 }
@@ -256,13 +259,17 @@ func (h *SignatureHandler) AddDocumentSignature(c *gin.Context) {
 }
 
 // updateDocumentStatus updates the document status based on signatures
+// Implements automatic workflow transitions for Issue #47
 func (h *SignatureHandler) updateDocumentStatus(ctx context.Context, documentID primitive.ObjectID) {
 	// Get document
 	var document models.Document
 	err := h.documentCollection.FindOne(ctx, bson.M{"_id": documentID}).Decode(&document)
 	if err != nil {
+		fmt.Printf("❌ [updateDocumentStatus] Failed to fetch document: %v\n", err)
 		return
 	}
+
+	fmt.Printf("🔍 [updateDocumentStatus] Document ID: %s, Current Status: %s\n", documentID.Hex(), document.Status)
 
 	// Count signatures by type
 	authorSigs, _ := h.signatureCollection.CountDocuments(ctx, bson.M{
@@ -283,32 +290,152 @@ func (h *SignatureHandler) updateDocumentStatus(ctx context.Context, documentID 
 	verifiersCount := len(document.Contributors.Verifiers)
 	validatorsCount := len(document.Contributors.Validators)
 
-	// Update status based on signature progress
-	var newStatus models.DocumentStatus
+	fmt.Printf("📊 [updateDocumentStatus] Signature counts - Authors: %d/%d, Verifiers: %d/%d, Validators: %d/%d\n",
+		authorSigs, authorsCount, verifierSigs, verifiersCount, validatorSigs, validatorsCount)
 
-	if validatorSigs >= int64(validatorsCount) && validatorsCount > 0 {
-		newStatus = models.DocumentStatusApproved
-		now := time.Now()
-		h.documentCollection.UpdateOne(ctx,
-			bson.M{"_id": documentID},
-			bson.M{
-				"$set": bson.M{
-					"status":      newStatus,
-					"approved_at": now,
-				},
-			},
-		)
-	} else if verifierSigs >= int64(verifiersCount) && verifiersCount > 0 {
-		newStatus = models.DocumentStatusVerifierSigned
-		h.documentCollection.UpdateOne(ctx,
-			bson.M{"_id": documentID},
-			bson.M{"$set": bson.M{"status": newStatus}},
-		)
-	} else if authorSigs >= int64(authorsCount) && authorsCount > 0 {
-		newStatus = models.DocumentStatusAuthorSigned
-		h.documentCollection.UpdateOne(ctx,
-			bson.M{"_id": documentID},
-			bson.M{"$set": bson.M{"status": newStatus}},
-		)
+	// Determine new status based on current status and signature completion
+	var newStatus models.DocumentStatus
+	shouldUpdate := false
+
+	switch document.Status {
+	case models.DocumentStatusDraft:
+		// Auto-publish to author_review when first author signs
+		// This allows authors to sign immediately without manual publish
+		if authorSigs > 0 {
+			newStatus = models.DocumentStatusAuthorReview
+			// Set all authors to pending
+			for i := range document.Contributors.Authors {
+				if document.Contributors.Authors[i].Status == models.SignatureStatusJoined {
+					document.Contributors.Authors[i].Status = models.SignatureStatusPending
+				}
+			}
+			shouldUpdate = true
+			fmt.Printf("✅ [updateDocumentStatus] Auto-publishing: draft → author_review (first author signature)\n")
+		}
+
+	case models.DocumentStatusAuthorReview:
+		// All authors have signed -> automatically transition to verifier_signed or verifier_review
+		if authorSigs >= int64(authorsCount) && authorsCount > 0 {
+			if verifiersCount > 0 {
+				newStatus = models.DocumentStatusVerifierReview
+				// Set verifiers to pending
+				for i := range document.Contributors.Verifiers {
+					if document.Contributors.Verifiers[i].Status == models.SignatureStatusJoined {
+						document.Contributors.Verifiers[i].Status = models.SignatureStatusPending
+					}
+				}
+				fmt.Printf("✅ [updateDocumentStatus] Transitioning: author_review → verifier_review\n")
+			} else {
+				// No verifiers, go straight to author_signed
+				newStatus = models.DocumentStatusAuthorSigned
+				fmt.Printf("✅ [updateDocumentStatus] Transitioning: author_review → author_signed (no verifiers)\n")
+			}
+			shouldUpdate = true
+		} else {
+			fmt.Printf("⏳ [updateDocumentStatus] Not all authors signed yet (%d/%d)\n", authorSigs, authorsCount)
+		}
+
+	case models.DocumentStatusVerifierReview:
+		// All verifiers have signed -> automatically transition to validator_signed or validator_review
+		if verifierSigs >= int64(verifiersCount) && verifiersCount > 0 {
+			if validatorsCount > 0 {
+				newStatus = models.DocumentStatusValidatorReview
+				// Set validators to pending
+				for i := range document.Contributors.Validators {
+					if document.Contributors.Validators[i].Status == models.SignatureStatusJoined {
+						document.Contributors.Validators[i].Status = models.SignatureStatusPending
+					}
+				}
+				fmt.Printf("✅ [updateDocumentStatus] Transitioning: verifier_review → validator_review\n")
+			} else {
+				// No validators, go straight to verifier_signed
+				newStatus = models.DocumentStatusVerifierSigned
+				fmt.Printf("✅ [updateDocumentStatus] Transitioning: verifier_review → verifier_signed (no validators)\n")
+			}
+			shouldUpdate = true
+		} else {
+			fmt.Printf("⏳ [updateDocumentStatus] Not all verifiers signed yet (%d/%d)\n", verifierSigs, verifiersCount)
+		}
+
+	case models.DocumentStatusValidatorReview:
+		// All validators have signed -> approve document
+		if validatorSigs >= int64(validatorsCount) && validatorsCount > 0 {
+			newStatus = models.DocumentStatusApproved
+			shouldUpdate = true
+			fmt.Printf("✅ [updateDocumentStatus] Transitioning: validator_review → approved\n")
+		} else {
+			fmt.Printf("⏳ [updateDocumentStatus] Not all validators signed yet (%d/%d)\n", validatorSigs, validatorsCount)
+		}
+
+	default:
+		fmt.Printf("ℹ️ [updateDocumentStatus] Document status '%s' does not trigger automatic transitions\n", document.Status)
 	}
+
+	// Update document status if needed
+	if shouldUpdate {
+		fmt.Printf("💾 [updateDocumentStatus] Updating document status to: %s\n", newStatus)
+		updateDoc := bson.M{
+			"status": newStatus,
+		}
+
+		// Update contributor arrays if they were modified
+		if newStatus == models.DocumentStatusAuthorReview {
+			updateDoc["contributors.authors"] = document.Contributors.Authors
+			fmt.Printf("📝 [updateDocumentStatus] Updating authors to pending status\n")
+		} else if newStatus == models.DocumentStatusVerifierReview || newStatus == models.DocumentStatusValidatorReview {
+			if newStatus == models.DocumentStatusVerifierReview {
+				updateDoc["contributors.verifiers"] = document.Contributors.Verifiers
+				fmt.Printf("📝 [updateDocumentStatus] Updating verifiers to pending status\n")
+			} else {
+				updateDoc["contributors.validators"] = document.Contributors.Validators
+				fmt.Printf("📝 [updateDocumentStatus] Updating validators to pending status\n")
+			}
+		}
+
+		// Set approved_at timestamp if document is approved
+		if newStatus == models.DocumentStatusApproved {
+			updateDoc["approved_at"] = time.Now()
+			fmt.Printf("🎉 [updateDocumentStatus] Document approved! Setting approved_at timestamp\n")
+
+			// Create immutable version snapshot when document is approved
+			err = h.createVersionSnapshot(ctx, &document, "Approved version snapshot")
+			if err != nil {
+				fmt.Printf("❌ [updateDocumentStatus] Failed to create version snapshot: %v\n", err)
+			} else {
+				fmt.Printf("📸 [updateDocumentStatus] Version snapshot created successfully\n")
+			}
+		}
+
+		_, err = h.documentCollection.UpdateOne(ctx,
+			bson.M{"_id": documentID},
+			bson.M{"$set": updateDoc},
+		)
+		if err != nil {
+			fmt.Printf("❌ [updateDocumentStatus] Failed to update document status: %v\n", err)
+		} else {
+			fmt.Printf("✅ [updateDocumentStatus] Document status updated successfully to: %s\n", newStatus)
+		}
+	} else {
+		fmt.Printf("⏭️ [updateDocumentStatus] No status update needed\n")
+	}
+}
+
+// createVersionSnapshot creates an immutable snapshot of the document
+func (h *SignatureHandler) createVersionSnapshot(ctx context.Context, document *models.Document, changeNote string) error {
+	version := &models.DocumentVersion{
+		ID:         primitive.NewObjectID(),
+		DocumentID: document.ID,
+		Version:    document.Version,
+		Data:       *document,
+		CreatedBy:  document.CreatedBy,
+		CreatedAt:  time.Now(),
+		ChangeNote: changeNote,
+	}
+
+	_, err := h.versionCollection.InsertOne(ctx, version)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

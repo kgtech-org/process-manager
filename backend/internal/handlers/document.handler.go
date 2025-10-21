@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -371,10 +372,17 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 
 	fmt.Printf("✅ [PUBLISH] Document published successfully, status: %s\n", document.Status)
 
-	// Log activity
+	// Log activity with appropriate description
+	var activityDescription string
+	if document.Status == models.DocumentStatusArchived {
+		activityDescription = fmt.Sprintf("Published approved document '%s' (%s) to the organization", document.Title, document.Reference)
+	} else {
+		activityDescription = fmt.Sprintf("Published document '%s' (%s) for signature", document.Title, document.Reference)
+	}
+
 	activityReq := models.ActivityLogRequest{
 		Action:       "document_published",
-		Description:  fmt.Sprintf("Published document '%s' (%s) for signature", document.Title, document.Reference),
+		Description:  activityDescription,
 		ResourceType: "document",
 		ResourceID:   &document.ID,
 		Success:      true,
