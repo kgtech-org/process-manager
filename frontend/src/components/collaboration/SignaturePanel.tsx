@@ -120,20 +120,22 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
   const canUserSignNow = (): boolean => {
     if (!userTeam || hasUserSigned()) return false;
 
-    // Map document status to which team can sign
-    const activeTeamByStatus: Record<string, 'authors' | 'verifiers' | 'validators' | null> = {
-      'draft': 'authors',
-      'author_review': 'authors',
-      'author_signed': null, // No one can sign - waiting for next stage
-      'verifier_review': 'verifiers',
-      'verifier_signed': null,
-      'validator_review': 'validators',
-      'approved': null,
-      'archived': null,
-    };
+    // Authors can sign in both draft and author_review
+    if (userTeam === 'authors' && (document.status === 'draft' || document.status === 'author_review')) {
+      return true;
+    }
 
-    const activeTeam = activeTeamByStatus[document.status];
-    return activeTeam === userTeam;
+    // Verifiers can only sign in verifier_review
+    if (userTeam === 'verifiers' && document.status === 'verifier_review') {
+      return true;
+    }
+
+    // Validators can only sign in validator_review
+    if (userTeam === 'validators' && document.status === 'validator_review') {
+      return true;
+    }
+
+    return false;
   };
 
   const handleSignClick = () => {
@@ -273,25 +275,22 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
 
     // Check if it's the user's turn to sign based on document status
     const isActivePhaseForRole = () => {
-      const activeTeamByStatus: Record<string, 'authors' | 'verifiers' | 'validators' | null> = {
-        'draft': 'authors',
-        'author_review': 'authors',
-        'author_signed': null,
-        'verifier_review': 'verifiers',
-        'verifier_signed': null,
-        'validator_review': 'validators',
-        'approved': null,
-        'archived': null,
-      };
+      // Authors can sign in draft and author_review
+      if (type === 'author' && (document.status === 'draft' || document.status === 'author_review')) {
+        return true;
+      }
 
-      const roleToTeam: Record<SignatureType, 'authors' | 'verifiers' | 'validators'> = {
-        'author': 'authors',
-        'verifier': 'verifiers',
-        'validator': 'validators',
-      };
+      // Verifiers can only sign in verifier_review
+      if (type === 'verifier' && document.status === 'verifier_review') {
+        return true;
+      }
 
-      const activeTeam = activeTeamByStatus[document.status];
-      return activeTeam === roleToTeam[type];
+      // Validators can only sign in validator_review
+      if (type === 'validator' && document.status === 'validator_review') {
+        return true;
+      }
+
+      return false;
     };
 
     const canSign = isCurrentUser && contributor.status === 'pending' && !signature && isActivePhaseForRole();
