@@ -474,21 +474,41 @@ const documentHTMLTemplate = `
     <div class="process-group">
         <div class="process-group-title">{{.Title}}</div>
         <div style="padding: 10px;">
-            {{if .Description}}
-            <p style="margin-bottom: 10px;">{{.Description}}</p>
-            {{end}}
-
-            {{range .Steps}}
+            {{range .ProcessSteps}}
             <div class="process-step">
-                <div class="step-number">{{.Number}}. {{.Title}}</div>
-                {{if .Description}}
-                <div class="step-description">{{.Description}}</div>
+                <div class="step-number">{{.Order}}. {{.Title}}</div>
+                {{if .Responsible}}
+                <div style="margin-top: 5px;"><strong>Responsable:</strong> {{.Responsible}}</div>
                 {{end}}
-                {{if .ResponsibleRole}}
-                <div style="margin-top: 5px;"><strong>Responsable:</strong> {{.ResponsibleRole}}</div>
+                {{if .Descriptions}}
+                <div class="step-description">
+                    {{range .Descriptions}}
+                    <div style="margin-top: 5px;">
+                        <strong>{{.Title}}</strong>
+                        {{if .Instructions}}
+                        <ul style="margin: 5px 0 5px 20px;">
+                            {{range .Instructions}}
+                            <li>{{.}}</li>
+                            {{end}}
+                        </ul>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
                 {{end}}
-                {{if .ExecutionTime}}
-                <div><strong>Délais:</strong> {{.ExecutionTime}}</div>
+                {{if .Outputs}}
+                <div style="margin-top: 5px;"><strong>Résultats:</strong>
+                    {{range $index, $output := .Outputs}}
+                    {{if $index}}, {{end}}{{$output}}
+                    {{end}}
+                </div>
+                {{end}}
+                {{if .Durations}}
+                <div><strong>Délais:</strong>
+                    {{range $index, $duration := .Durations}}
+                    {{if $index}}, {{end}}{{$duration}}
+                    {{end}}
+                </div>
                 {{end}}
             </div>
             {{end}}
