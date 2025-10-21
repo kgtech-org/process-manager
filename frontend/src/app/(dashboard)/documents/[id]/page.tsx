@@ -366,14 +366,7 @@ export default function DocumentDetailPage() {
       </div>
 
       <div className="flex gap-2">
-        {/* Only show publish button for draft status - automatic transitions handle the rest */}
-        {document.status === 'draft' && (
-          <Button onClick={handlePublish}>
-            <Send className="h-4 w-4 mr-2" />
-            Publish for Signature
-          </Button>
-        )}
-        <Button onClick={() => setInvitationModalOpen(true)} variant={document.status === 'draft' ? 'outline' : 'default'}>
+        <Button onClick={() => setInvitationModalOpen(true)} variant="outline">
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Collaborator
         </Button>

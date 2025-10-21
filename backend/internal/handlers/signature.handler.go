@@ -298,6 +298,21 @@ func (h *SignatureHandler) updateDocumentStatus(ctx context.Context, documentID 
 	shouldUpdate := false
 
 	switch document.Status {
+	case models.DocumentStatusDraft:
+		// Auto-publish to author_review when first author signs
+		// This allows authors to sign immediately without manual publish
+		if authorSigs > 0 {
+			newStatus = models.DocumentStatusAuthorReview
+			// Set all authors to pending
+			for i := range document.Contributors.Authors {
+				if document.Contributors.Authors[i].Status == models.SignatureStatusJoined {
+					document.Contributors.Authors[i].Status = models.SignatureStatusPending
+				}
+			}
+			shouldUpdate = true
+			fmt.Printf("✅ [updateDocumentStatus] Auto-publishing: draft → author_review (first author signature)\n")
+		}
+
 	case models.DocumentStatusAuthorReview:
 		// All authors have signed -> automatically transition to verifier_signed or verifier_review
 		if authorSigs >= int64(authorsCount) && authorsCount > 0 {
@@ -364,7 +379,10 @@ func (h *SignatureHandler) updateDocumentStatus(ctx context.Context, documentID 
 		}
 
 		// Update contributor arrays if they were modified
-		if newStatus == models.DocumentStatusVerifierReview || newStatus == models.DocumentStatusValidatorReview {
+		if newStatus == models.DocumentStatusAuthorReview {
+			updateDoc["contributors.authors"] = document.Contributors.Authors
+			fmt.Printf("📝 [updateDocumentStatus] Updating authors to pending status\n")
+		} else if newStatus == models.DocumentStatusVerifierReview || newStatus == models.DocumentStatusValidatorReview {
 			if newStatus == models.DocumentStatusVerifierReview {
 				updateDoc["contributors.verifiers"] = document.Contributors.Verifiers
 				fmt.Printf("📝 [updateDocumentStatus] Updating verifiers to pending status\n")
