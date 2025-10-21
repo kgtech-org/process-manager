@@ -613,6 +613,7 @@ export default function DocumentDetailPage() {
             document={document}
             userTeam={userTeam}
             onSignatureAdded={loadDocument}
+            onInviteClick={() => setInvitationModalOpen(true)}
           />
 
           {/* Invitations */}

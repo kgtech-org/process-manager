@@ -24,7 +24,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Signature, SignatureResource, SignatureType, Document, Contributor, UserSignatureResource, UserSignature } from '@/lib/resources';
 import { authService } from '@/lib/auth';
-import { CheckCircle2, XCircle, Clock, PenTool, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, PenTool, AlertCircle, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   Alert,
@@ -37,9 +37,10 @@ interface SignaturePanelProps {
   document: Document;
   userTeam?: 'authors' | 'verifiers' | 'validators';
   onSignatureAdded?: () => void;
+  onInviteClick?: () => void;
 }
 
-export function SignaturePanel({ documentId, document, userTeam, onSignatureAdded }: SignaturePanelProps) {
+export function SignaturePanel({ documentId, document, userTeam, onSignatureAdded, onInviteClick }: SignaturePanelProps) {
   const { t } = useTranslation('collaboration');
   const { toast } = useToast();
   const router = useRouter();
@@ -349,11 +350,20 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
               <CardTitle>{t('signatures.title')}</CardTitle>
               <CardDescription>{t('signatures.description')}</CardDescription>
             </div>
-            {userTeam && !hasUserSigned() && (
-              <Button onClick={handleSignClick}>
-                {t('signatures.signDocument')}
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {onInviteClick && (
+                <Button variant="outline" onClick={onInviteClick}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {t('invitation.title')}
+                </Button>
+              )}
+              {userTeam && !hasUserSigned() && (
+                <Button onClick={handleSignClick}>
+                  <PenTool className="h-4 w-4 mr-2" />
+                  {t('signatures.signDocument')}
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
