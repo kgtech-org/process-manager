@@ -18,14 +18,16 @@ type DocumentService struct {
 	versionCollection    *mongo.Collection
 	invitationCollection *mongo.Collection
 	userService          *UserService
+	pdfService           *PDFService
 }
 
-func NewDocumentService(db *mongo.Database, userService *UserService) *DocumentService {
+func NewDocumentService(db *mongo.Database, userService *UserService, pdfService *PDFService) *DocumentService {
 	return &DocumentService{
 		collection:           db.Collection("documents"),
 		versionCollection:    db.Collection("document_versions"),
 		invitationCollection: db.Collection("invitations"),
 		userService:          userService,
+		pdfService:           pdfService,
 	}
 }
 
@@ -450,6 +452,21 @@ func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*
 	// Update document status and timestamp
 	document.Status = newStatus
 	document.UpdatedAt = now
+
+	// Generate and upload PDF if archiving approved document
+	if newStatus == models.DocumentStatusArchived && s.pdfService != nil {
+		fmt.Printf("📄 [PUBLISH] Generating PDF for archived document...\n")
+		pdfURL, err := s.pdfService.GenerateDocumentPDF(ctx, document)
+		if err != nil {
+			fmt.Printf("⚠️ [PUBLISH] Failed to generate PDF: %v\n", err)
+			// Don't fail the entire publish operation if PDF generation fails
+			// Log the error and continue
+		} else {
+			fmt.Printf("✅ [PUBLISH] PDF generated successfully: %s\n", pdfURL)
+			// Store PDF URL in document metadata or a new field
+			// For now, we'll just log it - you can add a field to the document model later
+		}
+	}
 
 	// Replace the entire document to avoid validation issues
 	_, err = s.collection.ReplaceOne(
