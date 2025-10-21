@@ -112,5 +112,8 @@
     "group": "Groupe",
     "step": "Étape",
     "of": "de"
+  },
+  "signatures": {
+    "noContributors": "Aucun contributeur assigné pour cette équipe"
   }
 }

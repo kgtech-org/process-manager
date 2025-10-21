@@ -114,5 +114,8 @@
     "group": "Group",
     "step": "Step",
     "of": "of"
+  },
+  "signatures": {
+    "noContributors": "No contributors assigned to this team"
   }
 }
