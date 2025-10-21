@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"net/url"
 	"time"
 
 	"github.com/chromedp/cdproto/page"
@@ -31,12 +32,14 @@ func (s *PDFService) GenerateDocumentPDF(ctx context.Context, document *models.D
 	if err != nil {
 		return "", fmt.Errorf("failed to render HTML: %w", err)
 	}
+	fmt.Printf("📄 [PDF] Generated HTML length: %d bytes\n", len(html))
 
 	// Convert HTML to PDF using chromedp
 	pdfBytes, err := s.htmlToPDF(ctx, html)
 	if err != nil {
 		return "", fmt.Errorf("failed to convert HTML to PDF: %w", err)
 	}
+	fmt.Printf("📄 [PDF] Generated PDF size: %d bytes\n", len(pdfBytes))
 
 	// Upload PDF to MinIO
 	fileName := fmt.Sprintf("%s_%s_v%s.pdf", document.Reference, time.Now().Format("20060102_150405"), document.Version)
@@ -53,19 +56,38 @@ func (s *PDFService) GenerateDocumentPDF(ctx context.Context, document *models.D
 
 // htmlToPDF converts HTML to PDF using headless Chrome
 func (s *PDFService) htmlToPDF(ctx context.Context, html string) ([]byte, error) {
-	// Create a new browser context with timeout
-	allocCtx, cancel := chromedp.NewContext(ctx)
+	// Create allocator options for headless Chrome
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.DisableGPU,
+		chromedp.NoDefaultBrowserCheck,
+		chromedp.Flag("headless", true),
+		chromedp.Flag("disable-dev-shm-usage", true),
+		chromedp.Flag("no-sandbox", true),
+	)
+
+	// Create context with allocator
+	allocCtx, cancel := chromedp.NewExecAllocator(ctx, opts...)
+	defer cancel()
+
+	// Create browser context
+	browserCtx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
 	// Set a timeout for PDF generation
-	allocCtx, cancel = context.WithTimeout(allocCtx, 30*time.Second)
+	browserCtx, cancel = context.WithTimeout(browserCtx, 30*time.Second)
 	defer cancel()
 
 	var pdfBuf []byte
 
-	// Navigate to a data URL and print to PDF
-	if err := chromedp.Run(allocCtx,
-		chromedp.Navigate("data:text/html,"+html),
+	// URL encode the HTML for data URL
+	encodedHTML := url.QueryEscape(html)
+	dataURL := "data:text/html;charset=utf-8," + encodedHTML
+
+	// Navigate to the data URL and wait for rendering, then print to PDF
+	if err := chromedp.Run(browserCtx,
+		chromedp.Navigate(dataURL),
+		chromedp.WaitReady("body"),
+		chromedp.Sleep(500*time.Millisecond), // Give time for rendering
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			var err error
 			pdfBuf, _, err = page.PrintToPDF().
