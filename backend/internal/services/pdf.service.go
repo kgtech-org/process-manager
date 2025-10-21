@@ -102,6 +102,12 @@ func (s *PDFService) renderDocumentHTML(document *models.Document) (string, erro
 			}
 			return t.Format("02/01/2006 15:04")
 		},
+		"formatPtrDate": func(t *time.Time) string {
+			if t == nil || t.IsZero() {
+				return ""
+			}
+			return t.Format("02/01/2006")
+		},
 		"getContributorStatus": func(status models.SignatureStatus) string {
 			switch status {
 			case models.SignatureStatusPending:
@@ -347,7 +353,7 @@ const documentHTMLTemplate = `
             <td>{{.Name}}</td>
             <td>{{.Title}}</td>
             <td class="signature-cell"></td>
-            <td>{{if .SignedAt}}{{formatDate .SignedAt}}{{end}}</td>
+            <td>{{formatPtrDate .SignatureDate}}</td>
         </tr>
         {{end}}
     </table>
@@ -366,7 +372,7 @@ const documentHTMLTemplate = `
             <td>{{.Name}}</td>
             <td>{{.Title}}</td>
             <td class="signature-cell"></td>
-            <td>{{if .SignedAt}}{{formatDate .SignedAt}}{{end}}</td>
+            <td>{{formatPtrDate .SignatureDate}}</td>
         </tr>
         {{end}}
     </table>
@@ -386,7 +392,7 @@ const documentHTMLTemplate = `
             <td>{{.Name}}</td>
             <td>{{.Title}}</td>
             <td class="signature-cell"></td>
-            <td>{{if .SignedAt}}{{formatDate .SignedAt}}{{end}}</td>
+            <td>{{formatPtrDate .SignatureDate}}</td>
         </tr>
         {{end}}
     </table>
