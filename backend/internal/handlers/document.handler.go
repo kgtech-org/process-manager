@@ -458,6 +458,40 @@ func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 	helpers.SendSuccess(c, "Document published successfully", document.ToResponse())
 }
 
+// ExportPDF exports document as PDF
+// GET /api/documents/:id/export-pdf
+func (h *DocumentHandler) ExportPDF(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	fmt.Printf("📥 [EXPORT] Exporting PDF for document ID: %s\n", id.Hex())
+
+	pdfURL, err := h.documentService.ExportPDF(ctx, id)
+	if err != nil {
+		fmt.Printf("❌ [EXPORT] Error: %v\n", err)
+		if err.Error() == "document not found" {
+			helpers.SendNotFound(c, "Document not found")
+			return
+		}
+		if strings.Contains(err.Error(), "PDF service not available") {
+			helpers.SendInternalError(c, fmt.Errorf("PDF generation service is not available"))
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	helpers.SendSuccess(c, "PDF exported successfully", gin.H{
+		"pdfUrl": pdfURL,
+	})
+}
+
 // GetDocumentVersions retrieves all versions of a document
 // GET /api/documents/:id/versions
 func (h *DocumentHandler) GetDocumentVersions(c *gin.Context) {

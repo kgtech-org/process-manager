@@ -223,6 +223,24 @@ export default function DocumentDetailPage() {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const pdfUrl = await DocumentResource.exportPDF(documentId);
+      // Open PDF in new tab
+      window.open(pdfUrl, '_blank');
+      toast({
+        title: 'PDF exported successfully',
+        description: 'Opening PDF in new tab...',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to export PDF',
+        description: error.message || 'An error occurred',
+      });
+    }
+  };
+
   const handleProcessFlowUpdate = useCallback(async (processGroups: any) => {
     await DocumentResource.update(documentId, { processGroups, isAutosave: true });
     // Update local state to keep parent in sync (ProcessFlowEditor uses ref to prevent loop)
@@ -389,7 +407,7 @@ export default function DocumentDetailPage() {
           <Copy className="h-4 w-4 mr-2" />
           Duplicate
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleExportPDF}>
           <Download className="h-4 w-4 mr-2" />
           Export PDF
         </Button>

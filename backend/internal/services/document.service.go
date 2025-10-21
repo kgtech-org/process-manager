@@ -463,8 +463,8 @@ func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*
 			// Log the error and continue
 		} else {
 			fmt.Printf("✅ [PUBLISH] PDF generated successfully: %s\n", pdfURL)
-			// Store PDF URL in document metadata or a new field
-			// For now, we'll just log it - you can add a field to the document model later
+			// Store PDF URL in document
+			document.PdfUrl = pdfURL
 		}
 	}
 
@@ -480,6 +480,53 @@ func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*
 	}
 
 	return document, nil
+}
+
+// ExportPDF generates and exports the document as PDF
+// If PDF already exists, returns the existing URL
+// If not, generates a new PDF and stores the URL
+func (s *DocumentService) ExportPDF(ctx context.Context, id primitive.ObjectID) (string, error) {
+	// Get existing document
+	document, err := s.GetByID(ctx, id)
+	if err != nil {
+		return "", err
+	}
+
+	// If PDF already exists, return the URL
+	if document.PdfUrl != "" {
+		fmt.Printf("📄 [EXPORT] PDF already exists for document %s: %s\n", document.Reference, document.PdfUrl)
+		return document.PdfUrl, nil
+	}
+
+	// Generate PDF if service is available
+	if s.pdfService == nil {
+		return "", fmt.Errorf("PDF service not available")
+	}
+
+	fmt.Printf("📄 [EXPORT] Generating new PDF for document: %s (%s)\n", document.Title, document.Reference)
+	pdfURL, err := s.pdfService.GenerateDocumentPDF(ctx, document)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate PDF: %w", err)
+	}
+
+	// Store PDF URL in document
+	_, err = s.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": id},
+		bson.M{
+			"$set": bson.M{
+				"pdf_url":    pdfURL,
+				"updated_at": time.Now(),
+			},
+		},
+	)
+	if err != nil {
+		// Log error but still return the PDF URL since it was generated successfully
+		fmt.Printf("⚠️ [EXPORT] Failed to store PDF URL in database: %v\n", err)
+	}
+
+	fmt.Printf("✅ [EXPORT] PDF generated and stored successfully: %s\n", pdfURL)
+	return pdfURL, nil
 }
 
 // Delete deletes a document

@@ -147,6 +147,7 @@ type Document struct {
 	Metadata      DocumentMetadata   `json:"metadata" bson:"metadata"`
 	ProcessGroups []ProcessGroup     `json:"processGroups" bson:"process_groups"`
 	Annexes       []Annex            `json:"annexes" bson:"annexes"`
+	PdfUrl        string             `json:"pdfUrl,omitempty" bson:"pdf_url,omitempty"`
 	CreatedAt     time.Time          `json:"createdAt" bson:"created_at"`
 	UpdatedAt     time.Time          `json:"updatedAt" bson:"updated_at"`
 	ApprovedAt    *time.Time         `json:"approvedAt,omitempty" bson:"approved_at,omitempty"`
@@ -164,6 +165,7 @@ type DocumentResponse struct {
 	Metadata      DocumentMetadata `json:"metadata"`
 	ProcessGroups []ProcessGroup   `json:"processGroups"`
 	Annexes       []Annex          `json:"annexes"`
+	PdfUrl        string           `json:"pdfUrl,omitempty"`
 	CreatedAt     time.Time        `json:"createdAt"`
 	UpdatedAt     time.Time        `json:"updatedAt"`
 	ApprovedAt    *time.Time       `json:"approvedAt,omitempty"`
@@ -182,6 +184,7 @@ func (d *Document) ToResponse() DocumentResponse {
 		Metadata:      d.Metadata,
 		ProcessGroups: d.ProcessGroups,
 		Annexes:       d.Annexes,
+		PdfUrl:        d.PdfUrl,
 		CreatedAt:     d.CreatedAt,
 		UpdatedAt:     d.UpdatedAt,
 		ApprovedAt:    d.ApprovedAt,
