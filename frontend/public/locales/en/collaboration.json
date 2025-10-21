@@ -67,6 +67,7 @@
     "description": "View and add digital signatures",
     "loading": "Loading signatures...",
     "noSignatures": "No signatures yet",
+    "noContributors": "No contributors assigned to this team",
     "signDocument": "Sign Document",
     "signDescription": "Add your digital signature to this document",
     "signatureField": "Signature",
