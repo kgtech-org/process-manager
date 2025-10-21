@@ -116,6 +116,26 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
     return signatures.some((sig) => sig.userId === currentUserId);
   };
 
+  // Determine if the current user's role is in the active signing phase
+  const canUserSignNow = (): boolean => {
+    if (!userTeam || hasUserSigned()) return false;
+
+    // Map document status to which team can sign
+    const activeTeamByStatus: Record<string, 'authors' | 'verifiers' | 'validators' | null> = {
+      'draft': 'authors',
+      'author_review': 'authors',
+      'author_signed': null, // No one can sign - waiting for next stage
+      'verifier_review': 'verifiers',
+      'verifier_signed': null,
+      'validator_review': 'validators',
+      'approved': null,
+      'archived': null,
+    };
+
+    const activeTeam = activeTeamByStatus[document.status];
+    return activeTeam === userTeam;
+  };
+
   const handleSignClick = () => {
     // Check if user has a signature first
     if (!userSignature) {
@@ -250,7 +270,31 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
   const renderContributorWithSignature = (contributor: Contributor, type: SignatureType) => {
     const signature = getSignatureForContributor(contributor);
     const isCurrentUser = currentUserId === contributor.userId;
-    const canSign = isCurrentUser && contributor.status === 'pending' && !signature;
+
+    // Check if it's the user's turn to sign based on document status
+    const isActivePhaseForRole = () => {
+      const activeTeamByStatus: Record<string, 'authors' | 'verifiers' | 'validators' | null> = {
+        'draft': 'authors',
+        'author_review': 'authors',
+        'author_signed': null,
+        'verifier_review': 'verifiers',
+        'verifier_signed': null,
+        'validator_review': 'validators',
+        'approved': null,
+        'archived': null,
+      };
+
+      const roleToTeam: Record<SignatureType, 'authors' | 'verifiers' | 'validators'> = {
+        'author': 'authors',
+        'verifier': 'verifiers',
+        'validator': 'validators',
+      };
+
+      const activeTeam = activeTeamByStatus[document.status];
+      return activeTeam === roleToTeam[type];
+    };
+
+    const canSign = isCurrentUser && contributor.status === 'pending' && !signature && isActivePhaseForRole();
     const hasSigned = signature !== null;
 
     return (
@@ -357,7 +401,7 @@ export function SignaturePanel({ documentId, document, userTeam, onSignatureAdde
                   {t('invitation.title')}
                 </Button>
               )}
-              {userTeam && !hasUserSigned() && (
+              {canUserSignNow() && (
                 <Button onClick={handleSignClick}>
                   <PenTool className="h-4 w-4 mr-2" />
                   {t('signatures.signDocument')}
