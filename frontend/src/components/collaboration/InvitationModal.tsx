@@ -67,7 +67,6 @@ export function InvitationModal({
   const [formData, setFormData] = useState<CreateInvitationRequest>({
     documentId,
     invitedEmail: '',
-    type: 'collaborator',
     team: defaultTeam as any,
     message: '',
   });
@@ -114,7 +113,6 @@ export function InvitationModal({
       setFormData({
         documentId,
         invitedEmail: '',
-        type: 'collaborator',
         team: 'authors',
         message: '',
       });
@@ -193,25 +191,6 @@ export function InvitationModal({
                   </SelectContent>
                 </Select>
               </div>
-
-            {/* Type */}
-            <div className="grid gap-2">
-              <Label htmlFor="type">{t('invitation.type')}</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value: any) => setFormData({ ...formData, type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="collaborator">
-                    {t('invitation.types.collaborator')}
-                  </SelectItem>
-                  <SelectItem value="reviewer">{t('invitation.types.reviewer')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             {/* Message */}
             <div className="grid gap-2">

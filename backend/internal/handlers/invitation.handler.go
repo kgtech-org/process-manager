@@ -115,11 +115,7 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		return
 	}
 
-	// Validate invitation type and team
-	if !models.IsValidInvitationType(req.Type) {
-		helpers.SendBadRequest(c, "Invalid invitation type")
-		return
-	}
+	// Validate team
 	if !models.IsValidTeam(req.Team) {
 		helpers.SendBadRequest(c, "Invalid team")
 		return
@@ -177,7 +173,6 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		InvitedEmail:  req.InvitedEmail,
 		InvitedUserID: invitedUserID,
 		Token:         token,
-		Type:          req.Type,
 		Team:          req.Team,
 		Message:       req.Message,
 	}
@@ -256,11 +251,10 @@ func (h *InvitationHandler) CreateInvitation(c *gin.Context) {
 		ResourceID:   &documentID,
 		Success:      true,
 		Details: map[string]interface{}{
-			"documentId":     documentID.Hex(),
-			"invitedEmail":   req.InvitedEmail,
-			"team":           string(req.Team),
-			"invitationType": string(req.Type),
-			"invitationId":   invitation.ID.Hex(),
+			"documentId":   documentID.Hex(),
+			"invitedEmail": req.InvitedEmail,
+			"team":         string(req.Team),
+			"invitationId": invitation.ID.Hex(),
 		},
 	}
 	if invitedUserID != nil {
