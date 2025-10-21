@@ -438,6 +438,11 @@ func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*
 			}
 		}
 
+	case models.DocumentStatusApproved:
+		// Publish approved document to organization (archive it as final version)
+		newStatus = models.DocumentStatusArchived
+		fmt.Printf("📢 [PUBLISH] Publishing approved document to organization\n")
+
 	default:
 		return nil, fmt.Errorf("document cannot be published from status: %s", document.Status)
 	}

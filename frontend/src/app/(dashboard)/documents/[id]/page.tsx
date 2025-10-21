@@ -40,6 +40,7 @@ import {
   Table as TableIcon,
   ChevronDown,
   Search,
+  Rocket,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -196,13 +197,21 @@ export default function DocumentDetailPage() {
   };
 
   const handlePublish = async () => {
-    if (!confirm('Are you sure you want to publish this document? All contributors will be notified to sign.')) return;
+    // Check if document is approved (for final publication) or draft (for signature)
+    const isApproved = document?.status === 'approved';
+    const confirmMessage = isApproved
+      ? 'Are you sure you want to publish this approved document? It will be made available to the organization.'
+      : 'Are you sure you want to publish this document? All contributors will be notified to sign.';
+
+    if (!confirm(confirmMessage)) return;
 
     try {
       await DocumentResource.publish(documentId);
       toast({
         title: 'Document published successfully',
-        description: 'All contributors have been notified to sign the document.',
+        description: isApproved
+          ? 'The document has been published to the organization.'
+          : 'All contributors have been notified to sign the document.',
       });
       loadDocument(); // Reload to show updated status
     } catch (error: any) {
@@ -366,6 +375,12 @@ export default function DocumentDetailPage() {
       </div>
 
       <div className="flex gap-2">
+        {document.status === 'approved' && (
+          <Button onClick={handlePublish}>
+            <Rocket className="h-4 w-4 mr-2" />
+            Publish
+          </Button>
+        )}
         <Button onClick={() => setInvitationModalOpen(true)} variant="outline">
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Collaborator
