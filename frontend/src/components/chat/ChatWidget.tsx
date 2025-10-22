@@ -21,12 +21,15 @@ export function ChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  // Safe check for threads
+  const threadList = Array.isArray(threads) ? threads : [];
+
   // Load threads when widget opens
   useEffect(() => {
-    if (isOpen && threads.length === 0) {
+    if (isOpen && threadList.length === 0) {
       loadThreads();
     }
-  }, [isOpen]);
+  }, [isOpen, threadList.length]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -38,9 +41,11 @@ export function ChatWidget() {
   const loadThreads = async () => {
     try {
       const data = await chatService.getThreads();
-      setThreads(data || []);
+      console.log('Loaded threads:', data);
+      setThreads(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load threads:', error);
+      setThreads([]);
     }
   };
 
@@ -194,14 +199,14 @@ export function ChatWidget() {
               <p className="text-sm text-gray-600 mb-2">Conversations récentes</p>
             </div>
             <ScrollArea className="flex-1 p-2">
-              {threads.length === 0 ? (
+              {threadList.length === 0 ? (
                 <div className="p-4 text-center text-gray-500 text-sm">
                   <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                   <p className="font-medium mb-2">Bonjour! Je suis votre assistant processus.</p>
                   <p className="text-xs">Posez-moi des questions sur les procédures, les bonnes pratiques, ou les processus.</p>
                 </div>
               ) : (
-                threads.map((thread) => (
+                threadList.map((thread) => (
                   <div
                     key={thread.id}
                     className="group p-3 hover:bg-gray-50 rounded-lg cursor-pointer mb-2 flex items-start justify-between"
