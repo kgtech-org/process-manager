@@ -21,6 +21,9 @@ export default function AdminChatDiscussionsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  // Safe check for threads
+  const hasThreads = threads && threads.length > 0;
+
   useEffect(() => {
     loadThreads();
   }, []);
@@ -90,7 +93,7 @@ export default function AdminChatDiscussionsPage() {
             </Card>
           ))}
         </div>
-      ) : threads.length === 0 ? (
+      ) : !hasThreads ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <MessageCircle className="h-16 w-16 text-gray-300 mb-4" />
