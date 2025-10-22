@@ -529,6 +529,32 @@ func (s *DocumentService) ExportPDF(ctx context.Context, id primitive.ObjectID) 
 	return pdfURL, nil
 }
 
+// RenderDocumentView renders the document as HTML (same design as PDF)
+// Returns the HTML string for browser display
+func (s *DocumentService) RenderDocumentView(ctx context.Context, id primitive.ObjectID) (string, error) {
+	// Get existing document
+	document, err := s.GetByID(ctx, id)
+	if err != nil {
+		return "", err
+	}
+
+	// Check if PDF service is available
+	if s.pdfService == nil {
+		return "", fmt.Errorf("PDF service not available")
+	}
+
+	fmt.Printf("👁️  [VIEW] Rendering HTML view for document: %s (%s)\n", document.Title, document.Reference)
+
+	// Use the PDF service's HTML rendering method
+	html, err := s.pdfService.RenderDocumentHTML(ctx, document)
+	if err != nil {
+		return "", fmt.Errorf("failed to render document HTML: %w", err)
+	}
+
+	fmt.Printf("✅ [VIEW] HTML rendered successfully, size: %d bytes\n", len(html))
+	return html, nil
+}
+
 // Delete deletes a document
 func (s *DocumentService) Delete(ctx context.Context, id primitive.ObjectID) error {
 	result, err := s.collection.DeleteOne(ctx, bson.M{"_id": id})

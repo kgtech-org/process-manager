@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 	"github.com/kodesonik/process-manager/internal/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type PDFService struct {
@@ -109,7 +111,194 @@ func (s *PDFService) htmlToPDF(ctx context.Context, html string) ([]byte, error)
 	return pdfBuf, nil
 }
 
-// renderDocumentHTML renders the document as HTML using template
+// RenderDocumentHTML renders the document as HTML using template (public method)
+// This is used both for PDF generation and direct HTML view
+func (s *PDFService) RenderDocumentHTML(ctx context.Context, document *models.Document) (string, error) {
+	return s.renderDocumentHTML(document)
+}
+
+// getFloat64 safely extracts a float64 value from a map, handling different numeric types
+func getFloat64(m map[string]interface{}, key string) float64 {
+	if val, ok := m[key]; ok {
+		switch v := val.(type) {
+		case float64:
+			return v
+		case float32:
+			return float64(v)
+		case int:
+			return float64(v)
+		case int32:
+			return float64(v)
+		case int64:
+			return float64(v)
+		}
+	}
+	return 0
+}
+
+// renderShapesToSVG converts diagram shapes to SVG markup
+func renderShapesToSVG(shapes interface{}) string {
+	fmt.Printf("🎨 [SVG] Rendering shapes, type: %T\n", shapes)
+
+	var shapesList []interface{}
+
+	// Handle different types
+	switch v := shapes.(type) {
+	case []interface{}:
+		shapesList = v
+	case primitive.A:
+		// MongoDB BSON array type
+		shapesList = []interface{}(v)
+	default:
+		fmt.Printf("❌ [SVG] Unsupported type: %T\n", shapes)
+		return fmt.Sprintf(`<div style="border: 2px dashed #ddd; padding: 20px; text-align: center; color: #666;">
+			<p>Type error: %T</p>
+		</div>`, shapes)
+	}
+
+	if len(shapesList) == 0 {
+		return `<div style="border: 2px dashed #ddd; padding: 20px; text-align: center; color: #666;">
+			<p>No shapes in diagram</p>
+		</div>`
+	}
+
+	fmt.Printf("✅ [SVG] Found %d shapes to render\n", len(shapesList))
+
+	// Calculate bounding box
+	var minX, minY, maxX, maxY float64
+	minX, minY = 1000000, 1000000
+	maxX, maxY = 0, 0
+
+	for _, shape := range shapesList {
+		var shapeMap map[string]interface{}
+
+		// Handle different map types
+		switch v := shape.(type) {
+		case map[string]interface{}:
+			shapeMap = v
+		case primitive.M:
+			shapeMap = map[string]interface{}(v)
+		case primitive.D:
+			shapeMap = v.Map()
+		default:
+			continue
+		}
+
+		x := getFloat64(shapeMap, "x")
+		y := getFloat64(shapeMap, "y")
+		width := getFloat64(shapeMap, "width")
+		height := getFloat64(shapeMap, "height")
+
+		if x < minX {
+			minX = x
+		}
+		if y < minY {
+			minY = y
+		}
+		if x+width > maxX {
+			maxX = x + width
+		}
+		if y+height > maxY {
+			maxY = y + height
+		}
+
+		// Check for arrows
+		endX := getFloat64(shapeMap, "endX")
+		endY := getFloat64(shapeMap, "endY")
+		if endX > 0 {
+			if endX > maxX {
+				maxX = endX
+			}
+			if endX < minX {
+				minX = endX
+			}
+		}
+		if endY > 0 {
+			if endY > maxY {
+				maxY = endY
+			}
+			if endY < minY {
+				minY = endY
+			}
+		}
+	}
+
+	// Add padding
+	padding := 20.0
+	viewBoxX := minX - padding
+	viewBoxY := minY - padding
+	viewBoxWidth := maxX - minX + 2*padding
+	viewBoxHeight := maxY - minY + 2*padding
+
+	svg := fmt.Sprintf(`<svg viewBox="%.1f %.1f %.1f %.1f" style="max-width: 100%%; height: auto; border: 1px solid #ddd; background: white;" xmlns="http://www.w3.org/2000/svg">`,
+		viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight)
+
+	// Render each shape
+	for _, shape := range shapesList {
+		var shapeMap map[string]interface{}
+
+		// Handle different map types
+		switch v := shape.(type) {
+		case map[string]interface{}:
+			shapeMap = v
+		case primitive.M:
+			shapeMap = map[string]interface{}(v)
+		case primitive.D:
+			shapeMap = v.Map()
+		default:
+			fmt.Printf("⚠️  [SVG] Unknown shape type: %T\n", shape)
+			continue
+		}
+
+		shapeType, _ := shapeMap["type"].(string)
+		color, _ := shapeMap["color"].(string)
+
+		// Handle numeric values that might be different types
+		x := getFloat64(shapeMap, "x")
+		y := getFloat64(shapeMap, "y")
+		width := getFloat64(shapeMap, "width")
+		height := getFloat64(shapeMap, "height")
+
+		switch shapeType {
+		case "rectangle":
+			svg += fmt.Sprintf(`<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="%s" stroke="#000" stroke-width="2"/>`,
+				x, y, width, height, color)
+
+		case "circle":
+			radius := width / 2
+			svg += fmt.Sprintf(`<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" stroke="#000" stroke-width="2"/>`,
+				x+radius, y+radius, radius, color)
+
+		case "hexagon":
+			// Simple hexagon approximation
+			cx := x + width/2
+			cy := y + height/2
+			w := width / 2
+			h := height / 2
+			svg += fmt.Sprintf(`<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="%s" stroke="#000" stroke-width="2"/>`,
+				cx, cy-h, cx+w, cy-h/2, cx+w, cy+h/2, cx, cy+h, cx-w, cy+h/2, cx-w, cy-h/2, color)
+
+		case "arrow":
+			endX := getFloat64(shapeMap, "endX")
+			endY := getFloat64(shapeMap, "endY")
+			svg += fmt.Sprintf(`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="2" marker-end="url(#arrowhead)"/>`,
+				x, y, endX, endY, color)
+		}
+	}
+
+	// Add arrowhead marker definition
+	svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="` + fmt.Sprintf("%.1f %.1f %.1f %.1f", viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight) + `" style="max-width: 100%; height: auto; border: 1px solid #ddd; background: white;">
+		<defs>
+			<marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+				<polygon points="0 0, 10 3, 0 6" fill="#000"/>
+			</marker>
+		</defs>` + svg[strings.Index(svg, ">")+1:]
+
+	svg += "</svg>"
+	return svg
+}
+
+// renderDocumentHTML renders the document as HTML using template (private helper)
 func (s *PDFService) renderDocumentHTML(document *models.Document) (string, error) {
 	tmpl, err := template.New("document").Funcs(template.FuncMap{
 		"formatDate": func(t time.Time) string {
@@ -142,6 +331,9 @@ func (s *PDFService) renderDocumentHTML(document *models.Document) (string, erro
 				return string(status)
 			}
 		},
+		"renderDiagramSVG": func(shapes interface{}) template.HTML {
+			return template.HTML(renderShapesToSVG(shapes))
+		},
 	}).Parse(documentHTMLTemplate)
 
 	if err != nil {
@@ -165,8 +357,8 @@ const documentHTMLTemplate = `
     <title>{{.Title}}</title>
     <style>
         @page {
-            size: A4;
-            margin: 15mm;
+            size: A4 portrait;
+            margin: 20mm 15mm 30mm 15mm;
         }
 
         * {
@@ -176,27 +368,26 @@ const documentHTMLTemplate = `
         }
 
         body {
-            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 10pt;
-            line-height: 1.4;
+            line-height: 1.3;
             color: #000;
+            width: 210mm;
+            margin: 0 auto;
+            padding-bottom: 25mm;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #FF9500;
+        /* Header styling */
+        .page-header {
+            margin-bottom: 15px;
         }
 
         .logo-section {
-            flex: 1;
+            text-align: left;
         }
 
         .company-name {
-            font-size: 14pt;
+            font-size: 11pt;
             font-weight: bold;
             color: #FF9500;
             margin-bottom: 2px;
@@ -204,38 +395,175 @@ const documentHTMLTemplate = `
 
         .company-tagline {
             font-size: 8pt;
-            color: #666;
-            font-style: italic;
+            color: #000;
+            line-height: 1.2;
         }
 
-        .contact-info {
-            text-align: right;
+        /* Footer styling - Display at bottom of each page */
+        .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 210mm;
+            height: 20mm;
             font-size: 8pt;
-            color: #666;
+            color: #000;
+            border-top: 2px solid #FF9500;
+            padding-top: 8px;
+            background-color: #fff;
+            z-index: 1000;
         }
 
-        .page-title {
-            background-color: #FF9500;
-            color: white;
-            padding: 15px;
-            margin: 20px 0;
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                padding-bottom: 30mm;
+            }
+
+            .page-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 210mm;
+                height: 25mm;
+                margin: 0 auto;
+                page-break-inside: avoid;
+                page-break-after: avoid;
+            }
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0 15mm;
+            width: 100%;
+        }
+
+        .footer-left {
+            text-align: left;
+            flex: 1;
+            font-size: 7pt;
+            line-height: 1.3;
+        }
+
+        .footer-center {
             text-align: center;
+            flex: 0 0 60px;
+            font-weight: bold;
+            font-size: 9pt;
         }
 
-        .page-title h1 {
-            font-size: 16pt;
-            margin: 0;
+        .page-number::before {
+            content: "Page ";
         }
 
-        .page-title .reference {
-            font-size: 11pt;
-            margin-top: 5px;
+        @media print {
+            .page-number::after {
+                content: counter(page);
+            }
+            .page-number {
+                display: inline;
+            }
         }
 
+        .footer-right {
+            text-align: right;
+            flex: 1;
+            font-size: 7pt;
+            line-height: 1.3;
+        }
+
+        .footer-tagline {
+            font-style: italic;
+            color: #FF9500;
+            font-weight: bold;
+            margin-top: 3px;
+        }
+
+        /* Annex content styling */
+        .annex-content {
+            margin: 10px 0;
+        }
+
+        .annex-content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .annex-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        .annex-table th,
+        .annex-table td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+        }
+
+        .annex-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .rich-text-content {
+            line-height: 1.6;
+        }
+
+        .rich-text-content p {
+            margin: 8px 0;
+        }
+
+        .rich-text-content ul,
+        .rich-text-content ol {
+            margin: 8px 0;
+            padding-left: 25px;
+        }
+
+        .rich-text-content h1,
+        .rich-text-content h2,
+        .rich-text-content h3 {
+            margin: 12px 0 8px 0;
+            font-weight: bold;
+        }
+
+        .rich-text-content h1 { font-size: 14pt; }
+        .rich-text-content h2 { font-size: 12pt; }
+        .rich-text-content h3 { font-size: 11pt; }
+
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .file-list li {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+
+        .file-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+        }
+
+        /* Table styling - based on example PDF */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 15px 0;
+            margin: 10px 0;
             page-break-inside: auto;
         }
 
@@ -246,124 +574,201 @@ const documentHTMLTemplate = `
 
         th, td {
             border: 1px solid #000;
-            padding: 8px;
+            padding: 6px 8px;
             text-align: left;
             vertical-align: top;
+            font-size: 9pt;
         }
 
         th {
-            background-color: #FF9500;
-            color: white;
+            background-color: white;
             font-weight: bold;
         }
 
-        .section-header {
-            background-color: #FFF3E0;
-            border-left: 4px solid #FF9500;
-            padding: 10px;
-            margin: 20px 0 10px 0;
+        /* Title table on first page */
+        .title-table {
+            margin: 20px 0;
+        }
+
+        .title-table th {
+            background-color: white;
             font-weight: bold;
-            font-size: 12pt;
+            width: 30%;
+        }
+
+        .title-table td {
+            font-weight: normal;
+        }
+
+        /* Signature tables */
+        .signature-table {
+            margin: 15px 0;
         }
 
         .signature-table th {
-            width: 25%;
+            background-color: white;
+            font-weight: bold;
+            text-align: center;
         }
 
-        .signature-cell {
-            height: 60px;
+        .signature-table td {
+            min-height: 40px;
+            height: 40px;
         }
 
-        .metadata-list {
-            list-style-type: disc;
-            margin-left: 20px;
-            margin-bottom: 15px;
+        /* Section headers as table rows */
+        .section-header-row {
+            background-color: white;
         }
 
-        .metadata-list li {
-            margin-bottom: 5px;
+        .section-header-row td {
+            font-weight: bold;
+            font-size: 10pt;
+            padding: 8px;
+            background-color: white;
+            border: 1px solid #000;
+        }
+
+        /* Content tables for metadata sections */
+        .content-table {
+            margin: 10px 0;
+        }
+
+        .content-table td {
+            padding: 8px;
+        }
+
+        .content-table ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .content-table li {
+            margin: 3px 0;
+            line-height: 1.4;
+        }
+
+        /* Terminology table */
+        .glossary-table td {
+            padding: 6px 8px;
         }
 
         .glossary-table td:first-child {
             font-weight: bold;
-            width: 30%;
-            background-color: #F5F5F5;
+            width: 25%;
         }
 
-        .process-group {
-            margin: 20px 0;
+        /* Process steps table */
+        .process-table {
+            margin: 15px 0;
         }
 
-        .process-group-title {
-            background-color: #FF9500;
-            color: white;
-            padding: 10px;
+        .process-table th {
+            background-color: white;
             font-weight: bold;
-            font-size: 11pt;
+            text-align: center;
+            font-size: 9pt;
         }
 
-        .process-step {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #DDD;
-            border-left: 4px solid #FF9500;
+        .process-table .section-header {
+            background-color: white;
+            font-weight: bold;
+            text-align: center;
+            font-size: 10pt;
         }
 
-        .step-number {
+        .process-table .step-number {
+            font-weight: bold;
+        }
+
+        .process-table ul {
+            margin: 5px 0;
+            padding-left: 15px;
+        }
+
+        .process-table li {
+            margin: 2px 0;
+        }
+
+        /* Page breaks */
+        .page-break {
+            page-break-before: always;
+        }
+
+        /* Section title pages */
+        .section-title-page {
+            page-break-before: always;
+            page-break-after: always;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 250mm;
+            text-align: center;
+        }
+
+        .section-title-text {
+            font-size: 32pt;
             font-weight: bold;
             color: #FF9500;
-            font-size: 11pt;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            padding: 40px;
+            border: 4px solid #FF9500;
+            background-color: #fff;
         }
 
-        .step-description {
-            margin: 5px 0;
-        }
-
-        .footer {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            text-align: center;
-            font-size: 8pt;
-            color: #666;
-            padding: 10px 0;
-            border-top: 1px solid #DDD;
-        }
-
+        /* Print-specific styles */
         @media print {
             .page-break {
                 page-break-before: always;
+            }
+            .section-title-page {
+                page-break-before: always;
+                page-break-after: always;
+            }
+            table {
+                page-break-inside: auto;
+            }
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            thead {
+                display: table-header-group;
+            }
+            tfoot {
+                display: table-footer-group;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
+    <!-- Header on first page -->
+    <div class="page-header">
         <div class="logo-section">
             <div class="company-name">TOGOCOM</div>
             <div class="company-tagline">TOGOCEL | TOGO TELECOM</div>
             <div class="company-tagline">Filiales du Groupe Togocom</div>
         </div>
-        <div class="contact-info">
-            Place de la Réconciliation – (Quartier Atchanté)<br>
-            Boîte postale : 333 – Lomé – Togo<br>
-            Téléphone : +228 22 53 44 01<br>
-            E-mail : spdgtgt@togotelecom.tg<br>
-            Site web : togocom.tg<br>
-            <strong>Avancer. Pour vous. Pour Tous.</strong>
-        </div>
     </div>
 
-    <!-- Title Page -->
-    <div class="page-title">
-        <div class="reference">Référence: {{.Reference}} v{{.Version}}</div>
-        <h1>{{.Title}}</h1>
-    </div>
+    <!-- Title Table -->
+    <table class="title-table">
+        <tr>
+            <th>Référence:</th>
+            <td>{{.Reference}} v{{.Version}}</td>
+        </tr>
+        <tr>
+            <th>Titre de document</th>
+            <td><strong>{{.Title}}</strong></td>
+        </tr>
+    </table>
 
     <!-- Contributors Signature Tables -->
-    <div class="section-header">Document Préparé par (Auteurs)</div>
     <table class="signature-table">
+        <tr class="section-header-row">
+            <td colspan="4">Document Préparé par</td>
+        </tr>
         <tr>
             <th>Nom</th>
             <th>Titre</th>
@@ -381,8 +786,10 @@ const documentHTMLTemplate = `
     </table>
 
     {{if .Contributors.Verifiers}}
-    <div class="section-header">Equipe de Vérification</div>
     <table class="signature-table">
+        <tr class="section-header-row">
+            <td colspan="4">Equipe de Vérification</td>
+        </tr>
         <tr>
             <th>Nom</th>
             <th>Titre</th>
@@ -401,8 +808,10 @@ const documentHTMLTemplate = `
     {{end}}
 
     {{if .Contributors.Validators}}
-    <div class="section-header">Equipe de Validation</div>
     <table class="signature-table">
+        <tr class="section-header-row">
+            <td colspan="4">Equipe de Validation</td>
+        </tr>
         <tr>
             <th>Nom</th>
             <th>Titre</th>
@@ -420,43 +829,71 @@ const documentHTMLTemplate = `
     </table>
     {{end}}
 
-    <!-- Page break for new section -->
-    <div class="page-break"></div>
+    <!-- Métadonnées Section Title Page -->
+    <div class="section-title-page">
+        <div class="section-title-text">MÉTADONNÉES</div>
+    </div>
 
     <!-- Objectives Section -->
     {{if .Metadata.Objectives}}
-    <div class="section-header">OBJECTIFS DE LA PROCEDURE</div>
-    <ul class="metadata-list">
-        {{range .Metadata.Objectives}}
-        <li>{{.}}</li>
-        {{end}}
-    </ul>
+    <table class="content-table">
+        <tr class="section-header-row">
+            <td>OBJECTIFS DE LA PROCEDURE</td>
+        </tr>
+        <tr>
+            <td>
+                <ul>
+                    {{range .Metadata.Objectives}}
+                    <li>{{.}}</li>
+                    {{end}}
+                </ul>
+            </td>
+        </tr>
+    </table>
     {{end}}
 
     <!-- Implicated Actors Section -->
     {{if .Metadata.ImplicatedActors}}
-    <div class="section-header">PRINCIPAUX INTERVENANTS</div>
-    <ul class="metadata-list">
-        {{range .Metadata.ImplicatedActors}}
-        <li>{{.}}</li>
-        {{end}}
-    </ul>
+    <table class="content-table">
+        <tr class="section-header-row">
+            <td>PRINCIPAUX INTERVENANTS</td>
+        </tr>
+        <tr>
+            <td>
+                <ul>
+                    {{range .Metadata.ImplicatedActors}}
+                    <li>{{.}}</li>
+                    {{end}}
+                </ul>
+            </td>
+        </tr>
+    </table>
     {{end}}
 
     <!-- Management Rules Section -->
     {{if .Metadata.ManagementRules}}
-    <div class="section-header">REGLES DE GESTION</div>
-    <ul class="metadata-list">
-        {{range .Metadata.ManagementRules}}
-        <li>{{.}}</li>
-        {{end}}
-    </ul>
+    <table class="content-table">
+        <tr class="section-header-row">
+            <td>REGLES DE GESTION</td>
+        </tr>
+        <tr>
+            <td>
+                <ul>
+                    {{range .Metadata.ManagementRules}}
+                    <li>{{.}}</li>
+                    {{end}}
+                </ul>
+            </td>
+        </tr>
+    </table>
     {{end}}
 
     <!-- Terminology Section -->
     {{if .Metadata.Terminology}}
-    <div class="section-header">DEFINITION DES TERMES - SIGLES – ABREVIATIONS</div>
     <table class="glossary-table">
+        <tr class="section-header-row">
+            <td colspan="2">DEFINITION DES TERMES - SIGLES – ABREVIATIONS</td>
+        </tr>
         {{range .Metadata.Terminology}}
         <tr>
             <td colspan="2">{{.}}</td>
@@ -467,8 +904,10 @@ const documentHTMLTemplate = `
 
     <!-- Change History -->
     {{if .Metadata.ChangeHistory}}
-    <div class="section-header">HISTORIQUE DES MODIFICATIONS</div>
     <table>
+        <tr class="section-header-row">
+            <td colspan="5">HISTORIQUE DES MODIFICATIONS</td>
+        </tr>
         <tr>
             <th>Date</th>
             <th>Objet</th>
@@ -488,80 +927,243 @@ const documentHTMLTemplate = `
     </table>
     {{end}}
 
-    <!-- Page break for process groups -->
-    <div class="page-break"></div>
-
-    <!-- Process Groups -->
-    {{range .ProcessGroups}}
-    <div class="process-group">
-        <div class="process-group-title">{{.Title}}</div>
-        <div style="padding: 10px;">
-            {{range .ProcessSteps}}
-            <div class="process-step">
-                <div class="step-number">{{.Order}}. {{.Title}}</div>
-                {{if .Responsible}}
-                <div style="margin-top: 5px;"><strong>Responsable:</strong> {{.Responsible}}</div>
-                {{end}}
-                {{if .Descriptions}}
-                <div class="step-description">
-                    {{range .Descriptions}}
-                    <div style="margin-top: 5px;">
-                        <strong>{{.Title}}</strong>
-                        {{if .Instructions}}
-                        <ul style="margin: 5px 0 5px 20px;">
-                            {{range .Instructions}}
-                            <li>{{.}}</li>
-                            {{end}}
-                        </ul>
-                        {{end}}
-                    </div>
-                    {{end}}
-                </div>
-                {{end}}
-                {{if .Outputs}}
-                <div style="margin-top: 5px;"><strong>Résultats:</strong>
-                    {{range $index, $output := .Outputs}}
-                    {{if $index}}, {{end}}{{$output}}
-                    {{end}}
-                </div>
-                {{end}}
-                {{if .Durations}}
-                <div><strong>Délais:</strong>
-                    {{range $index, $duration := .Durations}}
-                    {{if $index}}, {{end}}{{$duration}}
-                    {{end}}
-                </div>
-                {{end}}
-            </div>
-            {{end}}
-        </div>
+    <!-- Process Section Title Page -->
+    <div class="section-title-page">
+        <div class="section-title-text">PROCESS</div>
     </div>
+
+    <!-- Process Groups as Tables -->
+    {{range .ProcessGroups}}
+    <table class="process-table">
+        <tr class="section-header-row">
+            <td colspan="5">{{.Title}}</td>
+        </tr>
+        <tr>
+            <th style="width: 5%;">ETAPE</th>
+            <th style="width: 15%;">INTERVENANT</th>
+            <th style="width: 50%;">DESCRIPTIONS</th>
+            <th style="width: 15%;">OUTPUT</th>
+            <th style="width: 15%;">DELAIS</th>
+        </tr>
+        {{range .ProcessSteps}}
+        <tr>
+            <td class="step-number">{{.Order}}.</td>
+            <td>{{.Responsible}}</td>
+            <td>
+                <strong>{{.Title}}</strong>
+                {{if .Descriptions}}
+                {{range .Descriptions}}
+                <div style="margin-top: 5px;">
+                    <strong>{{.Title}}</strong>
+                    {{if .Instructions}}
+                    <ul>
+                        {{range .Instructions}}
+                        <li>{{.}}</li>
+                        {{end}}
+                    </ul>
+                    {{end}}
+                </div>
+                {{end}}
+                {{end}}
+            </td>
+            <td>
+                {{if .Outputs}}
+                {{range $index, $output := .Outputs}}
+                {{if $index}}<br>{{end}}{{$output}}
+                {{end}}
+                {{end}}
+            </td>
+            <td>
+                {{if .Durations}}
+                {{range $index, $duration := .Durations}}
+                {{if $index}}<br>{{end}}{{$duration}}
+                {{end}}
+                {{end}}
+            </td>
+        </tr>
+        {{end}}
+    </table>
     {{end}}
 
     <!-- Annexes -->
     {{if .Annexes}}
-    <div class="page-break"></div>
-    <div class="section-header">ANNEXES</div>
+    <!-- Annexes Section Title Page -->
+    <div class="section-title-page">
+        <div class="section-title-text">ANNEXES</div>
+    </div>
+
     {{range .Annexes}}
-    <div style="margin: 20px 0;">
-        <h3 style="color: #FF9500;">{{.Title}}</h3>
-        {{if eq .Type "table"}}
-        <!-- Render table content -->
-        <div style="margin: 10px 0;">Tableau: {{.Title}}</div>
-        {{else if eq .Type "diagram"}}
-        <!-- Render diagram reference -->
-        <div style="margin: 10px 0;">Diagramme: {{.Title}}</div>
-        {{else}}
-        <div style="margin: 10px 0;">{{.Title}}</div>
+    <div class="annex-content" style="margin: 20px 0;">
+        <h3 style="color: #FF9500; margin-bottom: 10px;">{{.Title}}</h3>
+
+        {{if eq .Type "diagram"}}
+        <!-- Diagram/Image Content -->
+        <div class="diagram-wrapper">
+            {{$shapes := index .Content "shapes"}}
+            {{if $shapes}}
+                <!-- Diagram with shapes - render as SVG -->
+                {{renderDiagramSVG $shapes}}
+            {{else if .Files}}
+                {{range .Files}}
+                <img src="http://localhost/files/{{.MinioObjectName}}" alt="{{.OriginalName}}" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+                {{end}}
+            {{else if index .Content "url"}}
+                <img src="{{index .Content "url"}}" alt="{{.Title}}" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 10px;">
+            {{else if index .Content "imageUrl"}}
+                <img src="{{index .Content "imageUrl"}}" alt="{{.Title}}" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 10px;">
+            {{else if index .Content "html"}}
+                {{index .Content "html"}}
+            {{else}}
+                <div style="border: 2px dashed #ddd; padding: 20px; text-align: center; color: #666;">
+                    <p>📊 Diagram: {{.Title}}</p>
+                </div>
+            {{end}}
+        </div>
+
+        {{else if eq .Type "text"}}
+        <!-- Rich Text Content -->
+        <div class="rich-text-content">
+            {{if index .Content "html"}}
+                {{index .Content "html"}}
+            {{else if index .Content "content"}}
+                {{index .Content "content"}}
+            {{else}}
+                <p>{{.Content}}</p>
+            {{end}}
+        </div>
+
+        {{else if eq .Type "table"}}
+        <!-- Table Content -->
+        <div class="annex-table-wrapper">
+            {{if index .Content "html"}}
+                <!-- If table is stored as HTML -->
+                {{index .Content "html"}}
+            {{else if index .Content "rows"}}
+                <!-- If table is stored as structured data -->
+                <table class="annex-table">
+                    {{if index .Content "headers"}}
+                    <thead>
+                        <tr>
+                            {{range index .Content "headers"}}
+                            <th>{{.}}</th>
+                            {{end}}
+                        </tr>
+                    </thead>
+                    {{end}}
+                    <tbody>
+                        {{range index .Content "rows"}}
+                        <tr>
+                            {{range .}}
+                            <td>{{.}}</td>
+                            {{end}}
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            {{else}}
+                <p style="color: #666;">Table: {{.Title}}</p>
+            {{end}}
+        </div>
+
+        {{else if eq .Type "file"}}
+        <!-- File Attachments - Check if they're images first -->
+        <div class="file-attachments">
+            {{if .Files}}
+                {{range .Files}}
+                    {{if or (eq .ContentType "image/png") (eq .ContentType "image/jpeg") (eq .ContentType "image/jpg") (eq .ContentType "image/gif") (eq .ContentType "image/svg+xml") (eq .ContentType "image/webp")}}
+                        <!-- Render as image if it's an image file -->
+                        <img src="http://localhost/files/{{.MinioObjectName}}" alt="{{.OriginalName}}" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+                        <p style="color: #666; font-size: 8pt; margin-top: 5px;">{{.OriginalName}} ({{.FileSize}} bytes)</p>
+                    {{else}}
+                        <!-- Render as file link for non-image files -->
+                        <ul class="file-list" style="list-style: none; padding: 0;">
+                            <li>
+                                <span class="file-icon">📎</span>
+                                <span style="color: #FF9500;">{{.OriginalName}}</span>
+                                {{if .FileSize}}
+                                <span style="color: #666; font-size: 8pt;"> ({{.FileSize}} bytes)</span>
+                                {{end}}
+                                <br>
+                                <span style="color: #999; font-size: 8pt;">Type: {{.ContentType}}</span>
+                            </li>
+                        </ul>
+                    {{end}}
+                {{end}}
+            {{else if index .Content "files"}}
+                {{range index .Content "files"}}
+                    {{$fileType := index . "type"}}
+                    {{if or (eq $fileType "image/png") (eq $fileType "image/jpeg") (eq $fileType "image/jpg") (eq $fileType "image/gif") (eq $fileType "image/svg+xml") (eq $fileType "image/webp")}}
+                        <!-- Render as image if it's an image file -->
+                        {{if index . "url"}}
+                        <div style="margin: 10px 0;">
+                            <img src="{{index . "url"}}" alt="{{index . "name"}}" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 10px;">
+                            <p style="color: #666; font-size: 8pt; margin-top: 5px;">
+                                {{index . "name"}}
+                                {{if index . "size"}} ({{index . "size"}} bytes){{end}}
+                            </p>
+                        </div>
+                        {{end}}
+                    {{else}}
+                        <!-- Render as file link for non-image files -->
+                        <ul class="file-list" style="list-style: none; padding: 0;">
+                            <li>
+                                <span class="file-icon">📎</span>
+                                {{if index . "url"}}
+                                <a href="{{index . "url"}}" target="_blank" style="color: #FF9500; text-decoration: none;">
+                                    {{if index . "name"}}{{index . "name"}}{{else}}File{{end}}
+                                </a>
+                                {{else}}
+                                <span style="color: #FF9500;">
+                                    {{if index . "name"}}{{index . "name"}}{{else}}File{{end}}
+                                </span>
+                                {{end}}
+                                {{if index . "size"}}
+                                <span style="color: #666; font-size: 8pt;"> ({{index . "size"}} bytes)</span>
+                                {{end}}
+                            </li>
+                        </ul>
+                    {{end}}
+                {{end}}
+            {{else}}
+                <p style="color: #666;">No files attached</p>
+            {{end}}
+        </div>
         {{end}}
     </div>
     {{end}}
     {{end}}
 
-    <!-- Footer with metadata -->
-    <div class="footer">
-        Document généré le {{formatDateTime .UpdatedAt}} | Version {{.Version}} | Statut: {{.Status}}
+    <!-- Footer - Fixed at bottom of each page -->
+    <div class="page-footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                Place de la Réconciliation – (Quartier Atchanté)<br>
+                Boîte postale : 333 – Lomé – Togo<br>
+                <span class="footer-tagline">Avancer. Pour vous. Pour Tous.</span>
+            </div>
+            <div class="footer-center">
+                <span class="page-number"></span>
+            </div>
+            <div class="footer-right">
+                Téléphone : +228 22 53 44 01<br>
+                E-mail : spdgtgt@togotelecom.tg<br>
+                Site web : togocom.tg
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Display page number for HTML view
+        window.addEventListener('load', function() {
+            const pageNumber = document.querySelector('.page-number');
+            if (pageNumber && !window.matchMedia('print').matches) {
+                // For HTML view, show "1" as default
+                // The CSS ::before adds "Page " prefix
+                // In PDF/print, the counter(page) will handle pagination automatically
+                pageNumber.textContent = '1';
+            }
+        });
+    </script>
 </body>
 </html>
 `

@@ -15,6 +15,14 @@ func SetupDocumentRoutes(
 	authMiddleware *middleware.AuthMiddleware,
 	documentMiddleware *middleware.DocumentMiddleware,
 ) {
+	// Public routes (no authentication required)
+	publicDocs := router.Group("/documents")
+	{
+		// Public HTML view endpoint - accessible to anyone with the link
+		publicDocs.GET("/:id/view", documentHandler.ViewDocument)
+	}
+
+	// Protected routes (require authentication)
 	documents := router.Group("/documents")
 	documents.Use(authMiddleware.RequireAuth())
 	{

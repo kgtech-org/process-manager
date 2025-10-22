@@ -492,6 +492,36 @@ func (h *DocumentHandler) ExportPDF(c *gin.Context) {
 	})
 }
 
+// ViewDocument returns the document as HTML view (same design as PDF)
+// GET /api/documents/:id/view
+func (h *DocumentHandler) ViewDocument(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid document ID format")
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	fmt.Printf("👁️  [VIEW] Rendering HTML view for document ID: %s\n", id.Hex())
+
+	html, err := h.documentService.RenderDocumentView(ctx, id)
+	if err != nil {
+		fmt.Printf("❌ [VIEW] Error: %v\n", err)
+		if err.Error() == "document not found" {
+			helpers.SendNotFound(c, "Document not found")
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Return HTML with proper content type
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.String(http.StatusOK, html)
+}
+
 // GetDocumentVersions retrieves all versions of a document
 // GET /api/documents/:id/versions
 func (h *DocumentHandler) GetDocumentVersions(c *gin.Context) {

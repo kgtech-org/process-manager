@@ -41,6 +41,7 @@ import {
   ChevronDown,
   Search,
   Rocket,
+  Eye,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -241,6 +242,13 @@ export default function DocumentDetailPage() {
     }
   };
 
+  const handleViewDocument = () => {
+    // Open the HTML view in a new tab
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api';
+    const viewUrl = `${apiUrl}/documents/${documentId}/view`;
+    window.open(viewUrl, '_blank');
+  };
+
   const handleProcessFlowUpdate = useCallback(async (processGroups: any) => {
     await DocumentResource.update(documentId, { processGroups, isAutosave: true });
     // Update local state to keep parent in sync (ProcessFlowEditor uses ref to prevent loop)
@@ -406,6 +414,10 @@ export default function DocumentDetailPage() {
         <Button variant="outline" onClick={handleDuplicate}>
           <Copy className="h-4 w-4 mr-2" />
           Duplicate
+        </Button>
+        <Button variant="outline" onClick={handleViewDocument}>
+          <Eye className="h-4 w-4 mr-2" />
+          View Document
         </Button>
         <Button variant="outline" onClick={handleExportPDF}>
           <Download className="h-4 w-4 mr-2" />
