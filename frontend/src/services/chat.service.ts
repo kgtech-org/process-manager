@@ -45,7 +45,7 @@ export const chatService = {
   // Get all threads for current user
   async getThreads(): Promise<ChatThread[]> {
     const response = await apiClient.get('/chat/threads');
-    return response.data;
+    return response as any;
   },
 
   // Get specific thread with messages

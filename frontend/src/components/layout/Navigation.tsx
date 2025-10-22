@@ -116,7 +116,7 @@ const getAdminItems = (t: any) => [
     ),
   },
   {
-    name: t('navigation.chatDiscussions') || 'Discussions IA',
+    name: t('navigation.chatDiscussions'),
     href: '/admin/chat-discussions',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

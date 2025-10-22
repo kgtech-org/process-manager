@@ -50,6 +50,9 @@ export default function AdminChatDiscussionsPage() {
       setLoadingThread(true);
       setDialogOpen(true);
       const data = await adminChatService.getThread(threadId);
+      console.log('Thread data received:', data);
+      console.log('Messages in thread:', data.messages);
+      console.log('Number of messages:', data.messages?.length || 0);
       setSelectedThread(data);
     } catch (error: any) {
       console.error('Failed to load thread:', error);
@@ -187,7 +190,8 @@ export default function AdminChatDiscussionsPage() {
           ) : selectedThread ? (
             <ScrollArea className="flex-1 pr-4">
               <div className="space-y-4">
-                {selectedThread.messages.map((message) => (
+                {selectedThread.messages && selectedThread.messages.length > 0 ? (
+                  selectedThread.messages.map((message) => (
                   <div
                     key={message.id}
                     className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -227,7 +231,13 @@ export default function AdminChatDiscussionsPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                    <MessageCircle className="h-12 w-12 mb-3 text-gray-300" />
+                    <p>Aucun message dans cette discussion</p>
+                  </div>
+                )}
               </div>
             </ScrollArea>
           ) : null}
