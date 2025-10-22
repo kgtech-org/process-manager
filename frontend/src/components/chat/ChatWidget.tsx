@@ -182,46 +182,72 @@ export function ChatWidget() {
 
       {/* Content */}
       {!currentThread && messages.length === 0 ? (
-        <div className="flex-1 flex flex-col">
-          {/* Thread List */}
-          <div className="p-4 border-b">
-            <p className="text-sm text-gray-600 mb-2">Conversations récentes</p>
-          </div>
-          <ScrollArea className="flex-1 p-2">
-            {threads.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 text-sm">
-                Aucune conversation. Posez une question pour commencer!
-              </div>
-            ) : (
-              threads.map((thread) => (
-                <div
-                  key={thread.id}
-                  className="group p-3 hover:bg-gray-50 rounded-lg cursor-pointer mb-2 flex items-start justify-between"
-                  onClick={() => loadThread(thread.id)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{thread.title}</p>
-                    <p className="text-xs text-gray-500 truncate mt-1">{thread.lastMessage}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {thread.messageCount} messages • {new Date(thread.updatedAt).toLocaleDateString('fr-FR')}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteThread(thread.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+        <>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Thread List */}
+            <div className="p-4 border-b">
+              <p className="text-sm text-gray-600 mb-2">Conversations récentes</p>
+            </div>
+            <ScrollArea className="flex-1 p-2">
+              {threads.length === 0 ? (
+                <div className="p-4 text-center text-gray-500 text-sm">
+                  <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="font-medium mb-2">Bonjour! Je suis votre assistant processus.</p>
+                  <p className="text-xs">Posez-moi des questions sur les procédures, les bonnes pratiques, ou les processus.</p>
                 </div>
-              ))
-            )}
-          </ScrollArea>
-        </div>
+              ) : (
+                threads.map((thread) => (
+                  <div
+                    key={thread.id}
+                    className="group p-3 hover:bg-gray-50 rounded-lg cursor-pointer mb-2 flex items-start justify-between"
+                    onClick={() => loadThread(thread.id)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{thread.title}</p>
+                      <p className="text-xs text-gray-500 truncate mt-1">{thread.lastMessage}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {thread.messageCount} messages • {new Date(thread.updatedAt).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteThread(thread.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </ScrollArea>
+          </div>
+
+          {/* Input - Always show */}
+          <div className="p-4 border-t">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendMessage();
+              }}
+              className="flex gap-2"
+            >
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Posez une question..."
+                disabled={isSending}
+                className="flex-1"
+              />
+              <Button type="submit" disabled={!inputMessage.trim() || isSending} className="bg-orange-500 hover:bg-orange-600">
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        </>
       ) : (
         <>
           {/* Messages */}

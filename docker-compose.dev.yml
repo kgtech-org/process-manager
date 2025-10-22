@@ -114,6 +114,8 @@ services:
       - FIREBASE_SERVICE_ACCOUNT_PATH=/app/serviceAccountKey.json
       - GO_ENV=development
       - MAILER_API_URL=https://mail.k-j.store/send
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
     depends_on:
       mongodb:
         condition: service_healthy
