@@ -104,9 +104,14 @@ export function ChatWidget() {
       // Remove temp message on error
       setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));
 
+      console.error('Chat error:', error);
+      console.error('Error response:', error.response);
+
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to send message';
+
       toast({
-        title: 'Error',
-        description: error.response?.data?.message || 'Failed to send message',
+        title: 'Erreur',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
