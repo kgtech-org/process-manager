@@ -205,3 +205,42 @@ func (h *ChatHandler) UpdateThreadTitle(c *gin.Context) {
 
 	helpers.SendSuccess(c, "Thread title updated successfully", nil)
 }
+
+// Admin Handlers
+
+// GetAllThreadsAdmin retrieves all chat threads across all users (admin only)
+func (h *ChatHandler) GetAllThreadsAdmin(c *gin.Context) {
+	ctx := c.Request.Context()
+	threads, err := h.chatService.GetAllThreadsWithUsers(ctx)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	helpers.SendSuccess(c, "Threads retrieved successfully", threads)
+}
+
+// GetThreadAdmin retrieves a specific thread with messages (admin only)
+func (h *ChatHandler) GetThreadAdmin(c *gin.Context) {
+	// Get thread ID from URL
+	threadIDParam := c.Param("id")
+	threadID, err := primitive.ObjectIDFromHex(threadIDParam)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid thread ID format")
+		return
+	}
+
+	// Get thread with messages and user info
+	ctx := c.Request.Context()
+	threadData, err := h.chatService.GetThreadWithMessagesAdmin(ctx, threadID)
+	if err != nil {
+		if err.Error() == "thread not found" {
+			helpers.SendNotFound(c, "Thread not found")
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	helpers.SendSuccess(c, "Thread retrieved successfully", threadData)
+}

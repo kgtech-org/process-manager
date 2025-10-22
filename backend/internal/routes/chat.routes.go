@@ -25,4 +25,15 @@ func SetupChatRoutes(router *gin.RouterGroup, chatHandler *handlers.ChatHandler,
 		// Delete a thread
 		chat.DELETE("/threads/:id", chatHandler.DeleteThread)
 	}
+
+	// Admin routes
+	admin := router.Group("/admin/chat")
+	admin.Use(authMiddleware.RequireAdmin())
+	{
+		// Get all threads across all users
+		admin.GET("/threads", chatHandler.GetAllThreadsAdmin)
+
+		// Get specific thread with messages (any user)
+		admin.GET("/threads/:id", chatHandler.GetThreadAdmin)
+	}
 }

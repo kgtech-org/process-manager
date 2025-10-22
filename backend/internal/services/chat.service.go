@@ -279,3 +279,147 @@ func (s *ChatService) UpdateThreadTitle(ctx context.Context, threadID primitive.
 
 	return nil
 }
+
+// Admin Methods
+
+// GetAllThreadsWithUsers retrieves all threads across all users (admin only)
+func (s *ChatService) GetAllThreadsWithUsers(ctx context.Context) ([]models.ChatThreadWithUser, error) {
+	// Aggregate to join with users collection
+	pipeline := []bson.M{
+		{
+			"$lookup": bson.M{
+				"from":         "users",
+				"localField":   "user_id",
+				"foreignField": "_id",
+				"as":           "user",
+			},
+		},
+		{
+			"$unwind": "$user",
+		},
+		{
+			"$sort": bson.M{"updated_at": -1},
+		},
+		{
+			"$project": bson.M{
+				"_id":               1,
+				"user_id":           1,
+				"openai_thread_id":  1,
+				"title":             1,
+				"last_message":      1,
+				"message_count":     1,
+				"created_at":        1,
+				"updated_at":        1,
+				"user.first_name":   1,
+				"user.last_name":    1,
+				"user.email":        1,
+				"user.phone_number": 1,
+			},
+		},
+	}
+
+	cursor, err := s.threadCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get threads: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var threads []models.ChatThreadWithUser
+	if err = cursor.All(ctx, &threads); err != nil {
+		return nil, fmt.Errorf("failed to decode threads: %w", err)
+	}
+
+	return threads, nil
+}
+
+// GetThreadByIDAdmin retrieves a thread by ID without ownership check (admin only)
+func (s *ChatService) GetThreadByIDAdmin(ctx context.Context, threadID primitive.ObjectID) (*models.ChatThread, error) {
+	var thread models.ChatThread
+
+	err := s.threadCollection.FindOne(ctx, bson.M{
+		"_id": threadID,
+	}).Decode(&thread)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("thread not found")
+		}
+		return nil, err
+	}
+
+	return &thread, nil
+}
+
+// GetThreadWithMessagesAdmin retrieves a thread with its messages and user info (admin only)
+func (s *ChatService) GetThreadWithMessagesAdmin(ctx context.Context, threadID primitive.ObjectID) (*models.ChatThreadWithUserAndMessages, error) {
+	// Get thread with user info via aggregation
+	pipeline := []bson.M{
+		{
+			"$match": bson.M{"_id": threadID},
+		},
+		{
+			"$lookup": bson.M{
+				"from":         "users",
+				"localField":   "user_id",
+				"foreignField": "_id",
+				"as":           "user",
+			},
+		},
+		{
+			"$unwind": "$user",
+		},
+		{
+			"$project": bson.M{
+				"_id":               1,
+				"user_id":           1,
+				"openai_thread_id":  1,
+				"title":             1,
+				"last_message":      1,
+				"message_count":     1,
+				"created_at":        1,
+				"updated_at":        1,
+				"user.first_name":   1,
+				"user.last_name":    1,
+				"user.email":        1,
+				"user.phone_number": 1,
+			},
+		},
+	}
+
+	cursor, err := s.threadCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get thread: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var threads []models.ChatThreadWithUser
+	if err = cursor.All(ctx, &threads); err != nil {
+		return nil, fmt.Errorf("failed to decode thread: %w", err)
+	}
+
+	if len(threads) == 0 {
+		return nil, fmt.Errorf("thread not found")
+	}
+
+	thread := threads[0]
+
+	// Get messages
+	msgCursor, err := s.messageCollection.Find(ctx, bson.M{
+		"thread_id": threadID,
+	}, options.Find().SetSort(bson.M{"created_at": 1}))
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get messages: %w", err)
+	}
+	defer msgCursor.Close(ctx)
+
+	var messages []models.ChatMessage
+	if err = msgCursor.All(ctx, &messages); err != nil {
+		return nil, fmt.Errorf("failed to decode messages: %w", err)
+	}
+
+	return &models.ChatThreadWithUserAndMessages{
+		ChatThreadWithUser: thread,
+		Messages:           messages,
+	}, nil
+}

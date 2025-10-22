@@ -45,3 +45,30 @@ type ChatThreadResponse struct {
 	Thread   ChatThread    `json:"thread"`
 	Messages []ChatMessage `json:"messages"`
 }
+
+// UserInfo represents basic user information for admin views
+type UserInfo struct {
+	FirstName   string `json:"firstName" bson:"first_name"`
+	LastName    string `json:"lastName" bson:"last_name"`
+	Email       string `json:"email" bson:"email"`
+	PhoneNumber string `json:"phoneNumber" bson:"phone_number"`
+}
+
+// ChatThreadWithUser represents a thread with user information (admin view)
+type ChatThreadWithUser struct {
+	ID             primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	UserID         primitive.ObjectID `json:"userId" bson:"user_id"`
+	OpenAIThreadID string             `json:"openaiThreadId" bson:"openai_thread_id"`
+	Title          string             `json:"title" bson:"title"`
+	LastMessage    string             `json:"lastMessage" bson:"last_message"`
+	MessageCount   int                `json:"messageCount" bson:"message_count"`
+	CreatedAt      time.Time          `json:"createdAt" bson:"created_at"`
+	UpdatedAt      time.Time          `json:"updatedAt" bson:"updated_at"`
+	User           UserInfo           `json:"user" bson:"user"`
+}
+
+// ChatThreadWithUserAndMessages represents a thread with user info and messages (admin view)
+type ChatThreadWithUserAndMessages struct {
+	ChatThreadWithUser `bson:",inline"`
+	Messages           []ChatMessage `json:"messages" bson:"-"`
+}
