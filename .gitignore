@@ -1,3 +1,6 @@
 node_modules
 .env
-vendor
+vendorbackend/bin/
+backend/server.log
+backend/server.pid
+server.pid
