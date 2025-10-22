@@ -23,7 +23,7 @@ func NewChatHandler(chatService *services.ChatService) *ChatHandler {
 // SendMessage handles sending a message to the AI assistant
 func (h *ChatHandler) SendMessage(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
-	userIDValue, exists := c.Get("userId")
+	userIDValue, exists := c.Get("user_id")
 	if !exists {
 		helpers.SendUnauthorized(c, "User not authenticated", "UNAUTHORIZED")
 		return
@@ -60,7 +60,7 @@ func (h *ChatHandler) SendMessage(c *gin.Context) {
 // GetThreads retrieves all chat threads for the current user
 func (h *ChatHandler) GetThreads(c *gin.Context) {
 	// Get user ID from context
-	userIDValue, exists := c.Get("userId")
+	userIDValue, exists := c.Get("user_id")
 	if !exists {
 		helpers.SendUnauthorized(c, "User not authenticated", "UNAUTHORIZED")
 		return
@@ -86,7 +86,7 @@ func (h *ChatHandler) GetThreads(c *gin.Context) {
 // GetThread retrieves a specific thread with its messages
 func (h *ChatHandler) GetThread(c *gin.Context) {
 	// Get user ID from context
-	userIDValue, exists := c.Get("userId")
+	userIDValue, exists := c.Get("user_id")
 	if !exists {
 		helpers.SendUnauthorized(c, "User not authenticated", "UNAUTHORIZED")
 		return
@@ -124,7 +124,7 @@ func (h *ChatHandler) GetThread(c *gin.Context) {
 // DeleteThread deletes a chat thread
 func (h *ChatHandler) DeleteThread(c *gin.Context) {
 	// Get user ID from context
-	userIDValue, exists := c.Get("userId")
+	userIDValue, exists := c.Get("user_id")
 	if !exists {
 		helpers.SendUnauthorized(c, "User not authenticated", "UNAUTHORIZED")
 		return
@@ -162,7 +162,7 @@ func (h *ChatHandler) DeleteThread(c *gin.Context) {
 // UpdateThreadTitle updates the title of a thread
 func (h *ChatHandler) UpdateThreadTitle(c *gin.Context) {
 	// Get user ID from context
-	userIDValue, exists := c.Get("userId")
+	userIDValue, exists := c.Get("user_id")
 	if !exists {
 		helpers.SendUnauthorized(c, "User not authenticated", "UNAUTHORIZED")
 		return
