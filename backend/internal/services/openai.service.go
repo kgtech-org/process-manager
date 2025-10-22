@@ -251,11 +251,12 @@ func (s *OpenAIService) SendMessage(ctx context.Context, message string, threadI
 			}
 
 			if run.Status == openai.RunStatusCompleted {
-				// Helper function for string pointer
+				// Helper functions for pointers
 				strPtr := func(s string) *string { return &s }
+				intPtr := func(i int) *int { return &i }
 
-				// Get the assistant's response
-				messages, err := s.client.ListMessage(ctx, threadID, nil, nil, nil, nil, strPtr("desc"))
+				// Get the assistant's response (limit=1, order=desc to get latest message)
+				messages, err := s.client.ListMessage(ctx, threadID, intPtr(1), strPtr("desc"), nil, nil, nil)
 				if err != nil {
 					return "", "", fmt.Errorf("failed to list messages: %w", err)
 				}
