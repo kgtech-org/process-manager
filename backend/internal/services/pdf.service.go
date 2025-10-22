@@ -3,9 +3,9 @@ package services
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"html/template"
-	"net/url"
 	"strings"
 	"time"
 
@@ -58,6 +58,12 @@ func (s *PDFService) GenerateDocumentPDF(ctx context.Context, document *models.D
 
 // htmlToPDF converts HTML to PDF using headless Chrome
 func (s *PDFService) htmlToPDF(ctx context.Context, html string) ([]byte, error) {
+	// Replace external URLs with internal Docker network URLs for image access
+	// http://localhost/files -> http://minio:9000/process-documents
+	html = strings.ReplaceAll(html, "http://localhost/files/process-documents", "http://minio:9000/process-documents")
+
+	fmt.Printf("📄 [PDF] Replaced external URLs with internal MinIO URLs\n")
+
 	// Create allocator options for headless Chrome
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.DisableGPU,
@@ -81,26 +87,23 @@ func (s *PDFService) htmlToPDF(ctx context.Context, html string) ([]byte, error)
 
 	var pdfBuf []byte
 
-	// URL encode the HTML for data URL
-	encodedHTML := url.QueryEscape(html)
-	dataURL := "data:text/html;charset=utf-8," + encodedHTML
+	// Use base64 encoding for data URL to preserve CSS and avoid encoding issues
+	encodedHTML := base64.StdEncoding.EncodeToString([]byte(html))
+	dataURL := "data:text/html;charset=utf-8;base64," + encodedHTML
+
+	fmt.Printf("📄 [PDF] Data URL length: %d bytes\n", len(dataURL))
 
 	// Navigate to the data URL and wait for rendering, then print to PDF
 	if err := chromedp.Run(browserCtx,
 		chromedp.Navigate(dataURL),
 		chromedp.WaitReady("body"),
-		chromedp.Sleep(500*time.Millisecond), // Give time for rendering
+		chromedp.Sleep(2*time.Second), // Give time for CSS, images, and SVG rendering
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			var err error
 			pdfBuf, _, err = page.PrintToPDF().
 				WithPrintBackground(true).
-				WithPaperWidth(8.27).  // A4 width in inches
-				WithPaperHeight(11.7). // A4 height in inches
-				WithMarginTop(0.4).
-				WithMarginBottom(0.4).
-				WithMarginLeft(0.4).
-				WithMarginRight(0.4).
-				WithPreferCSSPageSize(false).
+				WithDisplayHeaderFooter(false).
+				WithPreferCSSPageSize(true). // Use CSS @page rules
 				Do(ctx)
 			return err
 		}),
@@ -358,7 +361,7 @@ const documentHTMLTemplate = `
     <style>
         @page {
             size: A4 portrait;
-            margin: 20mm 15mm 30mm 15mm;
+            margin: 25mm 15mm 20mm 15mm;
         }
 
         * {
@@ -399,6 +402,23 @@ const documentHTMLTemplate = `
             line-height: 1.2;
         }
 
+        @media print {
+            .page-header {
+                position: fixed !important;
+                top: 0 !important;
+                left: -15mm !important;
+                right: -15mm !important;
+                width: calc(100% + 30mm) !important;
+                height: auto !important;
+                min-height: 15mm !important;
+                background-color: #fff !important;
+                border-bottom: 1px solid #ddd !important;
+                padding: 6px 15mm !important;
+                margin: 0 !important;
+                z-index: 1000 !important;
+            }
+        }
+
         /* Footer styling - Display at bottom of each page */
         .page-footer {
             position: fixed;
@@ -419,19 +439,32 @@ const documentHTMLTemplate = `
             body {
                 margin: 0;
                 padding: 0;
-                padding-bottom: 30mm;
+                padding-top: 25mm;
+                padding-bottom: 20mm;
             }
 
             .page-footer {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                width: 210mm;
-                height: 25mm;
-                margin: 0 auto;
-                page-break-inside: avoid;
-                page-break-after: avoid;
+                position: fixed !important;
+                bottom: 0 !important;
+                left: -15mm !important;
+                right: -15mm !important;
+                width: calc(100% + 30mm) !important;
+                height: 18mm !important;
+                border-top: 2px solid #FF9500 !important;
+                background-color: #fff !important;
+                padding-top: 6px !important;
+                display: block !important;
+                margin: 0 !important;
+                transform: none !important;
+            }
+
+            .footer-content {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: flex-start !important;
+                padding: 0 15mm !important;
+                max-width: 100% !important;
+                width: 100% !important;
             }
         }
 
@@ -462,9 +495,15 @@ const documentHTMLTemplate = `
         }
 
         @media print {
-            .page-number::after {
-                content: counter(page);
+            .page-number {
+                display: inline;
             }
+            .page-number::after {
+                content: " " counter(page, decimal);
+            }
+        }
+
+        @media screen {
             .page-number {
                 display: inline;
             }
@@ -1153,14 +1192,16 @@ const documentHTMLTemplate = `
     </div>
 
     <script>
-        // Display page number for HTML view
-        window.addEventListener('load', function() {
+        // Display page number for HTML view only
+        // In print/PDF, leave empty so CSS counter works
+        document.addEventListener('DOMContentLoaded', function() {
             const pageNumber = document.querySelector('.page-number');
-            if (pageNumber && !window.matchMedia('print').matches) {
-                // For HTML view, show "1" as default
-                // The CSS ::before adds "Page " prefix
-                // In PDF/print, the counter(page) will handle pagination automatically
-                pageNumber.textContent = '1';
+            if (pageNumber) {
+                // For HTML view only, show "1"
+                // In print/PDF context, leave empty for CSS counter
+                if (!window.matchMedia || !window.matchMedia('print').matches) {
+                    pageNumber.textContent = '1';
+                }
             }
         });
     </script>
