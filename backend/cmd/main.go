@@ -84,8 +84,11 @@ func main() {
 	deviceService := services.NewDeviceService(db, firebaseService)
 	notificationService := services.NewNotificationService(db, firebaseService, deviceService, userService)
 
+	// Initialize PDF service
+	pdfService := services.NewPDFService(minioService)
+
 	// Initialize document service
-	documentService := services.NewDocumentService(db.Database, userService)
+	documentService := services.NewDocumentService(db.Database, userService, pdfService)
 
 	// Ensure default admin exists
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -18,14 +18,16 @@ type DocumentService struct {
 	versionCollection    *mongo.Collection
 	invitationCollection *mongo.Collection
 	userService          *UserService
+	pdfService           *PDFService
 }
 
-func NewDocumentService(db *mongo.Database, userService *UserService) *DocumentService {
+func NewDocumentService(db *mongo.Database, userService *UserService, pdfService *PDFService) *DocumentService {
 	return &DocumentService{
 		collection:           db.Collection("documents"),
 		versionCollection:    db.Collection("document_versions"),
 		invitationCollection: db.Collection("invitations"),
 		userService:          userService,
+		pdfService:           pdfService,
 	}
 }
 
@@ -451,6 +453,21 @@ func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*
 	document.Status = newStatus
 	document.UpdatedAt = now
 
+	// Generate and upload PDF if archiving approved document
+	if newStatus == models.DocumentStatusArchived && s.pdfService != nil {
+		fmt.Printf("📄 [PUBLISH] Generating PDF for archived document...\n")
+		pdfURL, err := s.pdfService.GenerateDocumentPDF(ctx, document)
+		if err != nil {
+			fmt.Printf("⚠️ [PUBLISH] Failed to generate PDF: %v\n", err)
+			// Don't fail the entire publish operation if PDF generation fails
+			// Log the error and continue
+		} else {
+			fmt.Printf("✅ [PUBLISH] PDF generated successfully: %s\n", pdfURL)
+			// Store PDF URL in document
+			document.PdfUrl = pdfURL
+		}
+	}
+
 	// Replace the entire document to avoid validation issues
 	_, err = s.collection.ReplaceOne(
 		ctx,
@@ -463,6 +480,79 @@ func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*
 	}
 
 	return document, nil
+}
+
+// ExportPDF generates and exports the document as PDF
+// If PDF already exists, returns the existing URL
+// If not, generates a new PDF and stores the URL
+func (s *DocumentService) ExportPDF(ctx context.Context, id primitive.ObjectID) (string, error) {
+	// Get existing document
+	document, err := s.GetByID(ctx, id)
+	if err != nil {
+		return "", err
+	}
+
+	// If PDF already exists, return the URL
+	if document.PdfUrl != "" {
+		fmt.Printf("📄 [EXPORT] PDF already exists for document %s: %s\n", document.Reference, document.PdfUrl)
+		return document.PdfUrl, nil
+	}
+
+	// Generate PDF if service is available
+	if s.pdfService == nil {
+		return "", fmt.Errorf("PDF service not available")
+	}
+
+	fmt.Printf("📄 [EXPORT] Generating new PDF for document: %s (%s)\n", document.Title, document.Reference)
+	pdfURL, err := s.pdfService.GenerateDocumentPDF(ctx, document)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate PDF: %w", err)
+	}
+
+	// Store PDF URL in document
+	_, err = s.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": id},
+		bson.M{
+			"$set": bson.M{
+				"pdf_url":    pdfURL,
+				"updated_at": time.Now(),
+			},
+		},
+	)
+	if err != nil {
+		// Log error but still return the PDF URL since it was generated successfully
+		fmt.Printf("⚠️ [EXPORT] Failed to store PDF URL in database: %v\n", err)
+	}
+
+	fmt.Printf("✅ [EXPORT] PDF generated and stored successfully: %s\n", pdfURL)
+	return pdfURL, nil
+}
+
+// RenderDocumentView renders the document as HTML (same design as PDF)
+// Returns the HTML string for browser display
+func (s *DocumentService) RenderDocumentView(ctx context.Context, id primitive.ObjectID) (string, error) {
+	// Get existing document
+	document, err := s.GetByID(ctx, id)
+	if err != nil {
+		return "", err
+	}
+
+	// Check if PDF service is available
+	if s.pdfService == nil {
+		return "", fmt.Errorf("PDF service not available")
+	}
+
+	fmt.Printf("👁️  [VIEW] Rendering HTML view for document: %s (%s)\n", document.Title, document.Reference)
+
+	// Use the PDF service's HTML rendering method
+	html, err := s.pdfService.RenderDocumentHTML(ctx, document)
+	if err != nil {
+		return "", fmt.Errorf("failed to render document HTML: %w", err)
+	}
+
+	fmt.Printf("✅ [VIEW] HTML rendered successfully, size: %d bytes\n", len(html))
+	return html, nil
 }
 
 // Delete deletes a document

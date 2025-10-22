@@ -104,6 +104,7 @@ export interface Document {
   metadata: DocumentMetadata;
   processGroups: ProcessGroup[];
   annexes: Annex[];
+  pdfUrl?: string;
   createdAt: string;
   updatedAt: string;
   approvedAt?: string;
@@ -239,6 +240,15 @@ export class DocumentResource {
   static async publish(documentId: string): Promise<Document> {
     const response = await apiClient.post(`/documents/${documentId}/publish`);
     return response.data;
+  }
+
+  /**
+   * Export document as PDF
+   * Returns existing PDF URL if available, otherwise generates a new PDF
+   */
+  static async exportPDF(documentId: string): Promise<string> {
+    const response = await apiClient.get(`/documents/${documentId}/export-pdf`);
+    return response.data.pdfUrl;
   }
 
   /**

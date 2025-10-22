@@ -15,6 +15,14 @@ func SetupDocumentRoutes(
 	authMiddleware *middleware.AuthMiddleware,
 	documentMiddleware *middleware.DocumentMiddleware,
 ) {
+	// Public routes (no authentication required)
+	publicDocs := router.Group("/documents")
+	{
+		// Public HTML view endpoint - accessible to anyone with the link
+		publicDocs.GET("/:id/view", documentHandler.ViewDocument)
+	}
+
+	// Protected routes (require authentication)
 	documents := router.Group("/documents")
 	documents.Use(authMiddleware.RequireAuth())
 	{
@@ -30,6 +38,7 @@ func SetupDocumentRoutes(
 		// Document actions (require document access)
 		documents.POST("/:id/duplicate", documentMiddleware.RequireDocumentAccess(), documentHandler.DuplicateDocument)
 		documents.POST("/:id/publish", documentMiddleware.RequireDocumentAccess(), documentHandler.PublishDocument)
+		documents.GET("/:id/export-pdf", documentMiddleware.RequireDocumentAccess(), documentHandler.ExportPDF)
 		documents.GET("/:id/versions", documentMiddleware.RequireDocumentAccess(), documentHandler.GetDocumentVersions)
 
 		// Permissions (require document access)

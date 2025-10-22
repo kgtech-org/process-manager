@@ -341,3 +341,26 @@ func (s *MinIOService) DeleteAnnexFile(ctx context.Context, fileURL string) erro
 	log.Printf("✅ Annex file deleted successfully: %s", objectKey)
 	return nil
 }
+
+// UploadFile uploads a generic file to MinIO
+func (s *MinIOService) UploadFile(ctx context.Context, objectKey string, reader io.Reader, size int64, contentType string) (string, error) {
+	// Upload options
+	opts := minio.PutObjectOptions{
+		ContentType: contentType,
+		UserMetadata: map[string]string{
+			"upload-time": time.Now().Format(time.RFC3339),
+		},
+	}
+
+	// Upload the file
+	info, err := s.client.PutObject(ctx, s.bucketName, objectKey, reader, size, opts)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload file: %w", err)
+	}
+
+	log.Printf("✅ File uploaded successfully: %s (size: %d bytes)", objectKey, info.Size)
+
+	// Generate public URL
+	fileURL := fmt.Sprintf("%s/%s/%s", s.publicURL, s.bucketName, objectKey)
+	return fileURL, nil
+}
