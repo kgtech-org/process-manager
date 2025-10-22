@@ -19,17 +19,20 @@ export function ChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hasLoadedThreads = useRef(false);
+  const isLoadingThreads = useRef(false);
   const { toast } = useToast();
 
   // Safe check for threads
   const threadList = Array.isArray(threads) ? threads : [];
 
-  // Load threads when widget opens
+  // Load threads when widget opens (only once)
   useEffect(() => {
-    if (isOpen && threadList.length === 0) {
+    if (isOpen && !hasLoadedThreads.current) {
+      hasLoadedThreads.current = true;
       loadThreads();
     }
-  }, [isOpen, threadList.length]);
+  }, [isOpen]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -39,13 +42,22 @@ export function ChatWidget() {
   }, [messages]);
 
   const loadThreads = async () => {
+    // Prevent duplicate calls
+    if (isLoadingThreads.current) {
+      console.log('Already loading threads, skipping duplicate call');
+      return;
+    }
+
     try {
+      isLoadingThreads.current = true;
       const data = await chatService.getThreads();
       console.log('Loaded threads:', data);
       setThreads(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load threads:', error);
       setThreads([]);
+    } finally {
+      isLoadingThreads.current = false;
     }
   };
 
