@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import { apiClient } from '@/lib/api';
 
 export interface ChatThread {
   id: string;
@@ -38,29 +38,29 @@ export interface ChatThreadWithMessages {
 export const chatService = {
   // Send a message (creates new thread if threadId not provided)
   async sendMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
-    const response = await api.post('/chat/messages', request);
-    return response.data.data;
+    const response = await apiClient.post('/chat/messages', request);
+    return response.data;
   },
 
   // Get all threads for current user
   async getThreads(): Promise<ChatThread[]> {
-    const response = await api.get('/chat/threads');
-    return response.data.data;
+    const response = await apiClient.get('/chat/threads');
+    return response.data;
   },
 
   // Get specific thread with messages
   async getThread(threadId: string): Promise<ChatThreadWithMessages> {
-    const response = await api.get(`/chat/threads/${threadId}`);
-    return response.data.data;
+    const response = await apiClient.get(`/chat/threads/${threadId}`);
+    return response.data;
   },
 
   // Update thread title
   async updateThreadTitle(threadId: string, title: string): Promise<void> {
-    await api.patch(`/chat/threads/${threadId}`, { title });
+    await apiClient.patch(`/chat/threads/${threadId}`, { title });
   },
 
   // Delete a thread
   async deleteThread(threadId: string): Promise<void> {
-    await api.delete(`/chat/threads/${threadId}`);
+    await apiClient.delete(`/chat/threads/${threadId}`);
   },
 };
