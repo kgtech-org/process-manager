@@ -31,7 +31,7 @@ export default function AdminChatDiscussionsPage() {
     try {
       setLoading(true);
       const data = await adminChatService.getAllThreadsWithMessages();
-      console.log('Loaded threads with messages:', data);
+      // console.log('Loaded threads with messages:', data);
       setThreads(data);
     } catch (error: any) {
       console.error('Failed to load threads:', error);
@@ -46,9 +46,9 @@ export default function AdminChatDiscussionsPage() {
   };
 
   const openThread = (thread: ChatThreadWithUserAndMessages) => {
-    console.log('Opening thread:', thread);
-    console.log('Thread messages:', thread.messages);
-    console.log('Number of messages:', thread.messages?.length || 0);
+    // console.log('Opening thread:', thread);
+    // console.log('Thread messages:', thread.messages);
+    // console.log('Number of messages:', thread.messages?.length || 0);
     setSelectedThread(thread);
     setDialogOpen(true);
   };

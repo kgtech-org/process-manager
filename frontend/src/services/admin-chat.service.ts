@@ -37,22 +37,22 @@ export const adminChatService = {
    */
   async getAllThreads(): Promise<ChatThreadWithUser[]> {
     const response = await apiClient.get('/admin/chat/threads');
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * Get all threads with all messages merged in one response (admin only)
    */
   async getAllThreadsWithMessages(): Promise<ChatThreadWithUserAndMessages[]> {
-    console.log('[AdminChatService] Fetching all threads with messages...');
+    // console.log('[AdminChatService] Fetching all threads with messages...');
     const response = await apiClient.get('/admin/chat/threads-with-messages');
-    console.log('[AdminChatService] Response:', response);
-    console.log('[AdminChatService] Data:', response.data.data);
-    const threads = response.data.data;
-    console.log('[AdminChatService] Number of threads:', threads?.length);
-    if (threads && threads.length > 0) {
-      console.log('[AdminChatService] First thread messages:', threads[0].messages);
-    }
+    // console.log('[AdminChatService] Response:', response);
+    // console.log('[AdminChatService] Data:', response.data);
+    const threads = response.data;
+    // console.log('[AdminChatService] Number of threads:', threads?.length);
+    // if (threads && threads.length > 0) {
+    //   console.log('[AdminChatService] First thread messages:', threads[0].messages);
+    // }
     return threads;
   },
 
@@ -60,14 +60,14 @@ export const adminChatService = {
    * Get a specific thread with messages and user info (admin only)
    */
   async getThread(threadId: string): Promise<ChatThreadWithUserAndMessages> {
-    console.log('[AdminChatService] Fetching thread:', threadId);
+    // console.log('[AdminChatService] Fetching thread:', threadId);
     const response = await apiClient.get(`/admin/chat/threads/${threadId}`);
-    console.log('[AdminChatService] Raw response:', response);
-    console.log('[AdminChatService] Response data:', response.data);
-    console.log('[AdminChatService] Response data.data:', response.data.data);
+    // console.log('[AdminChatService] Raw response:', response);
+    // console.log('[AdminChatService] Response data:', response.data);
+    // console.log('[AdminChatService] Response data.data:', response.data.data);
     const threadData = response.data.data;
-    console.log('[AdminChatService] Thread data messages:', threadData?.messages);
-    console.log('[AdminChatService] Messages count:', threadData?.messages?.length);
+    // console.log('[AdminChatService] Thread data messages:', threadData?.messages);
+    // console.log('[AdminChatService] Messages count:', threadData?.messages?.length);
     return threadData;
   },
 };
