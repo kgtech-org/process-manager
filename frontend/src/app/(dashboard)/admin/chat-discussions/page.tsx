@@ -14,10 +14,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function AdminChatDiscussionsPage() {
-  const [threads, setThreads] = useState<ChatThreadWithUser[]>([]);
+  const [threads, setThreads] = useState<ChatThreadWithUserAndMessages[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedThread, setSelectedThread] = useState<ChatThreadWithUserAndMessages | null>(null);
-  const [loadingThread, setLoadingThread] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -31,7 +30,8 @@ export default function AdminChatDiscussionsPage() {
   const loadThreads = async () => {
     try {
       setLoading(true);
-      const data = await adminChatService.getAllThreads();
+      const data = await adminChatService.getAllThreadsWithMessages();
+      console.log('Loaded threads with messages:', data);
       setThreads(data);
     } catch (error: any) {
       console.error('Failed to load threads:', error);
@@ -45,26 +45,12 @@ export default function AdminChatDiscussionsPage() {
     }
   };
 
-  const openThread = async (threadId: string) => {
-    try {
-      setLoadingThread(true);
-      setDialogOpen(true);
-      const data = await adminChatService.getThread(threadId);
-      console.log('Thread data received:', data);
-      console.log('Messages in thread:', data.messages);
-      console.log('Number of messages:', data.messages?.length || 0);
-      setSelectedThread(data);
-    } catch (error: any) {
-      console.error('Failed to load thread:', error);
-      toast({
-        title: 'Erreur',
-        description: error.response?.data?.error || 'Impossible de charger la discussion',
-        variant: 'destructive',
-      });
-      setDialogOpen(false);
-    } finally {
-      setLoadingThread(false);
-    }
+  const openThread = (thread: ChatThreadWithUserAndMessages) => {
+    console.log('Opening thread:', thread);
+    console.log('Thread messages:', thread.messages);
+    console.log('Number of messages:', thread.messages?.length || 0);
+    setSelectedThread(thread);
+    setDialogOpen(true);
   };
 
   const closeDialog = () => {
@@ -109,7 +95,7 @@ export default function AdminChatDiscussionsPage() {
             <Card
               key={thread.id}
               className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => openThread(thread.id)}
+              onClick={() => openThread(thread)}
             >
               <CardHeader>
                 <CardTitle className="text-base line-clamp-2">{thread.title}</CardTitle>
@@ -175,19 +161,7 @@ export default function AdminChatDiscussionsPage() {
             )}
           </DialogHeader>
 
-          {loadingThread ? (
-            <div className="space-y-4 flex-1">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex gap-3">
-                  <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-1/4" />
-                    <Skeleton className="h-20 w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : selectedThread ? (
+          {selectedThread ? (
             <ScrollArea className="flex-1 pr-4">
               <div className="space-y-4">
                 {selectedThread.messages && selectedThread.messages.length > 0 ? (

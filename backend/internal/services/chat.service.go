@@ -423,3 +423,48 @@ func (s *ChatService) GetThreadWithMessagesAdmin(ctx context.Context, threadID p
 		Messages:           messages,
 	}, nil
 }
+
+// GetAllThreadsWithMessagesAdmin retrieves all threads with their messages (admin only)
+func (s *ChatService) GetAllThreadsWithMessagesAdmin(ctx context.Context) ([]models.ChatThreadWithUserAndMessages, error) {
+	// Get all threads with user info
+	threads, err := s.GetAllThreadsWithUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Prepare result array
+	result := make([]models.ChatThreadWithUserAndMessages, 0, len(threads))
+
+	// Fetch messages for each thread
+	for _, thread := range threads {
+		threadID, err := primitive.ObjectIDFromHex(thread.ID.Hex())
+		if err != nil {
+			continue
+		}
+
+		// Get messages for this thread
+		msgCursor, err := s.messageCollection.Find(ctx, bson.M{
+			"thread_id": threadID,
+		}, options.Find().SetSort(bson.M{"created_at": 1}))
+
+		if err != nil {
+			// Skip this thread if we can't get messages
+			continue
+		}
+
+		var messages []models.ChatMessage
+		if err = msgCursor.All(ctx, &messages); err != nil {
+			msgCursor.Close(ctx)
+			continue
+		}
+		msgCursor.Close(ctx)
+
+		// Add to result
+		result = append(result, models.ChatThreadWithUserAndMessages{
+			ChatThreadWithUser: thread,
+			Messages:           messages,
+		})
+	}
+
+	return result, nil
+}

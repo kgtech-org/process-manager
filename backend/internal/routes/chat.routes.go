@@ -33,6 +33,9 @@ func SetupChatRoutes(router *gin.RouterGroup, chatHandler *handlers.ChatHandler,
 		// Get all threads across all users
 		admin.GET("/threads", chatHandler.GetAllThreadsAdmin)
 
+		// Get all threads with messages (merged in one response)
+		admin.GET("/threads-with-messages", chatHandler.GetAllThreadsWithMessagesAdmin)
+
 		// Get specific thread with messages (any user)
 		admin.GET("/threads/:id", chatHandler.GetThreadAdmin)
 	}

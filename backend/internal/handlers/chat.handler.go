@@ -244,3 +244,15 @@ func (h *ChatHandler) GetThreadAdmin(c *gin.Context) {
 
 	helpers.SendSuccess(c, "Thread retrieved successfully", threadData)
 }
+
+// GetAllThreadsWithMessagesAdmin retrieves all threads with messages (admin only)
+func (h *ChatHandler) GetAllThreadsWithMessagesAdmin(c *gin.Context) {
+	ctx := c.Request.Context()
+	threadsWithMessages, err := h.chatService.GetAllThreadsWithMessagesAdmin(ctx)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	helpers.SendSuccess(c, "Threads with messages retrieved successfully", threadsWithMessages)
+}

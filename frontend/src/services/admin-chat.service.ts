@@ -41,6 +41,22 @@ export const adminChatService = {
   },
 
   /**
+   * Get all threads with all messages merged in one response (admin only)
+   */
+  async getAllThreadsWithMessages(): Promise<ChatThreadWithUserAndMessages[]> {
+    console.log('[AdminChatService] Fetching all threads with messages...');
+    const response = await apiClient.get('/admin/chat/threads-with-messages');
+    console.log('[AdminChatService] Response:', response);
+    console.log('[AdminChatService] Data:', response.data.data);
+    const threads = response.data.data;
+    console.log('[AdminChatService] Number of threads:', threads?.length);
+    if (threads && threads.length > 0) {
+      console.log('[AdminChatService] First thread messages:', threads[0].messages);
+    }
+    return threads;
+  },
+
+  /**
    * Get a specific thread with messages and user info (admin only)
    */
   async getThread(threadId: string): Promise<ChatThreadWithUserAndMessages> {
