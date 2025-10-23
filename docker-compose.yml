@@ -116,6 +116,8 @@ services:
       - FIREBASE_SERVICE_ACCOUNT_PATH=/app/serviceAccountKey.json
       - MAILER_API_URL=http://mailer:8085/send
       - MAILER_API_KEY=dkl1333022nd
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
     depends_on:
       mongodb:
         condition: service_healthy

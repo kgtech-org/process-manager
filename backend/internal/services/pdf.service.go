@@ -16,12 +16,14 @@ import (
 )
 
 type PDFService struct {
-	minioService *MinIOService
+	minioService  *MinIOService
+	openaiService *OpenAIService
 }
 
-func NewPDFService(minioService *MinIOService) *PDFService {
+func NewPDFService(minioService *MinIOService, openaiService *OpenAIService) *PDFService {
 	return &PDFService{
-		minioService: minioService,
+		minioService:  minioService,
+		openaiService: openaiService,
 	}
 }
 
@@ -53,6 +55,19 @@ func (s *PDFService) GenerateDocumentPDF(ctx context.Context, document *models.D
 	}
 
 	fmt.Printf("✅ [PDF] PDF generated and uploaded: %s\n", pdfURL)
+
+	// Upload PDF to OpenAI for assistant training
+	if s.openaiService != nil {
+		fmt.Printf("📤 [PDF] Uploading to OpenAI for assistant training...\n")
+		err = s.openaiService.UploadDocumentFromReader(ctx, bytes.NewReader(pdfBytes), fileName, document.ID.Hex())
+		if err != nil {
+			// Log error but don't fail the PDF generation
+			fmt.Printf("⚠️  [PDF] Failed to upload to OpenAI: %v\n", err)
+		} else {
+			fmt.Printf("✅ [PDF] Successfully uploaded to OpenAI Assistant\n")
+		}
+	}
+
 	return pdfURL, nil
 }
 

@@ -77,18 +77,34 @@ func main() {
 	// Initialize Firebase service
 	firebaseService, err := services.NewFirebaseService()
 	if err != nil {
-		log.Fatalf("Failed to initialize Firebase service: %v", err)
+		log.Printf("⚠️  Warning: Failed to initialize Firebase service: %v", err)
+		log.Printf("⚠️  Push notification features will be disabled")
+		firebaseService = nil
 	}
 
 	// Initialize device and notification services
 	deviceService := services.NewDeviceService(db, firebaseService)
 	notificationService := services.NewNotificationService(db, firebaseService, deviceService, userService)
 
+	// Initialize OpenAI service
+	openaiService, err := services.NewOpenAIService()
+	if err != nil {
+		log.Printf("⚠️  Warning: Failed to initialize OpenAI service: %v", err)
+		log.Printf("⚠️  OpenAI chatbot features will be disabled")
+		openaiService = nil
+	}
+
 	// Initialize PDF service
-	pdfService := services.NewPDFService(minioService)
+	pdfService := services.NewPDFService(minioService, openaiService)
 
 	// Initialize document service
 	documentService := services.NewDocumentService(db.Database, userService, pdfService)
+
+	// Initialize chat service
+	var chatService *services.ChatService
+	if openaiService != nil {
+		chatService = services.NewChatService(db.Database, openaiService)
+	}
 
 	// Ensure default admin exists
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -115,6 +131,12 @@ func main() {
 	permissionHandler := handlers.NewPermissionHandler(db.Database)
 	signatureHandler := handlers.NewSignatureHandler(db.Database)
 	userSignatureHandler := handlers.NewUserSignatureHandler(db.Database)
+
+	// Initialize chat handler (only if OpenAI service is available)
+	var chatHandler *handlers.ChatHandler
+	if chatService != nil {
+		chatHandler = handlers.NewChatHandler(chatService)
+	}
 
 	// Initialize Gin router
 	r := gin.Default()
@@ -184,6 +206,11 @@ func main() {
 		routes.SetupDocumentRoutes(api, documentHandler, permissionHandler, signatureHandler, authMiddleware, documentMiddleware)
 		routes.RegisterInvitationRoutes(api, invitationHandler, authMiddleware)
 		routes.SetupUserSignatureRoutes(api, userSignatureHandler, authMiddleware)
+
+		// Setup chat routes (only if OpenAI service is available)
+		if chatHandler != nil {
+			routes.SetupChatRoutes(api, chatHandler, authMiddleware)
+		}
 	}
 
 	// Get port from environment or default to 8080

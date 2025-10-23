@@ -3,6 +3,7 @@
 import React from 'react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { NavigationWrapper } from '@/components/layout/NavigationWrapper';
+import { ChatWidget } from '@/components/chat/ChatWidget';
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default function DashboardLayout({
             {children}
           </main>
         </NavigationWrapper>
+        <ChatWidget />
       </div>
     </AuthGuard>
   );
