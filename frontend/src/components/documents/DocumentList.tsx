@@ -31,11 +31,27 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
     loadDocuments(true);
   }, [filters]);
 
-  // Infinite scroll observer
+  // Refs to track latest values without causing observer recreation
+  const hasMoreRef = useRef(hasMore);
+  const loadingRef = useRef(loading);
+  const loadingMoreRef = useRef(loadingMore);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+    loadingRef.current = loading;
+    loadingMoreRef.current = loadingMore;
+  }, [hasMore, loading, loadingMore]);
+
+  // Infinite scroll observer - only recreate when target element changes
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+        if (
+          entries[0].isIntersecting &&
+          hasMoreRef.current &&
+          !loadingRef.current &&
+          !loadingMoreRef.current
+        ) {
           loadMoreDocuments();
         }
       },
@@ -47,7 +63,7 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
     }
 
     return () => observer.disconnect();
-  }, [hasMore, loading, loadingMore, currentPage, filters]);
+  }, [observerTarget.current]); // Only recreate when target element changes
 
   const loadDocuments = async (reset = false) => {
     try {
@@ -99,9 +115,21 @@ export function DocumentList({ initialFilters = {} }: DocumentListProps) {
   };
 
   const handleSearch = useCallback((newFilters: DocumentFilter) => {
-    setFilters(newFilters);
-    setCurrentPage(1);
-    setHasMore(true);
+    // Only update if filters actually changed (deep comparison)
+    setFilters((prevFilters) => {
+      const hasChanged =
+        prevFilters.search !== newFilters.search ||
+        prevFilters.status !== newFilters.status;
+
+      if (!hasChanged) {
+        return prevFilters; // Return same reference if values unchanged
+      }
+
+      // Reset pagination when filters change
+      setCurrentPage(1);
+      setHasMore(true);
+      return newFilters;
+    });
   }, []);
 
   const handleDuplicate = async (id: string) => {

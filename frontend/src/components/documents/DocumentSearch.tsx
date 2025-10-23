@@ -38,10 +38,16 @@ export function DocumentSearch({ onSearch, initialFilters = {} }: DocumentSearch
   // Debounced search - triggers automatically after 500ms of no typing
   useEffect(() => {
     const timer = setTimeout(() => {
-      const filters: DocumentFilter = {
-        search: searchQuery || undefined,
-        status: status !== 'all' ? status : undefined,
-      };
+      const filters: DocumentFilter = {};
+
+      // Only add properties if they have values to prevent unnecessary object differences
+      if (searchQuery) {
+        filters.search = searchQuery;
+      }
+      if (status !== 'all') {
+        filters.status = status;
+      }
+
       onSearch(filters);
     }, 500);
 
