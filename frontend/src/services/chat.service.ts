@@ -39,19 +39,19 @@ export const chatService = {
   // Send a message (creates new thread if threadId not provided)
   async sendMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
     const response = await apiClient.post('/chat/messages', request);
-    return response.data.data;
+    return response.data;
   },
 
   // Get all threads for current user
   async getThreads(): Promise<ChatThread[]> {
     const response = await apiClient.get('/chat/threads');
-    return response.data.data;
+    return response.data;
   },
 
   // Get specific thread with messages
   async getThread(threadId: string): Promise<ChatThreadWithMessages> {
     const response = await apiClient.get(`/chat/threads/${threadId}`);
-    return response.data.data;
+    return response.data;
   },
 
   // Update thread title
