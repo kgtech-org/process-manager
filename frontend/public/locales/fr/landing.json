@@ -2,60 +2,154 @@
   "header": {
     "title": "Process Manager",
     "signIn": "Se Connecter",
-    "getStarted": "Commencer"
+    "getStarted": "Démarrer Gratuitement"
   },
   "hero": {
-    "title": "Gestion Numérique des Processus pour les",
-    "titleHighlight": "Télécommunications",
-    "subtitle": "Transformez vos procédures opérationnelles avec notre plateforme complète conçue pour la création collaborative de documents, les signatures numériques et l'analyse des performances.",
+    "badge": "Conçu pour Togocom",
+    "title": "Transformez Vos Procédures Télécoms",
+    "titleHighlight": "en Documents Vivants et Performants",
+    "subtitle": "La plateforme de gestion des processus qui digitalise vos procédures opérationnelles, automatise les validations et mesure l'efficacité réelle de vos équipes terrain.",
     "benefits": {
-      "multiStep": "Documentation des procédures en plusieurs étapes",
-      "collaboration": "Édition collaborative avec signatures numériques",
-      "analytics": "Analyse des performances et suivi de la conformité"
+      "multiStep": "Réduction de 70% du temps de création des procédures",
+      "collaboration": "Validation collaborative avec signatures numériques",
+      "analytics": "Suivi en temps réel de la conformité SLA"
     },
     "cta": {
-      "createAccount": "Créer un Compte",
-      "signIn": "Se Connecter"
-    }
+      "createAccount": "Créer un Compte Gratuit",
+      "signIn": "Se Connecter",
+      "demo": "Voir une Démo"
+    },
+    "trustedBy": "Utilisé par les équipes techniques de Togocom"
   },
-  "features": {
-    "title": "Rationalisez Vos Procédures Opérationnelles",
-    "subtitle": "Spécialement conçu pour les entreprises de télécommunications suivant le format standardisé de Togocom (TG-TELCO-PRO-101 v1.0)",
-    "cards": {
-      "documentCreation": {
-        "title": "Création de Documents Interactive",
-        "description": "Formulaires multi-étapes pour la documentation structurée des procédures avec objectifs, rôles, terminologie et processus pas à pas."
+  "problems": {
+    "title": "Les Défis de la Gestion Documentaire Télécom",
+    "subtitle": "Les processus papier et les fichiers Word éparpillés ralentissent vos opérations",
+    "items": {
+      "chaos": {
+        "title": "Procédures Obsolètes",
+        "description": "Documents Word perdus, versions multiples, impossibilité de savoir quelle est la version à jour"
       },
-      "contributorManagement": {
-        "title": "Gestion des Contributeurs",
-        "description": "Workflows de signature numérique pour Auteurs, Vérificateurs et Validateurs avec invitations par e-mail et permissions granulaires."
-      },
-      "analytics": {
-        "title": "Analyse de l'Efficacité des Processus",
-        "description": "Analyse mensuelle des performances via des bilans d'incidents avec suivi de la conformité SLA et recommandations d'amélioration."
-      },
-      "richAnnexes": {
-        "title": "Annexes Enrichies",
-        "description": "Téléchargez des diagrammes, créez des tableaux structurés et ajoutez de la documentation en texte enrichi avec export PDF professionnel."
+      "compliance": {
+        "title": "Traçabilité Manquante",
+        "description": "Aucune preuve des validations, signatures perdues, audits difficiles"
       },
       "collaboration": {
-        "title": "Workflows Collaboratifs",
-        "description": "Invitations par e-mail avec contrôle d'accès basé sur les rôles, collaboration en temps réel et notifications de workflow automatisées."
+        "title": "Collaboration Chaotique",
+        "description": "Échanges par email interminables, pas de workflow clair, retards de validation"
       },
-      "pdfExport": {
-        "title": "Export PDF Professionnel",
-        "description": "Générez des PDFs aux couleurs de l'entreprise en utilisant le modèle YAS avec signatures numériques et formatage professionnel."
+      "performance": {
+        "title": "Performance Invisible",
+        "description": "Impossible de mesurer l'efficacité réelle des procédures sur le terrain"
       }
     }
   },
+  "solution": {
+    "badge": "La Solution",
+    "title": "Une Plateforme Complète pour Vos Procédures Télécoms",
+    "subtitle": "De la création collaborative à l'analyse de performance, tout est centralisé"
+  },
+  "features": {
+    "title": "Tout Ce Dont Vous Avez Besoin",
+    "subtitle": "Conforme au format standardisé Togocom TG-TELCO-PRO-101 v1.0 pour la surveillance réseau et la restauration de service",
+    "cards": {
+      "documentCreation": {
+        "title": "Création Guidée en 5 Étapes",
+        "description": "Formulaire intelligent pour documenter : objectifs, acteurs impliqués, règles métier, terminologie technique et procédure détaillée avec annexes."
+      },
+      "contributorManagement": {
+        "title": "Circuit de Validation Structuré",
+        "description": "Workflow à 3 niveaux (Rédacteur → Vérificateur → Validateur) avec invitations par email, permissions granulaires et signatures numériques horodatées."
+      },
+      "analytics": {
+        "title": "Bilans d'Efficacité Mensuels",
+        "description": "Importez vos rapports d'incidents mensuels et obtenez des analyses SLA automatiques (P1-P4), taux de résolution et recommandations d'amélioration."
+      },
+      "richAnnexes": {
+        "title": "Annexes Multimédias",
+        "description": "Intégrez diagrammes de réseau, tableaux de configuration, captures d'écran et documentation technique. Export PDF professionnel automatique."
+      },
+      "collaboration": {
+        "title": "Collaboration en Temps Réel",
+        "description": "Chat IA intégré pour questions/réponses, notifications automatiques, historique complet des modifications et gestion des versions."
+      },
+      "pdfExport": {
+        "title": "Export Corporatif Automatique",
+        "description": "Génération PDF instantanée au format YAS avec en-têtes, signatures numériques, numérotation automatique et table des matières."
+      }
+    }
+  },
+  "howItWorks": {
+    "badge": "Comment Ça Marche",
+    "title": "De l'Idée au Document Validé en 4 Étapes",
+    "subtitle": "Un processus simple et structuré pour des procédures de qualité",
+    "steps": {
+      "create": {
+        "title": "Créez Votre Procédure",
+        "description": "Utilisez notre formulaire en 5 étapes pour documenter votre processus. Ajoutez objectifs, acteurs, règles et étapes détaillées."
+      },
+      "collaborate": {
+        "title": "Invitez Vos Collaborateurs",
+        "description": "Définissez qui rédige, qui vérifie et qui valide. Envoyez des invitations par email avec permissions spécifiques."
+      },
+      "validate": {
+        "title": "Validez par Signatures Numériques",
+        "description": "Chaque contributeur signe numériquement son approbation. Traçabilité complète et horodatage automatique."
+      },
+      "analyze": {
+        "title": "Mesurez l'Efficacité Terrain",
+        "description": "Importez vos bilans mensuels et obtenez des KPIs sur la performance réelle : taux de résolution, respect SLA, délais moyens."
+      }
+    }
+  },
+  "stats": {
+    "title": "L'Impact Mesurable",
+    "subtitle": "Les résultats concrets observés par nos utilisateurs",
+    "items": {
+      "time": {
+        "value": "70%",
+        "label": "Réduction du temps de création"
+      },
+      "compliance": {
+        "value": "100%",
+        "label": "Traçabilité des validations"
+      },
+      "collaboration": {
+        "value": "5j → 2h",
+        "label": "Délai moyen de validation"
+      },
+      "performance": {
+        "value": "+45%",
+        "label": "Visibilité sur l'efficacité"
+      }
+    }
+  },
+  "testimonial": {
+    "quote": "Process Manager a révolutionné notre façon de gérer les procédures d'incidents réseau. La traçabilité complète et les analyses mensuelles nous permettent d'améliorer continuellement nos temps de résolution.",
+    "author": "Équipe Technique Togocom",
+    "role": "Surveillance Réseau & Exploitation"
+  },
   "cta": {
-    "title": "Prêt à Numériser Vos Processus ?",
-    "subtitle": "Rejoignez les équipes de télécommunications qui utilisent déjà Process Manager pour rationaliser leurs procédures opérationnelles.",
-    "createAccount": "Créer Votre Compte",
-    "signIn": "Se Connecter"
+    "title": "Prêt à Moderniser Vos Procédures ?",
+    "subtitle": "Rejoignez les équipes télécoms qui digitalisent leurs opérations avec Process Manager",
+    "createAccount": "Créer Mon Compte Gratuit",
+    "signIn": "J'ai Déjà un Compte",
+    "features": {
+      "trial": "Essai gratuit sans carte bancaire",
+      "support": "Support technique inclus",
+      "migration": "Aide à la migration de vos documents"
+    }
   },
   "footer": {
     "title": "Process Manager",
-    "copyright": "© 2025 YAS & Togocom. Tous droits réservés. | Conçu pour l'excellence opérationnelle des télécommunications."
+    "tagline": "La plateforme de gestion des processus pour les télécommunications",
+    "copyright": "© 2025 YAS & Togocom. Tous droits réservés.",
+    "builtFor": "Conçu pour l'excellence opérationnelle des télécommunications",
+    "links": {
+      "product": "Produit",
+      "features": "Fonctionnalités",
+      "documentation": "Documentation",
+      "support": "Support",
+      "contact": "Contact"
+    }
   }
 }
