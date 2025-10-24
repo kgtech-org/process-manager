@@ -5,10 +5,10 @@
     "getStarted": "Commencer"
   },
   "hero": {
-    "badge": "Outil Interne Togocom",
+    "badge": "Outil Interne YAS",
     "title": "Bienvenue sur Process Manager",
     "titleHighlight": "Votre Outil de Gestion des Procédures",
-    "subtitle": "Créez, validez et suivez vos procédures opérationnelles en toute simplicité. Conçu pour les équipes techniques de Togocom.",
+    "subtitle": "Créez, validez et suivez vos procédures opérationnelles en toute simplicité. Conçu pour les équipes techniques de YAS.",
     "benefits": {
       "multiStep": "Création guidée de procédures structurées",
       "collaboration": "Collaboration et validation en équipe",
@@ -18,7 +18,7 @@
       "getStarted": "Commencer",
       "signIn": "Se Connecter"
     },
-    "info": "Connectez-vous avec votre compte Togocom pour accéder à l'outil"
+    "info": "Connectez-vous avec votre compte YAS pour accéder à l'outil"
   },
   "benefits": {
     "title": "Pourquoi Utiliser Process Manager ?",
@@ -44,7 +44,7 @@
   },
   "features": {
     "title": "Fonctionnalités Principales",
-    "subtitle": "Conforme au format standardisé Togocom TG-TELCO-PRO-101 v1.0 pour la surveillance réseau et la restauration de service",
+    "subtitle": "Conforme au format standardisé YAS TG-TELCO-PRO-101 v1.0 pour la surveillance réseau et la restauration de service",
     "cards": {
       "documentCreation": {
         "title": "Création Guidée en 5 Étapes",
@@ -119,14 +119,14 @@
   },
   "cta": {
     "title": "Prêt à Commencer ?",
-    "subtitle": "Connectez-vous avec votre compte Togocom et créez votre première procédure",
+    "subtitle": "Connectez-vous avec votre compte YAS et créez votre première procédure",
     "getStarted": "Commencer",
     "signIn": "Se Connecter"
   },
   "footer": {
     "title": "Process Manager",
     "tagline": "Outil interne de gestion des procédures opérationnelles",
-    "copyright": "© 2025 YAS & Togocom. Tous droits réservés.",
-    "madeFor": "Développé par YAS pour Togocom"
+    "copyright": "© 2025 YAS. Tous droits réservés.",
+    "madeFor": "Développé par YAS"
   }
 }

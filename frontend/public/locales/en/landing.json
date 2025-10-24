@@ -5,10 +5,10 @@
     "getStarted": "Get Started"
   },
   "hero": {
-    "badge": "Togocom Internal Tool",
+    "badge": "YAS Internal Tool",
     "title": "Welcome to Process Manager",
     "titleHighlight": "Your Procedure Management Tool",
-    "subtitle": "Create, validate, and track your operational procedures with ease. Designed for Togocom technical teams.",
+    "subtitle": "Create, validate, and track your operational procedures with ease. Designed for YAS technical teams.",
     "benefits": {
       "multiStep": "Guided creation of structured procedures",
       "collaboration": "Team collaboration and validation",
@@ -18,7 +18,7 @@
       "getStarted": "Get Started",
       "signIn": "Sign In"
     },
-    "info": "Sign in with your Togocom account to access the tool"
+    "info": "Sign in with your YAS account to access the tool"
   },
   "benefits": {
     "title": "Why Use Process Manager?",
@@ -44,7 +44,7 @@
   },
   "features": {
     "title": "Key Features",
-    "subtitle": "Compliant with Togocom's standardized format TG-TELCO-PRO-101 v1.0 for network monitoring and service restoration",
+    "subtitle": "Compliant with YAS standardized format TG-TELCO-PRO-101 v1.0 for network monitoring and service restoration",
     "cards": {
       "documentCreation": {
         "title": "Guided 5-Step Creation",
@@ -119,14 +119,14 @@
   },
   "cta": {
     "title": "Ready to Get Started?",
-    "subtitle": "Sign in with your Togocom account and create your first procedure",
+    "subtitle": "Sign in with your YAS account and create your first procedure",
     "getStarted": "Get Started",
     "signIn": "Sign In"
   },
   "footer": {
     "title": "Process Manager",
     "tagline": "Internal tool for operational procedure management",
-    "copyright": "© 2025 YAS & Togocom. All rights reserved.",
-    "madeFor": "Developed by YAS for Togocom"
+    "copyright": "© 2025 YAS. All rights reserved.",
+    "madeFor": "Developed by YAS"
   }
 }

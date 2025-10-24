@@ -7,10 +7,10 @@ import { I18nProvider } from '@/components/providers/I18nProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Process Manager | Togocom',
+  title: 'Process Manager | YAS',
   description: 'Digital process management platform for telecommunications companies',
-  keywords: 'process management, telecommunications, procedures, Togocom',
-  authors: [{ name: 'Togocom Process Management Team' }],
+  keywords: 'process management, telecommunications, procedures, YAS',
+  authors: [{ name: 'YAS Process Management Team' }],
 };
 
 export default function RootLayout({

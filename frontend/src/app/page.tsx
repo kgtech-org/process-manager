@@ -464,7 +464,7 @@ export default function HomePage() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 text-center text-sm text-gray-500">
-            <p>&copy; 2025 Process Manager by YAS & Togocom</p>
+            <p>&copy; 2025 Process Manager by YAS</p>
           </div>
         </div>
       </footer>
