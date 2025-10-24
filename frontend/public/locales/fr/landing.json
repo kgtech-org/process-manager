@@ -1,0 +1,61 @@
+{
+  "header": {
+    "title": "Process Manager",
+    "signIn": "Se Connecter",
+    "getStarted": "Commencer"
+  },
+  "hero": {
+    "title": "Gestion Numérique des Processus pour les",
+    "titleHighlight": "Télécommunications",
+    "subtitle": "Transformez vos procédures opérationnelles avec notre plateforme complète conçue pour la création collaborative de documents, les signatures numériques et l'analyse des performances.",
+    "benefits": {
+      "multiStep": "Documentation des procédures en plusieurs étapes",
+      "collaboration": "Édition collaborative avec signatures numériques",
+      "analytics": "Analyse des performances et suivi de la conformité"
+    },
+    "cta": {
+      "createAccount": "Créer un Compte",
+      "signIn": "Se Connecter"
+    }
+  },
+  "features": {
+    "title": "Rationalisez Vos Procédures Opérationnelles",
+    "subtitle": "Spécialement conçu pour les entreprises de télécommunications suivant le format standardisé de Togocom (TG-TELCO-PRO-101 v1.0)",
+    "cards": {
+      "documentCreation": {
+        "title": "Création de Documents Interactive",
+        "description": "Formulaires multi-étapes pour la documentation structurée des procédures avec objectifs, rôles, terminologie et processus pas à pas."
+      },
+      "contributorManagement": {
+        "title": "Gestion des Contributeurs",
+        "description": "Workflows de signature numérique pour Auteurs, Vérificateurs et Validateurs avec invitations par e-mail et permissions granulaires."
+      },
+      "analytics": {
+        "title": "Analyse de l'Efficacité des Processus",
+        "description": "Analyse mensuelle des performances via des bilans d'incidents avec suivi de la conformité SLA et recommandations d'amélioration."
+      },
+      "richAnnexes": {
+        "title": "Annexes Enrichies",
+        "description": "Téléchargez des diagrammes, créez des tableaux structurés et ajoutez de la documentation en texte enrichi avec export PDF professionnel."
+      },
+      "collaboration": {
+        "title": "Workflows Collaboratifs",
+        "description": "Invitations par e-mail avec contrôle d'accès basé sur les rôles, collaboration en temps réel et notifications de workflow automatisées."
+      },
+      "pdfExport": {
+        "title": "Export PDF Professionnel",
+        "description": "Générez des PDFs aux couleurs de l'entreprise en utilisant le modèle YAS avec signatures numériques et formatage professionnel."
+      }
+    }
+  },
+  "cta": {
+    "title": "Prêt à Numériser Vos Processus ?",
+    "subtitle": "Rejoignez les équipes de télécommunications qui utilisent déjà Process Manager pour rationaliser leurs procédures opérationnelles.",
+    "createAccount": "Créer Votre Compte",
+    "signIn": "Se Connecter"
+  },
+  "footer": {
+    "title": "Process Manager",
+    "copyright": "© 2025 YAS & Togocom. Tous droits réservés. | Conçu pour l'excellence opérationnelle des télécommunications."
+  }
+}
