@@ -1,0 +1,132 @@
+{
+  "header": {
+    "title": "Process Manager",
+    "signIn": "Se Connecter",
+    "getStarted": "Commencer"
+  },
+  "hero": {
+    "badge": "Outil Interne YAS",
+    "title": "Bienvenue sur Process Manager",
+    "titleHighlight": "Votre Outil de Gestion des Procédures",
+    "subtitle": "Créez, validez et suivez vos procédures opérationnelles en toute simplicité. Conçu pour les équipes techniques de YAS.",
+    "benefits": {
+      "multiStep": "Création guidée de procédures structurées",
+      "collaboration": "Collaboration et validation en équipe",
+      "analytics": "Suivi de l'efficacité de vos processus"
+    },
+    "cta": {
+      "getStarted": "Commencer",
+      "signIn": "Se Connecter"
+    },
+    "info": "Connectez-vous avec votre compte YAS pour accéder à l'outil"
+  },
+  "benefits": {
+    "title": "Pourquoi Utiliser Process Manager ?",
+    "subtitle": "Un outil simple et efficace pour gérer vos procédures opérationnelles",
+    "items": {
+      "structured": {
+        "title": "Procédures Structurées",
+        "description": "Créez des documents conformes au format TG-TELCO-PRO-101 v1.0 avec un formulaire guidé"
+      },
+      "traceability": {
+        "title": "Traçabilité Complète",
+        "description": "Gardez l'historique de toutes les modifications et validations avec signatures numériques"
+      },
+      "collaboration": {
+        "title": "Travail en Équipe",
+        "description": "Invitez vos collègues à collaborer avec des rôles définis (Rédacteur, Vérificateur, Validateur)"
+      },
+      "analytics": {
+        "title": "Suivi des Performances",
+        "description": "Analysez l'efficacité de vos procédures avec les bilans mensuels d'incidents"
+      }
+    }
+  },
+  "features": {
+    "title": "Fonctionnalités Principales",
+    "subtitle": "Conforme au format standardisé YAS TG-TELCO-PRO-101 v1.0 pour la surveillance réseau et la restauration de service",
+    "cards": {
+      "documentCreation": {
+        "title": "Création Guidée en 5 Étapes",
+        "description": "Formulaire intelligent pour documenter : objectifs, acteurs impliqués, règles métier, terminologie technique et procédure détaillée avec annexes."
+      },
+      "contributorManagement": {
+        "title": "Circuit de Validation Structuré",
+        "description": "Workflow à 3 niveaux (Rédacteur → Vérificateur → Validateur) avec invitations par email, permissions granulaires et signatures numériques horodatées."
+      },
+      "analytics": {
+        "title": "Bilans d'Efficacité Mensuels",
+        "description": "Importez vos rapports d'incidents mensuels et obtenez des analyses SLA automatiques (P1-P4), taux de résolution et recommandations d'amélioration."
+      },
+      "richAnnexes": {
+        "title": "Annexes Multimédias",
+        "description": "Intégrez diagrammes de réseau, tableaux de configuration, captures d'écran et documentation technique. Export PDF professionnel automatique."
+      },
+      "collaboration": {
+        "title": "Collaboration en Temps Réel",
+        "description": "Chat IA intégré pour questions/réponses, notifications automatiques, historique complet des modifications et gestion des versions."
+      },
+      "pdfExport": {
+        "title": "Export Corporatif Automatique",
+        "description": "Génération PDF instantanée au format YAS avec en-têtes, signatures numériques, numérotation automatique et table des matières."
+      }
+    }
+  },
+  "howItWorks": {
+    "badge": "Comment Ça Marche",
+    "title": "De l'Idée au Document Validé en 4 Étapes",
+    "subtitle": "Un processus simple et structuré pour des procédures de qualité",
+    "steps": {
+      "create": {
+        "title": "Créez Votre Procédure",
+        "description": "Utilisez notre formulaire en 5 étapes pour documenter votre processus. Ajoutez objectifs, acteurs, règles et étapes détaillées."
+      },
+      "collaborate": {
+        "title": "Invitez Vos Collaborateurs",
+        "description": "Définissez qui rédige, qui vérifie et qui valide. Envoyez des invitations par email avec permissions spécifiques."
+      },
+      "validate": {
+        "title": "Validez par Signatures Numériques",
+        "description": "Chaque contributeur signe numériquement son approbation. Traçabilité complète et horodatage automatique."
+      },
+      "analyze": {
+        "title": "Mesurez l'Efficacité Terrain",
+        "description": "Importez vos bilans mensuels et obtenez des KPIs sur la performance réelle : taux de résolution, respect SLA, délais moyens."
+      }
+    }
+  },
+  "support": {
+    "title": "Besoin d'Aide ?",
+    "subtitle": "Notre équipe est là pour vous accompagner",
+    "items": {
+      "documentation": {
+        "title": "Documentation",
+        "description": "Guides complets et tutoriels vidéo"
+      },
+      "support": {
+        "title": "Support Technique",
+        "description": "Assistance disponible pour toute question"
+      },
+      "training": {
+        "title": "Formation",
+        "description": "Sessions de formation pour les nouveaux utilisateurs"
+      },
+      "feedback": {
+        "title": "Suggestions",
+        "description": "Votre avis compte pour améliorer l'outil"
+      }
+    }
+  },
+  "cta": {
+    "title": "Prêt à Commencer ?",
+    "subtitle": "Connectez-vous avec votre compte YAS et créez votre première procédure",
+    "getStarted": "Commencer",
+    "signIn": "Se Connecter"
+  },
+  "footer": {
+    "title": "Process Manager",
+    "tagline": "Outil interne de gestion des procédures opérationnelles",
+    "copyright": "© 2025 YAS. Tous droits réservés.",
+    "madeFor": "Développé par YAS"
+  }
+}

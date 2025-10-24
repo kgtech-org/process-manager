@@ -1,0 +1,132 @@
+{
+  "header": {
+    "title": "Process Manager",
+    "signIn": "Sign In",
+    "getStarted": "Get Started"
+  },
+  "hero": {
+    "badge": "YAS Internal Tool",
+    "title": "Welcome to Process Manager",
+    "titleHighlight": "Your Procedure Management Tool",
+    "subtitle": "Create, validate, and track your operational procedures with ease. Designed for YAS technical teams.",
+    "benefits": {
+      "multiStep": "Guided creation of structured procedures",
+      "collaboration": "Team collaboration and validation",
+      "analytics": "Track your process effectiveness"
+    },
+    "cta": {
+      "getStarted": "Get Started",
+      "signIn": "Sign In"
+    },
+    "info": "Sign in with your YAS account to access the tool"
+  },
+  "benefits": {
+    "title": "Why Use Process Manager?",
+    "subtitle": "A simple and efficient tool for managing your operational procedures",
+    "items": {
+      "structured": {
+        "title": "Structured Procedures",
+        "description": "Create documents compliant with TG-TELCO-PRO-101 v1.0 format using a guided form"
+      },
+      "traceability": {
+        "title": "Complete Traceability",
+        "description": "Keep history of all modifications and validations with digital signatures"
+      },
+      "collaboration": {
+        "title": "Teamwork",
+        "description": "Invite colleagues to collaborate with defined roles (Author, Verifier, Validator)"
+      },
+      "analytics": {
+        "title": "Performance Tracking",
+        "description": "Analyze the effectiveness of your procedures with monthly incident reports"
+      }
+    }
+  },
+  "features": {
+    "title": "Key Features",
+    "subtitle": "Compliant with YAS standardized format TG-TELCO-PRO-101 v1.0 for network monitoring and service restoration",
+    "cards": {
+      "documentCreation": {
+        "title": "Guided 5-Step Creation",
+        "description": "Smart form to document: objectives, involved actors, business rules, technical terminology, and detailed procedure with annexes."
+      },
+      "contributorManagement": {
+        "title": "Structured Validation Circuit",
+        "description": "3-level workflow (Author → Verifier → Validator) with email invitations, granular permissions, and timestamped digital signatures."
+      },
+      "analytics": {
+        "title": "Monthly Efficacy Reports",
+        "description": "Import your monthly incident reports and get automatic SLA analysis (P1-P4), resolution rates, and improvement recommendations."
+      },
+      "richAnnexes": {
+        "title": "Multimedia Annexes",
+        "description": "Integrate network diagrams, configuration tables, screenshots, and technical documentation. Automatic professional PDF export."
+      },
+      "collaboration": {
+        "title": "Real-Time Collaboration",
+        "description": "Integrated AI chat for Q&A, automatic notifications, complete modification history, and version management."
+      },
+      "pdfExport": {
+        "title": "Automatic Corporate Export",
+        "description": "Instant PDF generation in YAS format with headers, digital signatures, automatic numbering, and table of contents."
+      }
+    }
+  },
+  "howItWorks": {
+    "badge": "How It Works",
+    "title": "From Idea to Validated Document in 4 Steps",
+    "subtitle": "A simple, structured process for quality procedures",
+    "steps": {
+      "create": {
+        "title": "Create Your Procedure",
+        "description": "Use our 5-step form to document your process. Add objectives, actors, rules, and detailed steps."
+      },
+      "collaborate": {
+        "title": "Invite Your Collaborators",
+        "description": "Define who writes, who verifies, and who validates. Send email invitations with specific permissions."
+      },
+      "validate": {
+        "title": "Validate with Digital Signatures",
+        "description": "Each contributor digitally signs their approval. Complete traceability and automatic timestamping."
+      },
+      "analyze": {
+        "title": "Measure Field Effectiveness",
+        "description": "Import your monthly reports and get KPIs on real performance: resolution rate, SLA compliance, average delays."
+      }
+    }
+  },
+  "support": {
+    "title": "Need Help?",
+    "subtitle": "Our team is here to assist you",
+    "items": {
+      "documentation": {
+        "title": "Documentation",
+        "description": "Complete guides and video tutorials"
+      },
+      "support": {
+        "title": "Technical Support",
+        "description": "Assistance available for any questions"
+      },
+      "training": {
+        "title": "Training",
+        "description": "Training sessions for new users"
+      },
+      "feedback": {
+        "title": "Feedback",
+        "description": "Your input helps us improve the tool"
+      }
+    }
+  },
+  "cta": {
+    "title": "Ready to Get Started?",
+    "subtitle": "Sign in with your YAS account and create your first procedure",
+    "getStarted": "Get Started",
+    "signIn": "Sign In"
+  },
+  "footer": {
+    "title": "Process Manager",
+    "tagline": "Internal tool for operational procedure management",
+    "copyright": "© 2025 YAS. All rights reserved.",
+    "madeFor": "Developed by YAS"
+  }
+}

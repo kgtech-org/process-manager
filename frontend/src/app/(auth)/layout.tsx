@@ -122,7 +122,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           
           {/* Footer */}
           <footer className="p-6 text-center text-xs text-gray-500 bg-white/50">
-            <p>&copy; 2025 YAS & Togocom. All rights reserved.</p>
+            <p>&copy; 2025 YAS. All rights reserved.</p>
             <p className="mt-1">Built for telecommunications operational excellence</p>
           </footer>
         </div>
