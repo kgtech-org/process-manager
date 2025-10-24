@@ -62,22 +62,22 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="px-4 py-20 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <section className="px-4 py-16 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
-            <div className="space-y-8">
+            <div className="space-y-6">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
                 <Shield className="w-4 h-4 mr-2" />
                 {t('hero.badge')}
               </div>
 
               <div className="space-y-4">
-                <h1 className="text-5xl font-bold text-gray-900 leading-tight">
+                <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                   {t('hero.title')}{' '}
                   <span className="text-blue-600">{t('hero.titleHighlight')}</span>
                 </h1>
-                <p className="text-xl text-gray-600 leading-relaxed">
+                <p className="text-lg text-gray-600 leading-relaxed">
                   {t('hero.subtitle')}
                 </p>
               </div>
@@ -85,15 +85,15 @@ export default function HomePage() {
               {/* Key Benefits */}
               <div className="space-y-3">
                 <div className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-1 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <span className="text-gray-700">{t('hero.benefits.multiStep')}</span>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-1 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <span className="text-gray-700">{t('hero.benefits.collaboration')}</span>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-1 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <span className="text-gray-700">{t('hero.benefits.analytics')}</span>
                 </div>
               </div>
@@ -123,18 +123,14 @@ export default function HomePage() {
             </div>
 
             {/* Right Content - Illustration */}
-            <div className="relative">
-              <div className="relative z-10">
-                <Image
-                  src="/illustration.jpg"
-                  alt="Process Management Illustration"
-                  width={600}
-                  height={450}
-                  className="rounded-2xl shadow-2xl"
-                />
-              </div>
-              <div className="absolute -top-4 -right-4 w-72 h-72 bg-blue-200 rounded-full opacity-20 -z-10"></div>
-              <div className="absolute -bottom-4 -left-4 w-56 h-56 bg-indigo-200 rounded-full opacity-20 -z-10"></div>
+            <div className="flex items-center justify-center">
+              <Image
+                src="/illustration.png"
+                alt="Process Management Illustration"
+                width={500}
+                height={500}
+                className="w-full max-w-md"
+              />
             </div>
           </div>
         </div>
