@@ -62,48 +62,48 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="px-4 py-24 bg-white">
+      <section className="px-4 py-16 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
-            <div className="space-y-8">
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-base font-medium">
-                <Shield className="w-5 h-5 mr-2" />
+            <div className="space-y-6">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
+                <Shield className="w-4 h-4 mr-2" />
                 {t('hero.badge')}
               </div>
 
-              <div className="space-y-6">
-                <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                   {t('hero.title')}{' '}
                   <span className="text-blue-600">{t('hero.titleHighlight')}</span>
                 </h1>
-                <p className="text-xl text-gray-600 leading-relaxed">
+                <p className="text-lg text-gray-600 leading-relaxed">
                   {t('hero.subtitle')}
                 </p>
               </div>
 
               {/* Key Benefits */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
-                  <span className="text-lg text-gray-700">{t('hero.benefits.multiStep')}</span>
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">{t('hero.benefits.multiStep')}</span>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
-                  <span className="text-lg text-gray-700">{t('hero.benefits.collaboration')}</span>
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">{t('hero.benefits.collaboration')}</span>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
-                  <span className="text-lg text-gray-700">{t('hero.benefits.analytics')}</span>
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">{t('hero.benefits.analytics')}</span>
                 </div>
               </div>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={() => router.push('/register')}
                   size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6"
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   {t('hero.cta.getStarted')}
                 </Button>
@@ -111,14 +111,13 @@ export default function HomePage() {
                   onClick={() => router.push('/login')}
                   variant="outline"
                   size="lg"
-                  className="text-lg px-8 py-6"
                 >
                   {t('hero.cta.signIn')}
                 </Button>
               </div>
 
-              <div className="flex items-center space-x-3 text-base text-gray-600 bg-blue-50 p-4 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <div className="flex items-center space-x-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
                 <span>{t('hero.info')}</span>
               </div>
             </div>
@@ -128,9 +127,9 @@ export default function HomePage() {
               <Image
                 src="/illustration.png"
                 alt="Process Management Illustration"
-                width={600}
-                height={600}
-                className="w-full max-w-lg"
+                width={700}
+                height={700}
+                className="w-full max-w-2xl"
               />
             </div>
           </div>
