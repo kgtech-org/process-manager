@@ -14,15 +14,14 @@ import {
   Image as ImageIcon,
   MessageSquare,
   FileDown,
-  AlertCircle,
-  ShieldAlert,
-  Mail,
-  TrendingDown,
-  ArrowRight,
-  Zap,
-  Award,
-  Clock,
-  Target
+  CheckSquare,
+  Shield,
+  UsersIcon,
+  TrendingUp,
+  BookOpen,
+  HeadphonesIcon,
+  GraduationCap,
+  MessageCircle
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -69,7 +68,7 @@ export default function HomePage() {
             {/* Left Content */}
             <div className="space-y-8">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
-                <Award className="w-4 h-4 mr-2" />
+                <Shield className="w-4 h-4 mr-2" />
                 {t('hero.badge')}
               </div>
 
@@ -106,8 +105,7 @@ export default function HomePage() {
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700"
                 >
-                  {t('hero.cta.createAccount')}
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  {t('hero.cta.getStarted')}
                 </Button>
                 <Button
                   onClick={() => router.push('/login')}
@@ -118,9 +116,9 @@ export default function HomePage() {
                 </Button>
               </div>
 
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                <span>{t('hero.trustedBy')}</span>
+              <div className="flex items-center space-x-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <span>{t('hero.info')}</span>
               </div>
             </div>
 
@@ -142,80 +140,64 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Problems Section */}
-      <section className="px-4 py-16 bg-gray-50">
+      {/* Benefits Section */}
+      <section className="px-4 py-16 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              {t('problems.title')}
+              {t('benefits.title')}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {t('problems.subtitle')}
+              {t('benefits.subtitle')}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
-              <AlertCircle className="w-10 h-10 text-red-500 mb-4" />
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl border border-blue-100">
+              <CheckSquare className="w-10 h-10 text-blue-600 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t('problems.items.chaos.title')}
+                {t('benefits.items.structured.title')}
               </h3>
               <p className="text-gray-600 text-sm">
-                {t('problems.items.chaos.description')}
+                {t('benefits.items.structured.description')}
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
-              <ShieldAlert className="w-10 h-10 text-orange-500 mb-4" />
+            <div className="bg-gradient-to-br from-green-50 to-white p-6 rounded-xl border border-green-100">
+              <Shield className="w-10 h-10 text-green-600 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t('problems.items.compliance.title')}
+                {t('benefits.items.traceability.title')}
               </h3>
               <p className="text-gray-600 text-sm">
-                {t('problems.items.compliance.description')}
+                {t('benefits.items.traceability.description')}
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
-              <Mail className="w-10 h-10 text-yellow-500 mb-4" />
+            <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-xl border border-purple-100">
+              <UsersIcon className="w-10 h-10 text-purple-600 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t('problems.items.collaboration.title')}
+                {t('benefits.items.collaboration.title')}
               </h3>
               <p className="text-gray-600 text-sm">
-                {t('problems.items.collaboration.description')}
+                {t('benefits.items.collaboration.description')}
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
-              <TrendingDown className="w-10 h-10 text-purple-500 mb-4" />
+            <div className="bg-gradient-to-br from-orange-50 to-white p-6 rounded-xl border border-orange-100">
+              <TrendingUp className="w-10 h-10 text-orange-600 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t('problems.items.performance.title')}
+                {t('benefits.items.analytics.title')}
               </h3>
               <p className="text-gray-600 text-sm">
-                {t('problems.items.performance.description')}
+                {t('benefits.items.analytics.description')}
               </p>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Solution Section */}
-      <section className="px-4 py-16 bg-white">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium mb-6">
-            <Zap className="w-4 h-4 mr-2" />
-            {t('solution.badge')}
-          </div>
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            {t('solution.title')}
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            {t('solution.subtitle')}
-          </p>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="px-4 py-16 bg-gradient-to-b from-white to-gray-50">
+      <section className="px-4 py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -227,7 +209,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-blue-300 hover:shadow-xl transition-all duration-300">
+            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-blue-300 hover:shadow-lg transition-all duration-300">
               <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <FileText className="w-7 h-7 text-blue-600" />
               </div>
@@ -239,7 +221,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-green-300 hover:shadow-xl transition-all duration-300">
+            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-green-300 hover:shadow-lg transition-all duration-300">
               <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Users className="w-7 h-7 text-green-600" />
               </div>
@@ -251,7 +233,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-purple-300 hover:shadow-xl transition-all duration-300">
+            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-purple-300 hover:shadow-lg transition-all duration-300">
               <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <BarChart3 className="w-7 h-7 text-purple-600" />
               </div>
@@ -263,7 +245,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-orange-300 hover:shadow-xl transition-all duration-300">
+            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-orange-300 hover:shadow-lg transition-all duration-300">
               <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <ImageIcon className="w-7 h-7 text-orange-600" />
               </div>
@@ -275,7 +257,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-teal-300 hover:shadow-xl transition-all duration-300">
+            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-teal-300 hover:shadow-lg transition-all duration-300">
               <div className="w-14 h-14 bg-teal-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <MessageSquare className="w-7 h-7 text-teal-600" />
               </div>
@@ -287,7 +269,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-indigo-300 hover:shadow-xl transition-all duration-300">
+            <div className="group p-8 rounded-xl border border-gray-200 bg-white hover:border-indigo-300 hover:shadow-lg transition-all duration-300">
               <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <FileDown className="w-7 h-7 text-indigo-600" />
               </div>
@@ -369,59 +351,64 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="px-4 py-16 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+      {/* Support Section */}
+      <section className="px-4 py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">
-              {t('stats.title')}
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              {t('support.title')}
             </h2>
-            <p className="text-xl text-blue-100">
-              {t('stats.subtitle')}
+            <p className="text-xl text-gray-600">
+              {t('support.subtitle')}
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-5xl font-bold mb-2">{t('stats.items.time.value')}</div>
-              <div className="text-blue-100">{t('stats.items.time.label')}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold mb-2">{t('stats.items.compliance.value')}</div>
-              <div className="text-blue-100">{t('stats.items.compliance.label')}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold mb-2">{t('stats.items.collaboration.value')}</div>
-              <div className="text-blue-100">{t('stats.items.collaboration.label')}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold mb-2">{t('stats.items.performance.value')}</div>
-              <div className="text-blue-100">{t('stats.items.performance.label')}</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonial Section */}
-      <section className="px-4 py-16 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white p-8 md:p-12 rounded-2xl shadow-lg">
-            <div className="text-center mb-6">
-              <div className="text-5xl text-blue-600 mb-4">&ldquo;</div>
-              <p className="text-xl text-gray-700 leading-relaxed mb-6">
-                {t('testimonial.quote')}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+              <BookOpen className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">
+                {t('support.items.documentation.title')}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {t('support.items.documentation.description')}
               </p>
             </div>
-            <div className="text-center border-t border-gray-200 pt-6">
-              <p className="font-semibold text-gray-900">{t('testimonial.author')}</p>
-              <p className="text-gray-600">{t('testimonial.role')}</p>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+              <HeadphonesIcon className="w-12 h-12 text-green-600 mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">
+                {t('support.items.support.title')}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {t('support.items.support.description')}
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+              <GraduationCap className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">
+                {t('support.items.training.title')}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {t('support.items.training.description')}
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+              <MessageCircle className="w-12 h-12 text-orange-600 mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">
+                {t('support.items.feedback.title')}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {t('support.items.feedback.description')}
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="px-4 py-20 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* CTA Section */}
+      <section className="px-4 py-20 bg-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
             {t('cta.title')}
@@ -430,14 +417,13 @@ export default function HomePage() {
             {t('cta.subtitle')}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               onClick={() => router.push('/register')}
               size="lg"
               className="bg-blue-600 hover:bg-blue-700 text-lg px-8"
             >
-              {t('cta.createAccount')}
-              <ArrowRight className="w-5 h-5 ml-2" />
+              {t('cta.getStarted')}
             </Button>
             <Button
               onClick={() => router.push('/login')}
@@ -447,21 +433,6 @@ export default function HomePage() {
             >
               {t('cta.signIn')}
             </Button>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-2xl mx-auto">
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <span>{t('cta.features.trial')}</span>
-            </div>
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <span>{t('cta.features.support')}</span>
-            </div>
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <span>{t('cta.features.migration')}</span>
-            </div>
           </div>
         </div>
       </section>
@@ -485,7 +456,7 @@ export default function HomePage() {
                 {t('footer.tagline')}
               </p>
               <p className="text-sm text-gray-500">
-                {t('footer.builtFor')}
+                {t('footer.madeFor')}
               </p>
             </div>
 

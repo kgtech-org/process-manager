@@ -2,54 +2,48 @@
   "header": {
     "title": "Process Manager",
     "signIn": "Se Connecter",
-    "getStarted": "Démarrer Gratuitement"
+    "getStarted": "Commencer"
   },
   "hero": {
-    "badge": "Conçu pour Togocom",
-    "title": "Transformez Vos Procédures Télécoms",
-    "titleHighlight": "en Documents Vivants et Performants",
-    "subtitle": "La plateforme de gestion des processus qui digitalise vos procédures opérationnelles, automatise les validations et mesure l'efficacité réelle de vos équipes terrain.",
+    "badge": "Outil Interne Togocom",
+    "title": "Bienvenue sur Process Manager",
+    "titleHighlight": "Votre Outil de Gestion des Procédures",
+    "subtitle": "Créez, validez et suivez vos procédures opérationnelles en toute simplicité. Conçu pour les équipes techniques de Togocom.",
     "benefits": {
-      "multiStep": "Réduction de 70% du temps de création des procédures",
-      "collaboration": "Validation collaborative avec signatures numériques",
-      "analytics": "Suivi en temps réel de la conformité SLA"
+      "multiStep": "Création guidée de procédures structurées",
+      "collaboration": "Collaboration et validation en équipe",
+      "analytics": "Suivi de l'efficacité de vos processus"
     },
     "cta": {
-      "createAccount": "Créer un Compte Gratuit",
-      "signIn": "Se Connecter",
-      "demo": "Voir une Démo"
+      "getStarted": "Commencer",
+      "signIn": "Se Connecter"
     },
-    "trustedBy": "Utilisé par les équipes techniques de Togocom"
+    "info": "Connectez-vous avec votre compte Togocom pour accéder à l'outil"
   },
-  "problems": {
-    "title": "Les Défis de la Gestion Documentaire Télécom",
-    "subtitle": "Les processus papier et les fichiers Word éparpillés ralentissent vos opérations",
+  "benefits": {
+    "title": "Pourquoi Utiliser Process Manager ?",
+    "subtitle": "Un outil simple et efficace pour gérer vos procédures opérationnelles",
     "items": {
-      "chaos": {
-        "title": "Procédures Obsolètes",
-        "description": "Documents Word perdus, versions multiples, impossibilité de savoir quelle est la version à jour"
+      "structured": {
+        "title": "Procédures Structurées",
+        "description": "Créez des documents conformes au format TG-TELCO-PRO-101 v1.0 avec un formulaire guidé"
       },
-      "compliance": {
-        "title": "Traçabilité Manquante",
-        "description": "Aucune preuve des validations, signatures perdues, audits difficiles"
+      "traceability": {
+        "title": "Traçabilité Complète",
+        "description": "Gardez l'historique de toutes les modifications et validations avec signatures numériques"
       },
       "collaboration": {
-        "title": "Collaboration Chaotique",
-        "description": "Échanges par email interminables, pas de workflow clair, retards de validation"
+        "title": "Travail en Équipe",
+        "description": "Invitez vos collègues à collaborer avec des rôles définis (Rédacteur, Vérificateur, Validateur)"
       },
-      "performance": {
-        "title": "Performance Invisible",
-        "description": "Impossible de mesurer l'efficacité réelle des procédures sur le terrain"
+      "analytics": {
+        "title": "Suivi des Performances",
+        "description": "Analysez l'efficacité de vos procédures avec les bilans mensuels d'incidents"
       }
     }
   },
-  "solution": {
-    "badge": "La Solution",
-    "title": "Une Plateforme Complète pour Vos Procédures Télécoms",
-    "subtitle": "De la création collaborative à l'analyse de performance, tout est centralisé"
-  },
   "features": {
-    "title": "Tout Ce Dont Vous Avez Besoin",
+    "title": "Fonctionnalités Principales",
     "subtitle": "Conforme au format standardisé Togocom TG-TELCO-PRO-101 v1.0 pour la surveillance réseau et la restauration de service",
     "cards": {
       "documentCreation": {
@@ -101,55 +95,38 @@
       }
     }
   },
-  "stats": {
-    "title": "L'Impact Mesurable",
-    "subtitle": "Les résultats concrets observés par nos utilisateurs",
+  "support": {
+    "title": "Besoin d'Aide ?",
+    "subtitle": "Notre équipe est là pour vous accompagner",
     "items": {
-      "time": {
-        "value": "70%",
-        "label": "Réduction du temps de création"
+      "documentation": {
+        "title": "Documentation",
+        "description": "Guides complets et tutoriels vidéo"
       },
-      "compliance": {
-        "value": "100%",
-        "label": "Traçabilité des validations"
+      "support": {
+        "title": "Support Technique",
+        "description": "Assistance disponible pour toute question"
       },
-      "collaboration": {
-        "value": "5j → 2h",
-        "label": "Délai moyen de validation"
+      "training": {
+        "title": "Formation",
+        "description": "Sessions de formation pour les nouveaux utilisateurs"
       },
-      "performance": {
-        "value": "+45%",
-        "label": "Visibilité sur l'efficacité"
+      "feedback": {
+        "title": "Suggestions",
+        "description": "Votre avis compte pour améliorer l'outil"
       }
     }
   },
-  "testimonial": {
-    "quote": "Process Manager a révolutionné notre façon de gérer les procédures d'incidents réseau. La traçabilité complète et les analyses mensuelles nous permettent d'améliorer continuellement nos temps de résolution.",
-    "author": "Équipe Technique Togocom",
-    "role": "Surveillance Réseau & Exploitation"
-  },
   "cta": {
-    "title": "Prêt à Moderniser Vos Procédures ?",
-    "subtitle": "Rejoignez les équipes télécoms qui digitalisent leurs opérations avec Process Manager",
-    "createAccount": "Créer Mon Compte Gratuit",
-    "signIn": "J'ai Déjà un Compte",
-    "features": {
-      "trial": "Essai gratuit sans carte bancaire",
-      "support": "Support technique inclus",
-      "migration": "Aide à la migration de vos documents"
-    }
+    "title": "Prêt à Commencer ?",
+    "subtitle": "Connectez-vous avec votre compte Togocom et créez votre première procédure",
+    "getStarted": "Commencer",
+    "signIn": "Se Connecter"
   },
   "footer": {
     "title": "Process Manager",
-    "tagline": "La plateforme de gestion des processus pour les télécommunications",
+    "tagline": "Outil interne de gestion des procédures opérationnelles",
     "copyright": "© 2025 YAS & Togocom. Tous droits réservés.",
-    "builtFor": "Conçu pour l'excellence opérationnelle des télécommunications",
-    "links": {
-      "product": "Produit",
-      "features": "Fonctionnalités",
-      "documentation": "Documentation",
-      "support": "Support",
-      "contact": "Contact"
-    }
+    "madeFor": "Développé par YAS pour Togocom"
   }
 }

@@ -2,54 +2,48 @@
   "header": {
     "title": "Process Manager",
     "signIn": "Sign In",
-    "getStarted": "Start Free"
+    "getStarted": "Get Started"
   },
   "hero": {
-    "badge": "Built for Togocom",
-    "title": "Transform Your Telecom Procedures",
-    "titleHighlight": "into Living, High-Performance Documents",
-    "subtitle": "The process management platform that digitizes your operational procedures, automates validations, and measures the real effectiveness of your field teams.",
+    "badge": "Togocom Internal Tool",
+    "title": "Welcome to Process Manager",
+    "titleHighlight": "Your Procedure Management Tool",
+    "subtitle": "Create, validate, and track your operational procedures with ease. Designed for Togocom technical teams.",
     "benefits": {
-      "multiStep": "70% reduction in procedure creation time",
-      "collaboration": "Collaborative validation with digital signatures",
-      "analytics": "Real-time SLA compliance monitoring"
+      "multiStep": "Guided creation of structured procedures",
+      "collaboration": "Team collaboration and validation",
+      "analytics": "Track your process effectiveness"
     },
     "cta": {
-      "createAccount": "Create Free Account",
-      "signIn": "Sign In",
-      "demo": "Watch Demo"
+      "getStarted": "Get Started",
+      "signIn": "Sign In"
     },
-    "trustedBy": "Trusted by Togocom technical teams"
+    "info": "Sign in with your Togocom account to access the tool"
   },
-  "problems": {
-    "title": "The Challenges of Telecom Document Management",
-    "subtitle": "Paper processes and scattered Word files slow down your operations",
+  "benefits": {
+    "title": "Why Use Process Manager?",
+    "subtitle": "A simple and efficient tool for managing your operational procedures",
     "items": {
-      "chaos": {
-        "title": "Outdated Procedures",
-        "description": "Lost Word documents, multiple versions, impossible to know which is current"
+      "structured": {
+        "title": "Structured Procedures",
+        "description": "Create documents compliant with TG-TELCO-PRO-101 v1.0 format using a guided form"
       },
-      "compliance": {
-        "title": "Missing Traceability",
-        "description": "No proof of validations, lost signatures, difficult audits"
+      "traceability": {
+        "title": "Complete Traceability",
+        "description": "Keep history of all modifications and validations with digital signatures"
       },
       "collaboration": {
-        "title": "Chaotic Collaboration",
-        "description": "Endless email exchanges, no clear workflow, validation delays"
+        "title": "Teamwork",
+        "description": "Invite colleagues to collaborate with defined roles (Author, Verifier, Validator)"
       },
-      "performance": {
-        "title": "Invisible Performance",
-        "description": "Impossible to measure real procedure effectiveness in the field"
+      "analytics": {
+        "title": "Performance Tracking",
+        "description": "Analyze the effectiveness of your procedures with monthly incident reports"
       }
     }
   },
-  "solution": {
-    "badge": "The Solution",
-    "title": "A Complete Platform for Your Telecom Procedures",
-    "subtitle": "From collaborative creation to performance analysis, everything is centralized"
-  },
   "features": {
-    "title": "Everything You Need",
+    "title": "Key Features",
     "subtitle": "Compliant with Togocom's standardized format TG-TELCO-PRO-101 v1.0 for network monitoring and service restoration",
     "cards": {
       "documentCreation": {
@@ -101,55 +95,38 @@
       }
     }
   },
-  "stats": {
-    "title": "Measurable Impact",
-    "subtitle": "Real results observed by our users",
+  "support": {
+    "title": "Need Help?",
+    "subtitle": "Our team is here to assist you",
     "items": {
-      "time": {
-        "value": "70%",
-        "label": "Reduction in creation time"
+      "documentation": {
+        "title": "Documentation",
+        "description": "Complete guides and video tutorials"
       },
-      "compliance": {
-        "value": "100%",
-        "label": "Validation traceability"
+      "support": {
+        "title": "Technical Support",
+        "description": "Assistance available for any questions"
       },
-      "collaboration": {
-        "value": "5d → 2h",
-        "label": "Average validation time"
+      "training": {
+        "title": "Training",
+        "description": "Training sessions for new users"
       },
-      "performance": {
-        "value": "+45%",
-        "label": "Effectiveness visibility"
+      "feedback": {
+        "title": "Feedback",
+        "description": "Your input helps us improve the tool"
       }
     }
   },
-  "testimonial": {
-    "quote": "Process Manager revolutionized how we manage network incident procedures. Complete traceability and monthly analyses allow us to continuously improve our resolution times.",
-    "author": "Togocom Technical Team",
-    "role": "Network Monitoring & Operations"
-  },
   "cta": {
-    "title": "Ready to Modernize Your Procedures?",
-    "subtitle": "Join telecom teams digitalizing their operations with Process Manager",
-    "createAccount": "Create My Free Account",
-    "signIn": "I Already Have an Account",
-    "features": {
-      "trial": "Free trial without credit card",
-      "support": "Technical support included",
-      "migration": "Help migrating your documents"
-    }
+    "title": "Ready to Get Started?",
+    "subtitle": "Sign in with your Togocom account and create your first procedure",
+    "getStarted": "Get Started",
+    "signIn": "Sign In"
   },
   "footer": {
     "title": "Process Manager",
-    "tagline": "The process management platform for telecommunications",
+    "tagline": "Internal tool for operational procedure management",
     "copyright": "© 2025 YAS & Togocom. All rights reserved.",
-    "builtFor": "Built for telecommunications operational excellence",
-    "links": {
-      "product": "Product",
-      "features": "Features",
-      "documentation": "Documentation",
-      "support": "Support",
-      "contact": "Contact"
-    }
+    "madeFor": "Developed by YAS for Togocom"
   }
 }
