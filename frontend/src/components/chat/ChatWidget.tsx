@@ -165,7 +165,7 @@ export function ChatWidget() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-orange-500 text-white shadow-lg hover:bg-orange-600 transition-colors flex items-center justify-center z-50"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:opacity-90 transition-opacity flex items-center justify-center z-50"
       >
         <MessageCircle className="h-6 w-6" />
       </button>
@@ -175,7 +175,7 @@ export function ChatWidget() {
   return (
     <Card className="fixed bottom-6 right-6 w-96 h-[600px] shadow-2xl flex flex-col z-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-orange-500 text-white rounded-t-lg">
+      <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
         <div className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5" />
           <h3 className="font-semibold">Assistant Processus</h3>
@@ -186,7 +186,7 @@ export function ChatWidget() {
               variant="ghost"
               size="icon"
               onClick={startNewConversation}
-              className="h-8 w-8 text-white hover:bg-orange-600"
+              className="h-8 w-8 text-primary-foreground hover:bg-primary/90"
             >
               <PlusCircle className="h-4 w-4" />
             </Button>
@@ -195,7 +195,7 @@ export function ChatWidget() {
             variant="ghost"
             size="icon"
             onClick={() => setIsOpen(false)}
-            className="h-8 w-8 text-white hover:bg-orange-600"
+            className="h-8 w-8 text-primary-foreground hover:bg-primary/90"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -264,7 +264,7 @@ export function ChatWidget() {
                 disabled={isSending}
                 className="flex-1"
               />
-              <Button type="submit" disabled={!inputMessage.trim() || isSending} className="bg-orange-500 hover:bg-orange-600">
+              <Button type="submit" disabled={!inputMessage.trim() || isSending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Send className="h-4 w-4" />
               </Button>
             </form>
@@ -276,7 +276,7 @@ export function ChatWidget() {
           <ScrollArea className="flex-1 p-4" ref={scrollRef}>
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : messages.length === 0 ? (
               <div className="flex items-center justify-center h-full text-center">
@@ -300,8 +300,8 @@ export function ChatWidget() {
                       className={cn(
                         'rounded-lg px-4 py-2 max-w-[80%]',
                         message.role === 'user'
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-gray-100 text-gray-900'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-foreground'
                       )}
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -335,7 +335,7 @@ export function ChatWidget() {
                 disabled={isSending}
                 className="flex-1"
               />
-              <Button type="submit" disabled={!inputMessage.trim() || isSending} className="bg-orange-500 hover:bg-orange-600">
+              <Button type="submit" disabled={!inputMessage.trim() || isSending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Send className="h-4 w-4" />
               </Button>
             </form>
