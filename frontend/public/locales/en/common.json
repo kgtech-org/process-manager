@@ -2,6 +2,7 @@
   "navigation": {
     "home": "Home",
     "macros": "Macros",
+    "stats": "Statistics",
     "documents": "Documents",
     "notifications": "Notifications",
     "myActivity": "My Activity",
