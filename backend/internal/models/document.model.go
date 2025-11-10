@@ -137,62 +137,71 @@ type DocumentMetadata struct {
 
 // Document represents a process document (Micro-processus)
 type Document struct {
-	ID            primitive.ObjectID  `json:"id" bson:"_id,omitempty"`
-	MacroID       *primitive.ObjectID `json:"macroId,omitempty" bson:"macro_id,omitempty"`       // Link to Macro (M1, M2, etc.)
-	ProcessCode   string              `json:"processCode,omitempty" bson:"process_code,omitempty"` // New format: M1_P1, M2_P1, etc.
-	Reference     string              `json:"reference" bson:"reference"`                          // Legacy reference
-	Title         string              `json:"title" bson:"title"`
-	Version       string              `json:"version" bson:"version"`
-	Status        DocumentStatus      `json:"status" bson:"status"`
-	CreatedBy     primitive.ObjectID  `json:"createdBy" bson:"created_by"`
-	Contributors  Contributors        `json:"contributors" bson:"contributors"`
-	Metadata      DocumentMetadata    `json:"metadata" bson:"metadata"`
-	ProcessGroups []ProcessGroup      `json:"processGroups" bson:"process_groups"`
-	Annexes       []Annex             `json:"annexes" bson:"annexes"`
-	PdfUrl        string              `json:"pdfUrl,omitempty" bson:"pdf_url,omitempty"`
-	CreatedAt     time.Time           `json:"createdAt" bson:"created_at"`
-	UpdatedAt     time.Time           `json:"updatedAt" bson:"updated_at"`
-	ApprovedAt    *time.Time          `json:"approvedAt,omitempty" bson:"approved_at,omitempty"`
+	ID               primitive.ObjectID  `json:"id" bson:"_id,omitempty"`
+	MacroID          *primitive.ObjectID `json:"macroId,omitempty" bson:"macro_id,omitempty"`       // Link to Macro (M1, M2, etc.)
+	ProcessCode      string              `json:"processCode,omitempty" bson:"process_code,omitempty"` // New format: M1_P1, M2_P1, etc.
+	Reference        string              `json:"reference" bson:"reference"`                          // Legacy reference
+	Title            string              `json:"title" bson:"title"`
+	ShortDescription string              `json:"shortDescription,omitempty" bson:"short_description,omitempty"` // Brief description
+	Description      string              `json:"description,omitempty" bson:"description,omitempty"`           // Detailed description
+	IsActive         bool                `json:"isActive" bson:"is_active"`                                   // Active status
+	Version          string              `json:"version" bson:"version"`
+	Status           DocumentStatus      `json:"status" bson:"status"`
+	CreatedBy        primitive.ObjectID  `json:"createdBy" bson:"created_by"`
+	Contributors     Contributors        `json:"contributors" bson:"contributors"`
+	Metadata         DocumentMetadata    `json:"metadata" bson:"metadata"`
+	ProcessGroups    []ProcessGroup      `json:"processGroups" bson:"process_groups"`
+	Annexes          []Annex             `json:"annexes" bson:"annexes"`
+	PdfUrl           string              `json:"pdfUrl,omitempty" bson:"pdf_url,omitempty"`
+	CreatedAt        time.Time           `json:"createdAt" bson:"created_at"`
+	UpdatedAt        time.Time           `json:"updatedAt" bson:"updated_at"`
+	ApprovedAt       *time.Time          `json:"approvedAt,omitempty" bson:"approved_at,omitempty"`
 }
 
 // DocumentResponse represents the API response for a document
 type DocumentResponse struct {
-	ID            string           `json:"id"`
-	MacroID       string           `json:"macroId,omitempty"`
-	ProcessCode   string           `json:"processCode,omitempty"`
-	Reference     string           `json:"reference"`
-	Title         string           `json:"title"`
-	Version       string           `json:"version"`
-	Status        DocumentStatus   `json:"status"`
-	CreatedBy     string           `json:"createdBy"`
-	Contributors  Contributors     `json:"contributors"`
-	Metadata      DocumentMetadata `json:"metadata"`
-	ProcessGroups []ProcessGroup   `json:"processGroups"`
-	Annexes       []Annex          `json:"annexes"`
-	PdfUrl        string           `json:"pdfUrl,omitempty"`
-	CreatedAt     time.Time        `json:"createdAt"`
-	UpdatedAt     time.Time        `json:"updatedAt"`
-	ApprovedAt    *time.Time       `json:"approvedAt,omitempty"`
+	ID               string           `json:"id"`
+	MacroID          string           `json:"macroId,omitempty"`
+	ProcessCode      string           `json:"processCode,omitempty"`
+	Reference        string           `json:"reference"`
+	Title            string           `json:"title"`
+	ShortDescription string           `json:"shortDescription,omitempty"`
+	Description      string           `json:"description,omitempty"`
+	IsActive         bool             `json:"isActive"`
+	Version          string           `json:"version"`
+	Status           DocumentStatus   `json:"status"`
+	CreatedBy        string           `json:"createdBy"`
+	Contributors     Contributors     `json:"contributors"`
+	Metadata         DocumentMetadata `json:"metadata"`
+	ProcessGroups    []ProcessGroup   `json:"processGroups"`
+	Annexes          []Annex          `json:"annexes"`
+	PdfUrl           string           `json:"pdfUrl,omitempty"`
+	CreatedAt        time.Time        `json:"createdAt"`
+	UpdatedAt        time.Time        `json:"updatedAt"`
+	ApprovedAt       *time.Time       `json:"approvedAt,omitempty"`
 }
 
 // ToResponse converts a Document to DocumentResponse
 func (d *Document) ToResponse() DocumentResponse {
 	resp := DocumentResponse{
-		ID:            d.ID.Hex(),
-		ProcessCode:   d.ProcessCode,
-		Reference:     d.Reference,
-		Title:         d.Title,
-		Version:       d.Version,
-		Status:        d.Status,
-		CreatedBy:     d.CreatedBy.Hex(),
-		Contributors:  d.Contributors,
-		Metadata:      d.Metadata,
-		ProcessGroups: d.ProcessGroups,
-		Annexes:       d.Annexes,
-		PdfUrl:        d.PdfUrl,
-		CreatedAt:     d.CreatedAt,
-		UpdatedAt:     d.UpdatedAt,
-		ApprovedAt:    d.ApprovedAt,
+		ID:               d.ID.Hex(),
+		ProcessCode:      d.ProcessCode,
+		Reference:        d.Reference,
+		Title:            d.Title,
+		ShortDescription: d.ShortDescription,
+		Description:      d.Description,
+		IsActive:         d.IsActive,
+		Version:          d.Version,
+		Status:           d.Status,
+		CreatedBy:        d.CreatedBy.Hex(),
+		Contributors:     d.Contributors,
+		Metadata:         d.Metadata,
+		ProcessGroups:    d.ProcessGroups,
+		Annexes:          d.Annexes,
+		PdfUrl:           d.PdfUrl,
+		CreatedAt:        d.CreatedAt,
+		UpdatedAt:        d.UpdatedAt,
+		ApprovedAt:       d.ApprovedAt,
 	}
 
 	// Include MacroID if present

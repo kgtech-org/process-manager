@@ -18,8 +18,8 @@ export interface Macro {
 
 export interface Process {
   id: string;
-  code: string; // M1_P1, M1_P2, etc.
-  name: string;
+  processCode: string; // M1_P1, M1_P2, etc.
+  title: string;
   description?: string;
   shortDescription?: string;
   macroId: string;

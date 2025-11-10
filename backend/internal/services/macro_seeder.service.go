@@ -84,24 +84,27 @@ func (s *MacroService) InitializeMacros(ctx context.Context, seedFilePath string
 		// Create processes for this macro
 		for _, processData := range macroData.Processes {
 			document := &models.Document{
-				MacroID:     &macroID,                      // Link to macro
-				ProcessCode: processData.Code,              // M1_P1, M1_P2, etc.
-				Reference:   processData.Code,              // Use process code as reference
-				Title:       processData.Name,
-				Version:     "1.0",
-				Status:      models.DocumentStatusDraft,
-				CreatedBy:   systemUserID,
+				MacroID:          &macroID,                      // Link to macro
+				ProcessCode:      processData.Code,              // M1_P1, M1_P2, etc.
+				Reference:        processData.Code,              // Use process code as reference
+				Title:            processData.Name,
+				ShortDescription: processData.ShortDescription,  // Brief description
+				Description:      processData.Description,       // Detailed description
+				IsActive:         processData.IsActive,          // Active status
+				Version:          "1.0",
+				Status:           models.DocumentStatusDraft,
+				CreatedBy:        systemUserID,
 				Contributors: models.Contributors{
 					Authors:    []models.Contributor{},
 					Verifiers:  []models.Contributor{},
 					Validators: []models.Contributor{},
 				},
 				Metadata: models.DocumentMetadata{
-					Objectives:        []string{processData.Description},
-					ImplicatedActors:  []string{},
-					ManagementRules:   []string{},
-					Terminology:       []string{},
-					ChangeHistory:     []models.ChangeHistoryEntry{},
+					Objectives:       []string{},
+					ImplicatedActors: []string{},
+					ManagementRules:  []string{},
+					Terminology:      []string{},
+					ChangeHistory:    []models.ChangeHistoryEntry{},
 				},
 				ProcessGroups: []models.ProcessGroup{},
 				Annexes:       []models.Annex{},

@@ -232,7 +232,7 @@ export default function MacroDetailPage() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <Badge variant="outline" className="font-mono">
-                            {process.code}
+                            {process.processCode}
                           </Badge>
                           <Badge
                             variant={process.isActive ? 'default' : 'secondary'}
@@ -244,7 +244,7 @@ export default function MacroDetailPage() {
                           </Badge>
                         </div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                          {process.name}
+                          {process.title}
                         </h3>
                         {process.description && (
                           <p className="text-gray-600 text-sm line-clamp-2">
