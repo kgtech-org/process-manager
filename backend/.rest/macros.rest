@@ -1,0 +1,346 @@
+# Process Manager Backend - Macro Management API Tests
+# Use with REST Client extension in VS Code or any REST client
+
+@baseUrl = http://localhost:8080
+@apiUrl = {{baseUrl}}/api
+
+# Variables (will be set from responses)
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhjMTFiNTk1YTg2OTZhMjAxNWYyMThmIiwiZW1haWwiOiJhZG1pbkBwcm9jZXNzLW1hbmFnZXIubG9jYWwiLCJyb2xlIjoiYWRtaW4iLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaXNzIjoicHJvY2Vzcy1tYW5hZ2VyLWFwaSIsInN1YiI6IjY4YzExYjU5NWE4Njk2YTIwMTVmMjE4ZiIsImV4cCI6MTc1NzQ5NDAzMywibmJmIjoxNzU3NDkzMTMzLCJpYXQiOjE3NTc0OTMxMzN9.xnywNcjdXjXT4Vtw0kJ2tHO96HTr6Y_XhnxY5AbXf5Y
+
+### Health Check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+###
+# =========================
+# MACRO MANAGEMENT
+# =========================
+
+### Get all macros (Requires Authentication)
+GET {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Get all macros with pagination
+GET {{apiUrl}}/macros?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Search macros by keyword
+GET {{apiUrl}}/macros?search=stratégie
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Search macros by code
+GET {{apiUrl}}/macros?search=M1
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Get specific macro by ID
+# Replace with actual macro ID from the list above
+GET {{apiUrl}}/macros/673f1234567890abcdef1234
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Get processes in a specific macro
+# Replace with actual macro ID
+GET {{apiUrl}}/macros/673f1234567890abcdef1234/processes
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Get processes in macro with pagination
+# Replace with actual macro ID
+GET {{apiUrl}}/macros/673f1234567890abcdef1234/processes?page=1&limit=5
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# CREATE MACROS
+# =========================
+
+### Create Macro M1 - Stratégie & Évolution
+# @name macro1
+POST {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "M1",
+  "name": "Stratégie & Évolution des Infrastructures et Services",
+  "shortDescription": "Pilotage du cycle de vie des ressources et services techniques",
+  "description": "Cette macro couvre le pilotage global du cycle de vie des ressources (IT, réseau, plateformes) et des services (voix, data, BSS/OSS), depuis leur conception jusqu'à leur retrait. Elle vise à garantir une cohérence d'ensemble des choix techniques et à structurer l'évolution des capacités et des fonctions techniques en anticipant les ruptures technologiques."
+}
+
+### Create Macro M2 - Gouvernance Network & IS
+# @name macro2
+POST {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "M2",
+  "name": "Gouvernance Network & IS",
+  "shortDescription": "Cadre organisationnel clair pour la direction technique",
+  "description": "Cette macro regroupe les processus de gouvernance structurant la direction technique des réseaux et systèmes d'information. Elle vise à garantir un cadre organisationnel clair, cohérent et conforme, assurant l'alignement permanent entre les pratiques opérationnelles, les orientations stratégiques et les obligations réglementaires."
+}
+
+### Create Macro M3 - Support Opérationnel
+# @name macro3
+POST {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "M3",
+  "name": "Support Opérationnel aux Activités Networks & IS",
+  "shortDescription": "Soutien essentiel à la continuité des opérations techniques",
+  "description": "Cette macro regroupe les fonctions de soutien essentielles à la continuité des opérations techniques des réseaux et systèmes d'information. Elle vise à garantir que les équipes de terrain et d'exploitation disposent en permanence des moyens humains, matériels, logistiques, documentaires et organisationnels nécessaires."
+}
+
+### Create Macro M4 - Gestion Budgétaire
+# @name macro4
+POST {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "M4",
+  "name": "Gestion Budgétaire (Investissement et Opérationnel)",
+  "shortDescription": "Gestion financière CAPEX et OPEX",
+  "description": "Cette macro regroupe l'ensemble des processus liés à la gestion financière des activités techniques réseau et IT. Elle vise à planifier, exécuter, suivre et ajuster les budgets CAPEX (investissements) et OPEX (fonctionnement) en garantissant leur alignement avec les orientations stratégiques, les capacités techniques et les contraintes économiques."
+}
+
+### Create Macro M5 - Conception & Ingénierie
+# @name macro5
+POST {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "M5",
+  "name": "Conception & Ingénierie Networks & IS",
+  "shortDescription": "Conception des infrastructures et services techniques",
+  "description": "Cette macro regroupe l'ensemble des activités visant à concevoir les infrastructures et les services techniques en réponse aux besoins futurs (métiers, technologiques et opérationnels). Elle couvre l'analyse des besoins, la définition des services à fournir, le dimensionnement, la sélection des technologies, l'architecture, l'ingénierie détaillée, les validations, ainsi que la mise à jour des référentiels."
+}
+
+###
+# =========================
+# UPDATE MACROS
+# =========================
+
+### Update macro name
+# Replace with actual macro ID
+PUT {{apiUrl}}/macros/673f1234567890abcdef1234
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Stratégie & Évolution (Updated)"
+}
+
+### Update macro description
+# Replace with actual macro ID
+PUT {{apiUrl}}/macros/673f1234567890abcdef1234
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated detailed description of the macro..."
+}
+
+### Update macro short description
+# Replace with actual macro ID
+PUT {{apiUrl}}/macros/673f1234567890abcdef1234
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "shortDescription": "Updated brief description"
+}
+
+### Update multiple fields
+# Replace with actual macro ID
+PUT {{apiUrl}}/macros/673f1234567890abcdef1234
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Stratégie & Évolution v2",
+  "shortDescription": "Updated short description",
+  "description": "Updated full description with more details..."
+}
+
+###
+# =========================
+# DELETE MACROS
+# =========================
+
+### Delete macro (Admin only)
+# Replace with actual macro ID
+# Note: Cannot delete macro with associated processes
+DELETE {{apiUrl}}/macros/673f1234567890abcdef1234
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# ERROR SCENARIOS
+# =========================
+
+### Try to create macro with duplicate code (should fail)
+POST {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "M1",
+  "name": "Duplicate Macro",
+  "shortDescription": "This should fail",
+  "description": "This should fail because M1 already exists"
+}
+
+### Try to create macro with invalid code format (should fail)
+POST {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "INVALID",
+  "name": "Invalid Code Format",
+  "shortDescription": "Wrong format",
+  "description": "Code should be M1, M2, M3 format"
+}
+
+### Try to create macro without required fields (should fail)
+POST {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "M6"
+}
+
+### Try to access macros without authentication (should fail)
+GET {{apiUrl}}/macros
+Content-Type: application/json
+
+### Try to create macro without authentication (should fail)
+POST {{apiUrl}}/macros
+Content-Type: application/json
+
+{
+  "code": "M10",
+  "name": "Unauthorized Macro",
+  "shortDescription": "Test",
+  "description": "This should fail"
+}
+
+### Try to update non-existent macro (should fail)
+PUT {{apiUrl}}/macros/000000000000000000000000
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Non-existent Macro"
+}
+
+### Try to get non-existent macro (should fail)
+GET {{apiUrl}}/macros/000000000000000000000000
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Try to delete macro with processes (should fail if processes exist)
+# First create a macro, then add processes to it, then try to delete
+DELETE {{apiUrl}}/macros/673f1234567890abcdef1234
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# WORKFLOW EXAMPLES
+# =========================
+
+### Example: Full workflow - Create macro and list processes
+# Step 1: Create a macro
+# @name newMacro
+POST {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "M6",
+  "name": "Workflow Test Macro",
+  "shortDescription": "Test macro for workflow",
+  "description": "This is a test macro to demonstrate the workflow"
+}
+
+### Step 2: Get the created macro
+GET {{apiUrl}}/macros/{{newMacro.response.body.data.id}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Step 3: List processes in the macro (should be empty initially)
+GET {{apiUrl}}/macros/{{newMacro.response.body.data.id}}/processes
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Step 4: Update the macro
+PUT {{apiUrl}}/macros/{{newMacro.response.body.data.id}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Workflow Test Macro",
+  "description": "Updated description for testing"
+}
+
+### Step 5: Delete the macro (cleanup)
+DELETE {{apiUrl}}/macros/{{newMacro.response.body.data.id}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# PAGINATION TESTS
+# =========================
+
+### Test pagination - Page 1
+GET {{apiUrl}}/macros?page=1&limit=2
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Test pagination - Page 2
+GET {{apiUrl}}/macros?page=2&limit=2
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Test pagination - Large limit
+GET {{apiUrl}}/macros?page=1&limit=100
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Test pagination with search
+GET {{apiUrl}}/macros?page=1&limit=5&search=gestion
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+# =========================
+# INTEGRATION WITH PROCESSES
+# =========================
+
+### List all macros to see process counts
+GET {{apiUrl}}/macros
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Get macro with process count
+GET {{apiUrl}}/macros/{{macro1.response.body.data.id}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Get all processes in M1 macro
+GET {{apiUrl}}/macros/{{macro1.response.body.data.id}}/processes?page=1&limit=20
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
