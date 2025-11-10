@@ -5,3 +5,4 @@ mailer/vendor/
 backend/server.log
 backend/server.pid
 server.pid
+.venv/
