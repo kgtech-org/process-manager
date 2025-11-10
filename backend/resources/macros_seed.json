@@ -1,0 +1,700 @@
+[
+  {
+    "code": "M1",
+    "name": "Stratégie & Évolution des Infrastructures et Services",
+    "shortDescription": "Cette macro couvre le pilotage globale du cycle de vie des ressources (IT, réseau, plateformes) et des services (voix, data, BSS/OSS), depuis leur conception jusqu’à leur retrait. \nElle vise à garanti...",
+    "description": "Cette macro couvre le pilotage globale du cycle de vie des ressources (IT, réseau, plateformes) et des services (voix, data, BSS/OSS), depuis leur conception jusqu’à leur retrait. \nElle vise à garantir une cohérence d’ensemble des choix techniques et à structurer l’évolution des capacités et des fonctions techniques en anticipant les ruptures technologiques. Elle comprend : \n- L’analyse prospective et continue des besoins métiers et des usages \n- L’évaluation des tendances technologiques (cloud, 5G, edge, automatisation, IA, etc.) \n- La définition et la révision régulière des architectures cibles et des capacités de services \n- L’élaboration de feuilles de route structurées et arbitrées techniquement et budgétairement \n- La formalisation des principes directeurs (standards, normes, orientations techniques) \n- La coordination des trajectoires d’évolution des services et infrastructures (ressources physiques et logiques) \n- L’intégration de la résilience, de la scalabilité et de la maintenabilité dès la conception stratégique \n- L’articulation avec la gestion des risques, des investissements et des capacités",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M1_P1",
+        "name": "Processus d’analyse des besoins métiers et technologiques",
+        "shortDescription": "Identifier et qualifier les besoins métiers, les tendances technologiques et les contraintes de résilience à moyen/long terme.",
+        "description": "Identifier et qualifier les besoins métiers, les tendances technologiques et les contraintes de résilience à moyen/long terme.",
+        "isActive": true
+      },
+      {
+        "code": "M1_P2",
+        "name": "Processus d’évaluation de l’existant",
+        "shortDescription": "Évaluer l’état actuel des infrastructures, des services et de leurs performances pour établir une base de référence.",
+        "description": "Évaluer l’état actuel des infrastructures, des services et de leurs performances pour établir une base de référence.",
+        "isActive": true
+      },
+      {
+        "code": "M1_P3",
+        "name": "Processus de définition de l’architecture cible",
+        "shortDescription": "Élaborer une vision d’architecture cible alignée sur les objectifs métiers, techniques et de transformation.",
+        "description": "Élaborer une vision d’architecture cible alignée sur les objectifs métiers, techniques et de transformation.",
+        "isActive": true
+      },
+      {
+        "code": "M1_P4",
+        "name": "Processus de construction de la feuille de route technologique",
+        "shortDescription": "Définir les jalons de transformation vers la cible, en alignement avec les capacités, ressources et priorités.",
+        "description": "Définir les jalons de transformation vers la cible, en alignement avec les capacités, ressources et priorités.",
+        "isActive": true
+      },
+      {
+        "code": "M1_P5",
+        "name": "Processus d’arbitrage technico-économique",
+        "shortDescription": "Évaluer les choix technologiques et d’investissement en fonction du ROI, des risques et de la valeur métier.",
+        "description": "Évaluer les choix technologiques et d’investissement en fonction du ROI, des risques et de la valeur métier.",
+        "isActive": true
+      },
+      {
+        "code": "M1_P6",
+        "name": "Processus de gestion du cycle de vie des services",
+        "shortDescription": "Définir et encadrer la création, l’évolution et le retrait des services tout au long de leur cycle de vie.",
+        "description": "Définir et encadrer la création, l’évolution et le retrait des services tout au long de leur cycle de vie.",
+        "isActive": true
+      },
+      {
+        "code": "M1_P7",
+        "name": "Processus de gestion du cycle de vie des ressources",
+        "shortDescription": "Piloter l’utilisation, le renouvellement et la mise à jour des ressources techniques pour garantir leur performance.",
+        "description": "Piloter l’utilisation, le renouvellement et la mise à jour des ressources techniques pour garantir leur performance.",
+        "isActive": true
+      },
+      {
+        "code": "M1_P8",
+        "name": "Processus de veille technologique et stratégique",
+        "shortDescription": "Anticiper les innovations, ruptures ou menaces technologiques impactant les orientations stratégiques.",
+        "description": "Anticiper les innovations, ruptures ou menaces technologiques impactant les orientations stratégiques.",
+        "isActive": true
+      },
+      {
+        "code": "M1_P9",
+        "name": "Processus d’alignement aux cadres de référence",
+        "shortDescription": "Intégrer les exigences des cadres internationaux (eTOM, ITIL, TOGAF, etc.) dans la stratégie d’évolution.",
+        "description": "Intégrer les exigences des cadres internationaux (eTOM, ITIL, TOGAF, etc.) dans la stratégie d’évolution.",
+        "isActive": true
+      },
+      {
+        "code": "M1_P10",
+        "name": "Processus de pilotage de la revue stratégique",
+        "shortDescription": "Réviser régulièrement les choix stratégiques en fonction de l’évolution des contextes internes et externes.",
+        "description": "Réviser régulièrement les choix stratégiques en fonction de l’évolution des contextes internes et externes.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M2",
+    "name": "Gouvernance Network & IS",
+    "shortDescription": "Cette macro regroupe les processus de gouvernance structurant la direction technique des réseaux et systèmes d’information. Elle vise à garantir un cadre organisationnel clair, cohérent et conforme, a...",
+    "description": "Cette macro regroupe les processus de gouvernance structurant la direction technique des réseaux et systèmes d’information. Elle vise à garantir un cadre organisationnel clair, cohérent et conforme, assurant l'alignement permanent entre les pratiques opérationnelles, les orientations stratégiques et les obligations réglementaires. Elle comprend la définition des rôles, responsabilités, processus et règles applicables, le pilotage des politiques et des audits, ainsi que la gestion des risques et de la performance organisationnelle.Elle s’appuie sur une gouvernance transverse pour renforcer la maîtrise, la qualité, la conformité et l’amélioration continue. L’intégration des retours d’expérience, des dispositifs de contrôle interne, des indicateurs de pilotage et des engagements de niveau de service y sont essentiels. Elle s'aligne sur les cadres  ITIL (Governance/Plan), eTOM (Enterprise Risk Management, Enterprise Effectiveness Management, Service Level Management) et ISO 27001/9001 pour assurer la robustesse, la transparence et la responsabilité dans la gestion technique.",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M2_P1",
+        "name": "Processus de structuration des responsabilités et des rôles",
+        "shortDescription": "Définir les responsabilités, les rôles et les autorités dans l’organisation Network & IS afin d’assurer une gouvernance claire et efficace.",
+        "description": "Définir les responsabilités, les rôles et les autorités dans l’organisation Network & IS afin d’assurer une gouvernance claire et efficace.",
+        "isActive": true
+      },
+      {
+        "code": "M2_P2",
+        "name": "Processus de gestion des politiques et référentiels internes",
+        "shortDescription": "Élaborer, maintenir et diffuser les politiques, normes, procédures et référentiels internes pour garantir la conformité et l’alignement stratégique.",
+        "description": "Élaborer, maintenir et diffuser les politiques, normes, procédures et référentiels internes pour garantir la conformité et l’alignement stratégique.",
+        "isActive": true
+      },
+      {
+        "code": "M2_P3",
+        "name": "Processus de gestion des risques organisationnels",
+        "shortDescription": "Identifier, évaluer et traiter les risques impactant la structure, les processus ou la conformité de la direction Network & IS.",
+        "description": "Identifier, évaluer et traiter les risques impactant la structure, les processus ou la conformité de la direction Network & IS.",
+        "isActive": true
+      },
+      {
+        "code": "M2_P4",
+        "name": "Processus d’animation de la qualité et d’amélioration continue",
+        "shortDescription": "Mettre en œuvre une démarche qualité transverse, reposant sur la capitalisation, la revue des incidents et la promotion des bonnes pratiques.",
+        "description": "Mettre en œuvre une démarche qualité transverse, reposant sur la capitalisation, la revue des incidents et la promotion des bonnes pratiques.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M3",
+    "name": "Support Opérationnel aux Activités Networks & IS",
+    "shortDescription": "Cette macro regroupe les fonctions de soutien essentielles à la continuité des opérations techniques des réseaux et systèmes d’information. Elle vise à garantir que les équipes de terrain et d’exploit...",
+    "description": "Cette macro regroupe les fonctions de soutien essentielles à la continuité des opérations techniques des réseaux et systèmes d’information. Elle vise à garantir que les équipes de terrain et d’exploitation disposent en permanence des moyens humains, matériels, logistiques, documentaires et organisationnels nécessaires. Cela inclut la gestion des accès aux sites techniques, la mise à disposition des outils d’intervention, le support logistique et administratif, la coordination des ressources transverses (astreintes, plan de charge), ainsi que la gestion documentaire et des référentiels. Ce support transversal renforce la réactivité, la sécurité et l’efficacité opérationnelle. Elle s’appuie principalement sur les macro eTOM Service Support & Readiness, Resource Provisioning, et Enterprise Effectiveness Management, en lien avec ITIL (Service Operation).",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M3_P1",
+        "name": "Processus de gestion des accès techniques",
+        "shortDescription": "Gérer les droits d’accès physiques et logiques aux infrastructures réseau et IT pour garantir la sécurité et la traçabilité des interventions.",
+        "description": "Gérer les droits d’accès physiques et logiques aux infrastructures réseau et IT pour garantir la sécurité et la traçabilité des interventions.",
+        "isActive": true
+      },
+      {
+        "code": "M3_P2",
+        "name": "Processus de mise à disposition des outils et équipements",
+        "shortDescription": "Fournir aux équipes techniques les outils, logiciels et équipements nécessaires à la réalisation des opérations réseau et IT.",
+        "description": "Fournir aux équipes techniques les outils, logiciels et équipements nécessaires à la réalisation des opérations réseau et IT.",
+        "isActive": true
+      },
+      {
+        "code": "M3_P3",
+        "name": "Processus de support logistique aux opérations",
+        "shortDescription": "Organiser et assurer la logistique des interventions techniques, y compris transport, livraison et disponibilité des moyens.",
+        "description": "Organiser et assurer la logistique des interventions techniques, y compris transport, livraison et disponibilité des moyens.",
+        "isActive": true
+      },
+      {
+        "code": "M3_P4",
+        "name": "Processus de gestion documentaire technique",
+        "shortDescription": "Mettre à disposition et maintenir à jour la documentation technique nécessaire à l’exécution des activités réseau & IT.",
+        "description": "Mettre à disposition et maintenir à jour la documentation technique nécessaire à l’exécution des activités réseau & IT.",
+        "isActive": true
+      },
+      {
+        "code": "M3_P5",
+        "name": "Processus de coordination des moyens humains transverses",
+        "shortDescription": "Assurer la disponibilité et l’affectation efficace des ressources humaines opérationnelles nécessaires au bon déroulement des activités.",
+        "description": "Assurer la disponibilité et l’affectation efficace des ressources humaines opérationnelles nécessaires au bon déroulement des activités.",
+        "isActive": true
+      },
+      {
+        "code": "M3_P6",
+        "name": "Processus de gestion des incidents critiques liés au support",
+        "shortDescription": "Assurer la détection, l’analyse et la résolution rapide des incidents impactant les moyens de support aux activités techniques.",
+        "description": "Assurer la détection, l’analyse et la résolution rapide des incidents impactant les moyens de support aux activités techniques.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M4",
+    "name": "Gestion Budgétaire (Investissement et Opérationnel)",
+    "shortDescription": "Cette macro regroupe l’ensemble des processus liés à la gestion financière des activités techniques réseau et IT. Elle vise à planifier, exécuter, suivre et ajuster les budgets CAPEX (investissements)...",
+    "description": "Cette macro regroupe l’ensemble des processus liés à la gestion financière des activités techniques réseau et IT. Elle vise à planifier, exécuter, suivre et ajuster les budgets CAPEX (investissements) et OPEX (fonctionnement) en garantissant leur alignement avec les orientations stratégiques, les capacités techniques et les contraintes économiques. Elle comprend l’identification des besoins budgétaires, l’élaboration des prévisions, l’allocation des ressources, le suivi des consommations réelles, l’analyse des écarts, et la mise en place de plans d’optimisation. Elle s’appuie sur une collaboration étroite avec les équipes financières et les responsables techniques. Elle mobilise les macros eTOM suivants : Financial & Asset Management et Enterprise Strategic Planning.",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M4_P1",
+        "name": "Processus d’identification des besoins budgétaires",
+        "shortDescription": "Recenser et qualifier les besoins financiers liés aux projets, opérations et évolutions techniques à venir.",
+        "description": "Recenser et qualifier les besoins financiers liés aux projets, opérations et évolutions techniques à venir.",
+        "isActive": true
+      },
+      {
+        "code": "M4_P2",
+        "name": "Processus de construction budgétaire prévisionnelle",
+        "shortDescription": "Élaborer les budgets annuels et pluriannuels en alignement avec les orientations stratégiques et les contraintes économiques.",
+        "description": "Élaborer les budgets annuels et pluriannuels en alignement avec les orientations stratégiques et les contraintes économiques.",
+        "isActive": true
+      },
+      {
+        "code": "M4_P3",
+        "name": "Processus d’allocation et ventilation budgétaire",
+        "shortDescription": "Répartir les ressources financières par projet, activité ou entité pour assurer un usage optimal des fonds disponibles.",
+        "description": "Répartir les ressources financières par projet, activité ou entité pour assurer un usage optimal des fonds disponibles.",
+        "isActive": true
+      },
+      {
+        "code": "M4_P4",
+        "name": "Processus de suivi et pilotage de la consommation budgétaire",
+        "shortDescription": "Contrôler l’exécution des dépenses par rapport aux prévisions pour assurer la maîtrise financière continue.",
+        "description": "Contrôler l’exécution des dépenses par rapport aux prévisions pour assurer la maîtrise financière continue.",
+        "isActive": true
+      },
+      {
+        "code": "M4_P5",
+        "name": "Processus d’analyse et justification des écarts",
+        "shortDescription": "Analyser les écarts budgétaires, en déterminer les causes et proposer des ajustements pour corriger les dérives.",
+        "description": "Analyser les écarts budgétaires, en déterminer les causes et proposer des ajustements pour corriger les dérives.",
+        "isActive": true
+      },
+      {
+        "code": "M4_P6",
+        "name": "Processus d’optimisation et d’arbitrage budgétaire",
+        "shortDescription": "Réaliser des ajustements et réaffectations pour optimiser l’usage des ressources financières en cours d’exercice.",
+        "description": "Réaliser des ajustements et réaffectations pour optimiser l’usage des ressources financières en cours d’exercice.",
+        "isActive": true
+      },
+      {
+        "code": "M4_P7",
+        "name": "Processus de contribution aux exercices financiers globaux",
+        "shortDescription": "Participer aux processus financiers transverses de l’entreprise (forecasts, clôtures, business plan).",
+        "description": "Participer aux processus financiers transverses de l’entreprise (forecasts, clôtures, business plan).",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M5",
+    "name": "Conception & Ingénierie Networks & IS",
+    "shortDescription": "Cette macro regroupe l’ensemble des activités visant à concevoir les infrastructures et les services techniques en réponse aux besoins futurs               ( métiers, technologiques et opérationnels) ...",
+    "description": "Cette macro regroupe l’ensemble des activités visant à concevoir les infrastructures et les services techniques en réponse aux besoins futurs               ( métiers, technologiques et opérationnels) . Elle couvre l’analyse des besoins, la définition des services à fournir, le dimensionnement, la sélection des technologies, l’architecture, l’ingénierie détaillée, les validations, ainsi que la mise à jour des référentiels. La conception des services est un pivot central, reposant sur les capacités actuelles et futurs des infrastructures, et traduisant les exigences fonctionnelles en solutions opérationnelles. Ce processus garantit que les offres de service fournis et à fournir soient robustes, scalables, sécurisées et alignées sur les standards. La macro s’inscrit dans une logique de bout en bout, depuis l’identification du besoin jusqu’à la production d’une solution technique validée et documentée, prête à être déployée ou intégrée. Elle est alignée avec les référentiels eTOM ( Readiness), ITIL (Service Design).",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M5_P1",
+        "name": "Processus d’analyse des besoins futurs réseau & SI",
+        "shortDescription": "Recueillir et formaliser les exigences techniques, métiers et contraintes pour les nouvelles conceptions et évolutions.",
+        "description": "Recueillir et formaliser les exigences techniques, métiers et contraintes pour les nouvelles conceptions et évolutions.",
+        "isActive": true
+      },
+      {
+        "code": "M5_P2",
+        "name": "Processus de sélection technologique",
+        "shortDescription": "Identifier et valider les solutions technologiques et fournisseurs répondant aux exigences techniques et économiques.",
+        "description": "Identifier et valider les solutions technologiques et fournisseurs répondant aux exigences techniques et économiques.",
+        "isActive": true
+      },
+      {
+        "code": "M5_P3",
+        "name": "Processus de définition de l’architecture",
+        "shortDescription": "Concevoir l’architecture cible (logique, technique et physique) pour répondre aux besoins en interopérabilité, sécurité et performance.",
+        "description": "Concevoir l’architecture cible (logique, technique et physique) pour répondre aux besoins en interopérabilité, sécurité et performance.",
+        "isActive": true
+      },
+      {
+        "code": "M5_P4",
+        "name": "Processus de conception des services techniques",
+        "shortDescription": "Définir les caractéristiques fonctionnelles et techniques des services à délivrer, en cohérence avec les capacités d’infrastructure.",
+        "description": "Définir les caractéristiques fonctionnelles et techniques des services à délivrer, en cohérence avec les capacités d’infrastructure.",
+        "isActive": true
+      },
+      {
+        "code": "M5_P5",
+        "name": "Processus de dimensionnement & capacité",
+        "shortDescription": "Évaluer les ressources nécessaires pour garantir la performance, la disponibilité et l’évolutivité des infrastructures et services.",
+        "description": "Évaluer les ressources nécessaires pour garantir la performance, la disponibilité et l’évolutivité des infrastructures et services.",
+        "isActive": true
+      },
+      {
+        "code": "M5_P6",
+        "name": "Processus d’ingénierie de solutions",
+        "shortDescription": "Rédiger les spécifications techniques détaillées pour le déploiement des infrastructures ou services.",
+        "description": "Rédiger les spécifications techniques détaillées pour le déploiement des infrastructures ou services.",
+        "isActive": true
+      },
+      {
+        "code": "M5_P7",
+        "name": "Processus de simulation et validation",
+        "shortDescription": "Tester virtuellement ou en environnement restreint la faisabilité et les performances des conceptions proposées.",
+        "description": "Tester virtuellement ou en environnement restreint la faisabilité et les performances des conceptions proposées.",
+        "isActive": true
+      },
+      {
+        "code": "M5_P8",
+        "name": "Processus de mise à jour des référentiels d’architecture",
+        "shortDescription": "Actualiser les standards, guides, catalogues et bonnes pratiques d’architecture et d’ingénierie.",
+        "description": "Actualiser les standards, guides, catalogues et bonnes pratiques d’architecture et d’ingénierie.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M6",
+    "name": "---",
+    "shortDescription": "Cette macro englobe l’ensemble des activités permettant de transformer les architectures conçues en infrastructures réellement opérationnelles, tant sur les réseaux mobiles, fixes, de transport, que s...",
+    "description": "Cette macro englobe l’ensemble des activités permettant de transformer les architectures conçues en infrastructures réellement opérationnelles, tant sur les réseaux mobiles, fixes, de transport, que sur les plateformes informatiques (serveurs, virtualisation, stockage). Elle couvre le cycle complet de mise en œuvre, extension, modernisation des ressources physiques et logiquesjusqu'a leurs mise en service . Elle débute après la phase d’ingénierie, et s’inscrit dans le domaine « Capacity & Resource Delivery » de l’eTOM et le domaine « Service Transition » de l’ITIL v4. Elle garantit que les solutions sont livrées en conformité avec les exigences de performance, qualité de service, sécurité et continuité, tout en assurant une coordination rigoureuse entre les équipes projet, terrain, support et fournisseurs. Les étapes clés incluent : la planification détaillée du déploiement, la réservation et le provisioning des ressources, l’installation et la configuration des équipements, l’intégration dans l’écosystème existant, les tests d’acceptation, la documentation finale et le hand‑over vers l’exploitation.",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M6_P1",
+        "name": "Processus de planification des déploiements",
+        "shortDescription": "Définir et organiser les lots de déploiement ou d’extension des infrastructures Radio, FH/FO, IP/MPLS, Core et IT,en cohérence avec les capacités, pri...",
+        "description": "Définir et organiser les lots de déploiement ou d’extension des infrastructures Radio, FH/FO, IP/MPLS, Core et IT,en cohérence avec les capacités, priorités projets et contraintes opérationnelles & budgetaires .",
+        "isActive": true
+      },
+      {
+        "code": "M6_P2",
+        "name": "Processus d'Acquisition  des ressources",
+        "shortDescription": "Mettre à disposition les ressources physiques, logicielles et virtuelles nécessaires au déploiement des infrastructures et services, tout en prevoyant...",
+        "description": "Mettre à disposition les ressources physiques, logicielles et virtuelles nécessaires au déploiement des infrastructures et services, tout en prevoyant la mise à disposition d'un stock minimal en PDR  pour la maintenace",
+        "isActive": true
+      },
+      {
+        "code": "M6_P3",
+        "name": "Processus d’installation et de déploiement sur site",
+        "shortDescription": "Réaliser l’installation physique et la mise en service des éléments passifs et actifs (énergie, FH/FO, antennes, IP nodes, serveurs) selon les standar...",
+        "description": "Réaliser l’installation physique et la mise en service des éléments passifs et actifs (énergie, FH/FO, antennes, IP nodes, serveurs) selon les standards opérateur et exigences de sécurité.",
+        "isActive": true
+      },
+      {
+        "code": "M6_P4",
+        "name": "Processus de configuration, intégration réseau et interconnexion",
+        "shortDescription": "Configurer les équipements déployés et assurer leur intégration dans les réseaux existants (radio, transport, cœur, IT) et dans les systèmes de gestio...",
+        "description": "Configurer les équipements déployés et assurer leur intégration dans les réseaux existants (radio, transport, cœur, IT) et dans les systèmes de gestion (OSS, BSS...).",
+        "isActive": true
+      },
+      {
+        "code": "M6_P5",
+        "name": "Processus de tests et mise en service opérationnelle",
+        "shortDescription": "Assurer la conformité technique et fonctionnelle du déploiement à travers des tests d’acceptance couvrant les couches physiques, IP, applicatives et d...",
+        "description": "Assurer la conformité technique et fonctionnelle du déploiement à travers des tests d’acceptance couvrant les couches physiques, IP, applicatives et de service, avant bascule en production.",
+        "isActive": true
+      },
+      {
+        "code": "M6_P6",
+        "name": "Processus d'Acceptance",
+        "shortDescription": "verifier et valider les aspects techniques des deploiements et des extensions ,",
+        "description": "verifier et valider les aspects techniques des deploiements et des extensions ,",
+        "isActive": true
+      },
+      {
+        "code": "M6_P7",
+        "name": "Processus de transfert aux opérations et clôture projet",
+        "shortDescription": "Documenter l’ensemble du déploiement (infrastructures, configurations, résultats de tests) et assurer le transfert complet( Document ,PDR,Competences)...",
+        "description": "Documenter l’ensemble du déploiement (infrastructures, configurations, résultats de tests) et assurer le transfert complet( Document ,PDR,Competences)  vers les entités d’exploitation, de supervision et de support applicatif",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M7",
+    "name": "Exploitation & Maintenance Infrastructure Networks & IS",
+    "shortDescription": "Cette macro regroupe l’ensemble des activités nécessaires pour assurer le fonctionnement continu, la surveillance, la maintenance corrective& préventive et les changements sur les infrastructures N&IS...",
+    "description": "Cette macro regroupe l’ensemble des activités nécessaires pour assurer le fonctionnement continu, la surveillance, la maintenance corrective& préventive et les changements sur les infrastructures N&IS, tout en garantissant la QoS. Elle couvre la coordination avec les ressources support. Elle s’appuie sur les processus Operations d’eTOM  et sur les  best practice d’ITIL (Incident, Event, Problem, Access, Request). Elle vise à restaurer le service le plus vite possible, minimiser les interruptions, anticiper les pannes, optimiser la fiabilité, reduire les pannes recurenttes  et prolonger la durée de vie des équipements.\n\nLes principales activités sont :\n\n- Surveillance et détection d’incidents & problemes (Critique , Majeur , mineur ) sur les équipements, liens et les services via les les plateformes dediées \n- Gestion des incidents : priorisation, diagnostic, escalade, résolution, communication, clôture.\n- Gestion des problèmes : identification de causes profondes, suivi des actions correctives.  \n- Gestion des changements : Pilotation des demandes de changement de bout en bout \n- Maintenance curative et préventive   \n- Analyse de fiabilité et tendances (Suivi Indicateurs) : suivi des indicateurs (DR1,DR2,MTTR, MTBF, taux de panne, taux de disponibilité etc. . . )  \n- Interface avec les équipes de support (Logistique, orestataire, Business support, Gestion des pièces de rechange et  la planification des interventions)\n'-Gestion des pièces de rechange et  la planification des interventions\n- Documentation et reporting : mise à jour de la base de connaissance  des incidents.\n\nCette macro assure que les services délivrés  sont disponibles, fiables et performants, tout en anticipant les dégradations et en pilotant l’amélioration continue.",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M7_P1",
+        "name": "Processus de supervision",
+        "shortDescription": "Surveiller en temps réel l’état des équipements, services et ressources réseaux et IT pour détecter les anomalies ou dégradations.",
+        "description": "Surveiller en temps réel l’état des équipements, services et ressources réseaux et IT pour détecter les anomalies ou dégradations.",
+        "isActive": true
+      },
+      {
+        "code": "M7_P2",
+        "name": "Processus de gestion des incidents",
+        "shortDescription": "Gérer les incidents pour restaurer le service le plus rapidement possible tout en limitant l’impact sur les utilisateurs ou systèmes.",
+        "description": "Gérer les incidents pour restaurer le service le plus rapidement possible tout en limitant l’impact sur les utilisateurs ou systèmes.",
+        "isActive": true
+      },
+      {
+        "code": "M7_P3",
+        "name": "Processus de gestion des problèmes",
+        "shortDescription": "Identifier et corriger les causes racines des incidents récurrents ou majeurs pour éviter leur réapparition.",
+        "description": "Identifier et corriger les causes racines des incidents récurrents ou majeurs pour éviter leur réapparition.",
+        "isActive": true
+      },
+      {
+        "code": "M7_P4",
+        "name": "Processus de Gestion de changement",
+        "shortDescription": "Piloter les modifications N&IS (configurations, migrations, Ajout , Suppression etc).",
+        "description": "Piloter les modifications N&IS (configurations, migrations, Ajout , Suppression etc).",
+        "isActive": true
+      },
+      {
+        "code": "M7_P5",
+        "name": "Processus de maintenance préventive",
+        "shortDescription": "Exécuter les actions techniques nécessaires pour prévenir les défaillances  et maintenir en bon etat les infrastructures.",
+        "description": "Exécuter les actions techniques nécessaires pour prévenir les défaillances  et maintenir en bon etat les infrastructures.",
+        "isActive": true
+      },
+      {
+        "code": "M7_P6",
+        "name": "Processus de gestion des accès techniques",
+        "shortDescription": "Gérer les droits d’accès physiques  aux infrastructures réseau et IT pour garantir la sécurité et la traçabilité des interventions.",
+        "description": "Gérer les droits d’accès physiques  aux infrastructures réseau et IT pour garantir la sécurité et la traçabilité des interventions.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M8",
+    "name": "Performance & Optimisation Networks & IS",
+    "shortDescription": "Cette macro couvre l’ensemble des activités visant à surveiller, analyser, maintenir et améliorer en continu la performance des infrastructures techniques et des services associés, dans une logique pr...",
+    "description": "Cette macro couvre l’ensemble des activités visant à surveiller, analyser, maintenir et améliorer en continu la performance des infrastructures techniques et des services associés, dans une logique proactive et d’optimisation. Elle s’applique aux réseaux fixes, mobiles, plateformes IT, et services métiers ou techniques. L’objectif est de garantir un haut niveau de qualité de service (QoS), de disponibilité, et d’efficacité opérationnelle, tout en anticipant les dégradations et en adaptant les ressources aux évolutions des usages.\nElle intègre la collecte continue de métriques (temps de réponse, débit, disponibilité, erreurs), la détection de tendances ou d’anomalies, la gestion de la capacité (capacity management), l’analyse de la performance bout en bout, ainsi que la mise en œuvre de plans d’optimisation ou d’amélioration continue. Cette macro est également responsable de la mise en place de KPIs et dashboards décisionnels, du support aux métiers sur les sujets de qualité perçue, et de la contribution aux projets d’évolution en apportant une vision objective des performances existantes.\n\nAlignée avec les processus Performance Management, Service Quality Management et Resource Performance Analysis du cadre eTOM, ainsi qu’avec les pratiques ITIL de Monitoring & Event Management, Continual Improvement, et Capacity & Performance Management, elle est essentielle pour piloter la performance technique et garantir l’alignement des capacités réseau & IT avec les attentes métiers.",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M8_P1",
+        "name": "Processus de mesure de la performance",
+        "shortDescription": "Collecter, analyser et agréger les indicateurs de performance des infrastructures réseau et IT pour en évaluer le comportement.",
+        "description": "Collecter, analyser et agréger les indicateurs de performance des infrastructures réseau et IT pour en évaluer le comportement.",
+        "isActive": true
+      },
+      {
+        "code": "M8_P2",
+        "name": "Processus d’analyse de la qualité de service",
+        "shortDescription": "Évaluer l’expérience utilisateur et la qualité des services fournis à travers des mesures techniques et subjectives.",
+        "description": "Évaluer l’expérience utilisateur et la qualité des services fournis à travers des mesures techniques et subjectives.",
+        "isActive": true
+      },
+      {
+        "code": "M8_P3",
+        "name": "Processus d’optimisation des capacités",
+        "shortDescription": "Ajuster les ressources réseau et IT pour prévenir les congestions et garantir les performances nominales.",
+        "description": "Ajuster les ressources réseau et IT pour prévenir les congestions et garantir les performances nominales.",
+        "isActive": true
+      },
+      {
+        "code": "M8_P4",
+        "name": "Processus d’optimisation de la configuration",
+        "shortDescription": "Adapter dynamiquement les paramètres des équipements et plateformes pour maximiser les performances.",
+        "description": "Adapter dynamiquement les paramètres des équipements et plateformes pour maximiser les performances.",
+        "isActive": true
+      },
+      {
+        "code": "M8_P5",
+        "name": "Processus de pilotage des performances",
+        "shortDescription": "Superviser en continu les performances et mettre en œuvre des actions correctives en cas d’écart ou de dégradation.",
+        "description": "Superviser en continu les performances et mettre en œuvre des actions correctives en cas d’écart ou de dégradation.",
+        "isActive": true
+      },
+      {
+        "code": "M8_P6",
+        "name": "Processus de capacity planning",
+        "shortDescription": "Anticiper les besoins en ressources réseau et IT à moyen-long terme en fonction des usages et de la croissance attendue.",
+        "description": "Anticiper les besoins en ressources réseau et IT à moyen-long terme en fonction des usages et de la croissance attendue.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M9",
+    "name": "Management des Projets Networks & IS",
+    "shortDescription": "Cette macro couvre la gestion opérationnelle des projets techniques liés aux infrastructures réseaux (fixe, mobile, transmission), aux plateformes IT et aux services associés. Elle vise à assurer la l...",
+    "description": "Cette macro couvre la gestion opérationnelle des projets techniques liés aux infrastructures réseaux (fixe, mobile, transmission), aux plateformes IT et aux services associés. Elle vise à assurer la livraison des projets dans le respect des délais, du budget, de la qualité attendue et des exigences fonctionnelles, tout en maîtrisant les risques.Elle inclut la structuration des projets (objectifs, livrables, acteurs, jalons), la planification détaillée, le suivi de l’exécution, le reporting multi-niveaux, la gestion des ressources (internes/externes), la coordination interdomaines (infrastructure, sécurité, exploitation, métier), ainsi que l’arbitrage en cas d’écarts. Elle s’appuie sur les référentiels de gestion de projet (PMI, Prince2, Agile, ITIL), tout en intégrant les spécificités techniques des environnements réseaux et IT.  \n\nElle est essentielle pour garantir l’alignement entre la feuille de route technique, les priorités stratégiques de l’entreprise, et les capacités d’exécution.Elle vise à assurer la livraison des projets dans le respect des délais, du budget et des objectifs de performance.",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M9_P1",
+        "name": "Processus d’initialisation de projet",
+        "shortDescription": "Cadrer les projets en définissant les objectifs, les parties prenantes, les exigences clés et les hypothèses de réalisation.",
+        "description": "Cadrer les projets en définissant les objectifs, les parties prenantes, les exigences clés et les hypothèses de réalisation.",
+        "isActive": true
+      },
+      {
+        "code": "M9_P2",
+        "name": "Processus de planification projet",
+        "shortDescription": "Structurer les activités, les ressources, les délais et les coûts pour atteindre les objectifs définis.",
+        "description": "Structurer les activités, les ressources, les délais et les coûts pour atteindre les objectifs définis.",
+        "isActive": true
+      },
+      {
+        "code": "M9_P3",
+        "name": "Processus d’exécution et de pilotage projet",
+        "shortDescription": "Piloter la réalisation des livrables en assurant la coordination, le suivi, et la maîtrise des écarts.",
+        "description": "Piloter la réalisation des livrables en assurant la coordination, le suivi, et la maîtrise des écarts.",
+        "isActive": true
+      },
+      {
+        "code": "M9_P4",
+        "name": "Processus de gestion des changements",
+        "shortDescription": "Intégrer les demandes d’évolution ou les adaptations nécessaires en garantissant la maîtrise des impacts.",
+        "description": "Intégrer les demandes d’évolution ou les adaptations nécessaires en garantissant la maîtrise des impacts.",
+        "isActive": true
+      },
+      {
+        "code": "M9_P5",
+        "name": "Processus de clôture de projet",
+        "shortDescription": "Finaliser le projet en validant les livrables, capitalisant les retours d’expérience et libérant les ressources.",
+        "description": "Finaliser le projet en validant les livrables, capitalisant les retours d’expérience et libérant les ressources.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M10",
+    "name": "Sécurité & Résilience des Systèmes d’Information Networks & IS",
+    "shortDescription": "Cette macro regroupe toutes les activités nécessaires pour assurer la sécurité, la protection, la prévention et la résilience des infrastructures réseau (mobile, fixe, transmission) et IT (serveurs, p...",
+    "description": "Cette macro regroupe toutes les activités nécessaires pour assurer la sécurité, la protection, la prévention et la résilience des infrastructures réseau (mobile, fixe, transmission) et IT (serveurs, plateformes, services). Elle vise à anticiper, détecter, répondre et se remettre des incidents ou attaques, tout en maintenant la continuité des services techniques et métier. Elle inclut la définition des politiques de sécurité, la gestion des risques, la surveillance des menaces, la réponse aux incidents de sécurité, la gestion des vulnérabilités, le chiffrement, l’authentification, la sécurité des accès, la résilience (plans de reprise, redondance) et le reporting. Elle s’appuie sur les processus Security & Assurance d’eTOM, les pratiques ITIL Security Management, Information Security, Risk Management, ainsi que les cadres normatifs tels que ISO 27001, NIST, RGPD. L’objectif est de garantir que les infrastructures et services soient protégés, résilients, et conformes, tout en minimisant l’impact sur les opérations.",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M10_P1",
+        "name": "Processus de définition des politiques de sécurité",
+        "shortDescription": "Définir, maintenir et diffuser les politiques, standards et orientations de sécurité pour le parc technique et les services.",
+        "description": "Définir, maintenir et diffuser les politiques, standards et orientations de sécurité pour le parc technique et les services.",
+        "isActive": true
+      },
+      {
+        "code": "M10_P2",
+        "name": "Processus de gestion des risques & évaluations de la sécurité",
+        "shortDescription": "Identifier, évaluer et prioriser les risques de sécurité pesant sur les infrastructures et services.",
+        "description": "Identifier, évaluer et prioriser les risques de sécurité pesant sur les infrastructures et services.",
+        "isActive": true
+      },
+      {
+        "code": "M10_P3",
+        "name": "Processus de gestion des vulnérabilités",
+        "shortDescription": "Identifier, qualifier et traiter les vulnérabilités au sein des infrastructures, systèmes et applications.",
+        "description": "Identifier, qualifier et traiter les vulnérabilités au sein des infrastructures, systèmes et applications.",
+        "isActive": true
+      },
+      {
+        "code": "M10_P4",
+        "name": "Processus de surveillance et détection d’intrusions",
+        "shortDescription": "Surveiller les infrastructures pour détecter les attaques, intrusions ou comportements anormaux.",
+        "description": "Surveiller les infrastructures pour détecter les attaques, intrusions ou comportements anormaux.",
+        "isActive": true
+      },
+      {
+        "code": "M10_P5",
+        "name": "Processus de réponse aux incidents de sécurité",
+        "shortDescription": "Traiter les incidents de sécurité (détection, confinement, résolution, restauration) afin de limiter l’impact.",
+        "description": "Traiter les incidents de sécurité (détection, confinement, résolution, restauration) afin de limiter l’impact.",
+        "isActive": true
+      },
+      {
+        "code": "M10_P6",
+        "name": "Processus de résilience et reprise après sinistre",
+        "shortDescription": "Mettre en place les mesures de continuité, redondance et plans de reprise pour garantir la résilience des services.",
+        "description": "Mettre en place les mesures de continuité, redondance et plans de reprise pour garantir la résilience des services.",
+        "isActive": true
+      },
+      {
+        "code": "M10_P7",
+        "name": "Processus de reporting et conformité sécurité",
+        "shortDescription": "Suivre les indicateurs de sécurité, produire les rapports et vérifier la conformité aux normes.",
+        "description": "Suivre les indicateurs de sécurité, produire les rapports et vérifier la conformité aux normes.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M11",
+    "name": "Support & Assistance IT Network & IS",
+    "shortDescription": "Cette macro couvre l’ensemble des activités liées à la gestion des demandes, des incidents et de l’assistance utilisateurs pour les services IT et infrastructures réseau. Elle vise à garantir la conti...",
+    "description": "Cette macro couvre l’ensemble des activités liées à la gestion des demandes, des incidents et de l’assistance utilisateurs pour les services IT et infrastructures réseau. Elle vise à garantir la continuité de service, la satisfaction des utilisateurs (internes ou externes) et la résolution efficace des problèmes opérationnels rencontrés sur les systèmes, réseaux ou applications. Elle inclut les fonctions de support de niveau 1 à 3, le service desk, le traitement des tickets ITSM, la gestion des incidents, demandes, accès, problèmes et escalades, en conformité avec les référentiels ITIL v4 (Service Desk, Incident Management, Request Fulfillment, Problem Management) et eTOM (Assurance). Elle s’appuie sur des outils de supervision, de ticketing, de CMDB et sur des processus d'amélioration continue (KEDB, RCA, knowledge base).",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M11_P1",
+        "name": "Processus de réception et qualification des demandes",
+        "shortDescription": "Recevoir, enregistrer, qualifier et catégoriser les requêtes utilisateurs (incidents, demandes, accès).",
+        "description": "Recevoir, enregistrer, qualifier et catégoriser les requêtes utilisateurs (incidents, demandes, accès).",
+        "isActive": true
+      },
+      {
+        "code": "M11_P2",
+        "name": "Processus de traitement des incidents (support N1/N2/N3)",
+        "shortDescription": "Diagnostiquer, résoudre ou escalader les incidents afin de rétablir le service au plus vite.",
+        "description": "Diagnostiquer, résoudre ou escalader les incidents afin de rétablir le service au plus vite.",
+        "isActive": true
+      },
+      {
+        "code": "M11_P3",
+        "name": "Processus de traitement des demandes de service",
+        "shortDescription": "Gérer les demandes récurrentes (accès, logiciel, matériel, changement mineur).",
+        "description": "Gérer les demandes récurrentes (accès, logiciel, matériel, changement mineur).",
+        "isActive": true
+      },
+      {
+        "code": "M11_P4",
+        "name": "Processus de gestion des accès IT",
+        "shortDescription": "Créer, modifier ou révoquer les droits d’accès aux applications et ressources IT.",
+        "description": "Créer, modifier ou révoquer les droits d’accès aux applications et ressources IT.",
+        "isActive": true
+      },
+      {
+        "code": "M11_P5",
+        "name": "Processus de gestion des escalades critiques",
+        "shortDescription": "Gérer les incidents ou demandes à fort impact nécessitant un traitement prioritaire ou transversal.",
+        "description": "Gérer les incidents ou demandes à fort impact nécessitant un traitement prioritaire ou transversal.",
+        "isActive": true
+      },
+      {
+        "code": "M11_P6",
+        "name": "Processus de communication et retour utilisateur",
+        "shortDescription": "Assurer la communication claire avec les utilisateurs tout au long du cycle de support.",
+        "description": "Assurer la communication claire avec les utilisateurs tout au long du cycle de support.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M12",
+    "name": "Digitalisation Networks & IS",
+    "shortDescription": "Cette macro couvre l’ensemble des activités visant à automatiser, digitaliser et moderniser les processus, outils et services liés aux réseaux et systèmes d’information. Elle inclut la conception et l...",
+    "description": "Cette macro couvre l’ensemble des activités visant à automatiser, digitaliser et moderniser les processus, outils et services liés aux réseaux et systèmes d’information. Elle inclut la conception et le déploiement de solutions de digitalisation, l’automatisation des workflows techniques (provisioning, configuration, supervision), l’intégration d’outils DevOps/NetOps, et la mise en œuvre de portails utilisateurs, self-service, et orchestrateurs. Elle s’aligne sur les bonnes pratiques eTOM (Fulfillment, Assurance, OSS Integration) et ITIL (Change Enablement, Continual Improvement). Son objectif est d’améliorer la rapidité d’exécution, la qualité des services, la réduction des tâches manuelles, et de renforcer l’agilité opérationnelle des équipes techniques.",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M12_P1",
+        "name": "Processus de dématérialisation des processus techniques",
+        "shortDescription": "Identifier, analyser et digitaliser les processus manuels des équipes réseaux et IT.",
+        "description": "Identifier, analyser et digitaliser les processus manuels des équipes réseaux et IT.",
+        "isActive": true
+      },
+      {
+        "code": "M12_P2",
+        "name": "Processus d’automatisation des opérations techniques",
+        "shortDescription": "Automatiser les tâches techniques répétitives ou critiques (provisioning, patching, configuration).",
+        "description": "Automatiser les tâches techniques répétitives ou critiques (provisioning, patching, configuration).",
+        "isActive": true
+      },
+      {
+        "code": "M12_P3",
+        "name": "Processus d’intégration des outils de pilotage & orchestration",
+        "shortDescription": "Mettre en œuvre des plateformes d’orchestration et de pilotage unifié des ressources réseau & IT.",
+        "description": "Mettre en œuvre des plateformes d’orchestration et de pilotage unifié des ressources réseau & IT.",
+        "isActive": true
+      },
+      {
+        "code": "M12_P4",
+        "name": "Processus de développement de portails et services digitaux",
+        "shortDescription": "Concevoir des portails web ou mobiles pour faciliter l’accès aux services IT/Network.",
+        "description": "Concevoir des portails web ou mobiles pour faciliter l’accès aux services IT/Network.",
+        "isActive": true
+      },
+      {
+        "code": "M12_P5",
+        "name": "Processus de gestion de l’amélioration continue digitale",
+        "shortDescription": "Piloter les indicateurs, feedbacks et initiatives pour améliorer l'efficacité des solutions déployées.",
+        "description": "Piloter les indicateurs, feedbacks et initiatives pour améliorer l'efficacité des solutions déployées.",
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "code": "M13",
+    "name": "Big Data & Data Gouvernance (Network & IS)",
+    "shortDescription": "Cette macro regroupe l’ensemble des activités liées à la gestion des données & métadonnées dans l’écosystème technique et SI, depuis leur collecte jusqu’à leur valorisation métier. Elle s’inscrit dans...",
+    "description": "Cette macro regroupe l’ensemble des activités liées à la gestion des données & métadonnées dans l’écosystème technique et SI, depuis leur collecte jusqu’à leur valorisation métier. Elle s’inscrit dans les pratiques de Data Lifecycle Management en cohérence avec les référentiels eTOM (notamment AIM - Application, Information and Data Management) et ITIL (Service Operation, Continual Service Improvement).  \nElle couvre la collecte  et la consolidation des données issues des réseaux (fixes, mobiles), des systèmes IT, et des plateformes de service, via des pipelines d’ingestion adaptés. Elle intègre le stockage structuré et non structuré, la gestion rigoureuse des  données & métadonnées, la gouvernance des accès, ainsi que la surveillance de la performance des environnements Big Data. La macro inclut également les usages analytiques des données pour optimiser les performances, anticiper les incidents, améliorer les services ou appuyer les décisions stratégiques. Enfin, elle encadre l’innovation basée sur la donnée et la conduite de projets Big Data, garantissant alignement métier et efficacité technologique.",
+    "isActive": true,
+    "processes": [
+      {
+        "code": "M13_P1",
+        "name": "Processus de collecte, ingestion et intégration des données",
+        "shortDescription": "Assurer la collecte, l'ingestion et l’intégration continue et fiable des données issues de différentes sources internes et externes au datalake et au ...",
+        "description": "Assurer la collecte, l'ingestion et l’intégration continue et fiable des données issues de différentes sources internes et externes au datalake et au datawarehouse de l’entreprise.",
+        "isActive": true
+      },
+      {
+        "code": "M13_P2",
+        "name": "Processus de stockage et gestion des données & métadonnées",
+        "shortDescription": "Ce Process concerne le stockage, l’organisation, la gouvernance, la sécurisation et la mise à disposition des données. Il garantit que les données soi...",
+        "description": "Ce Process concerne le stockage, l’organisation, la gouvernance, la sécurisation et la mise à disposition des données. Il garantit que les données soient accessibles, fiables et conformes aux exigences métier et réglementaires.",
+        "isActive": true
+      },
+      {
+        "code": "M13_P3",
+        "name": "Processus d’exploitation et valorisation des données",
+        "shortDescription": "Le macro-processus regroupe l’ensemble des activités permettant de transformer les données en informations exploitables pour la prise de décision, l’o...",
+        "description": "Le macro-processus regroupe l’ensemble des activités permettant de transformer les données en informations exploitables pour la prise de décision, l’optimisation des opérations et l’innovation via l’analytique avancée, la Business Intelligence (BI), le Machine Learning (ML) et l’Intelligence Artificielle (IA).\nIl vise à extraire du sens des données, automatiser les analyses et fournir des insights stratégiques aux métiers",
+        "isActive": true
+      },
+      {
+        "code": "M13_P4",
+        "name": "Processus de surveillance et optimisation des performances Big Data /DWH",
+        "shortDescription": "Le macro-processus \"Surveillance et Optimisation des Performances de la plateforme Big Data/DWH\" regroupe l’ensemble des activités permettant de super...",
+        "description": "Le macro-processus \"Surveillance et Optimisation des Performances de la plateforme Big Data/DWH\" regroupe l’ensemble des activités permettant de superviser, analyser et optimiser la performance des infrastructures et des traitements de données.\nIl vise à garantir la disponibilité, la scalabilité et l'efficacité du système Big Data / DWH en s’appuyant sur le monitoring en temps réel, l’optimisation des ressources et la gestion proactive des incidents.",
+        "isActive": true
+      },
+      {
+        "code": "M13_P5",
+        "name": "Processus de gestion des projets Big Data (SI)",
+        "shortDescription": "Ce processus concerne la gestion des projets liés à l’exploitation du Big Data, de la conception à la mise en production dans le respect des exigences...",
+        "description": "Ce processus concerne la gestion des projets liés à l’exploitation du Big Data, de la conception à la mise en production dans le respect des exigences métiers.",
+        "isActive": true
+      },
+      {
+        "code": "M13_P6",
+        "name": "Processus d’innovation et transformation numérique",
+        "shortDescription": "Ce processus s'inscrit dans la vision stratégique à long terme de l’opérateur télécom pour intégrer de nouvelles technologies et transformer les modèl...",
+        "description": "Ce processus s'inscrit dans la vision stratégique à long terme de l’opérateur télécom pour intégrer de nouvelles technologies et transformer les modèles d'affaires grâce à la donnée.",
+        "isActive": true
+      }
+    ]
+  }
+]

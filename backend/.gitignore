@@ -54,4 +54,4 @@ process-manager
 
 # Air (hot-reload) artifacts
 tmp/
-build-errors.log
+build-errors.logbin/
