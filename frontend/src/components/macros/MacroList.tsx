@@ -1,0 +1,204 @@
+'use client';
+
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { MacroCard } from './MacroCard';
+import { MacroSearch } from './MacroSearch';
+import { MacroResource, type MacroFilter } from '@/lib/resources/macro';
+import type { Macro } from '@/types/macro';
+import { Loader2, Layers } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/lib/i18n';
+
+interface MacroListProps {
+  initialFilters?: MacroFilter;
+}
+
+export function MacroList({ initialFilters = {} }: MacroListProps) {
+  const { toast } = useToast();
+  const { t } = useTranslation('macros');
+  const [macros, setMacros] = useState<Macro[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [filters, setFilters] = useState<MacroFilter>(initialFilters);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [total, setTotal] = useState(0);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  const limit = 12;
+
+  // Load initial macros or when filters change
+  useEffect(() => {
+    loadMacros(true);
+  }, [filters]);
+
+  // Refs to track latest values without causing observer recreation
+  const hasMoreRef = useRef(hasMore);
+  const loadingRef = useRef(loading);
+  const loadingMoreRef = useRef(loadingMore);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+    loadingRef.current = loading;
+    loadingMoreRef.current = loadingMore;
+  }, [hasMore, loading, loadingMore]);
+
+  // Infinite scroll observer - only recreate when target element changes
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasMoreRef.current &&
+          !loadingRef.current &&
+          !loadingMoreRef.current
+        ) {
+          loadMoreMacros();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [observerTarget.current]); // Only recreate when target element changes
+
+  const loadMacros = async (reset = false) => {
+    try {
+      setLoading(true);
+      const response = await MacroResource.getAll({
+        ...filters,
+        page: 1,
+        limit,
+      });
+      setMacros(response.data);
+      setCurrentPage(1);
+      setTotal(response.pagination.total);
+      setHasMore(response.data.length === limit && response.pagination.totalPages > 1);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.loadFailed'),
+        description: error.message || t('messages.loadError'),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMoreMacros = async () => {
+    if (!hasMore || loadingMore) return;
+
+    try {
+      setLoadingMore(true);
+      const nextPage = currentPage + 1;
+      const response = await MacroResource.getAll({
+        ...filters,
+        page: nextPage,
+        limit,
+      });
+
+      setMacros((prev) => [...prev, ...response.data]);
+      setCurrentPage(nextPage);
+      setHasMore(response.data.length === limit && nextPage < response.pagination.totalPages);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.loadFailed'),
+        description: error.message || t('messages.loadError'),
+      });
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const handleSearch = useCallback((newFilters: MacroFilter) => {
+    // Only update if filters actually changed
+    setFilters((prevFilters) => {
+      const hasChanged = prevFilters.search !== newFilters.search;
+
+      if (!hasChanged) {
+        return prevFilters; // Return same reference if values unchanged
+      }
+
+      // Reset pagination when filters change
+      setCurrentPage(1);
+      setHasMore(true);
+      return newFilters;
+    });
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm(t('messages.deleteConfirm'))) return;
+
+    try {
+      await MacroResource.delete(id);
+      toast({
+        title: t('messages.deleteSuccess'),
+      });
+      loadMacros();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.deleteFailed'),
+        description: error.message || t('messages.error'),
+      });
+    }
+  };
+
+  if (loading && macros.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <MacroSearch onSearch={handleSearch} initialFilters={filters} />
+
+      {macros.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Layers className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">{t('noMacros')}</h3>
+          <p className="text-muted-foreground">
+            {filters.search
+              ? t('noMacrosDescription')
+              : t('noMacrosEmpty')}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {macros.map((macro) => (
+              <MacroCard
+                key={macro.id}
+                macro={macro}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+
+          {/* Infinite scroll trigger */}
+          <div ref={observerTarget} className="flex items-center justify-center py-4">
+            {loadingMore && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-sm">{t('loadingMore') || 'Loading more...'}</span>
+              </div>
+            )}
+            {!hasMore && macros.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {t('allLoaded') || `All ${total} macros loaded`}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

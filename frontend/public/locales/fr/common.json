@@ -1,6 +1,7 @@
 {
   "navigation": {
     "home": "Accueil",
+    "macros": "Macros",
     "documents": "Documents",
     "notifications": "Notifications",
     "myActivity": "Mon Activité",
