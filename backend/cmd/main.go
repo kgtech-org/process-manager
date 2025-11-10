@@ -100,6 +100,9 @@ func main() {
 	// Initialize document service
 	documentService := services.NewDocumentService(db.Database, userService, pdfService)
 
+	// Initialize macro service
+	macroService := services.NewMacroService(db)
+
 	// Initialize chat service
 	var chatService *services.ChatService
 	if openaiService != nil {
@@ -131,6 +134,7 @@ func main() {
 	permissionHandler := handlers.NewPermissionHandler(db.Database)
 	signatureHandler := handlers.NewSignatureHandler(db.Database)
 	userSignatureHandler := handlers.NewUserSignatureHandler(db.Database)
+	macroHandler := handlers.NewMacroHandler(macroService)
 
 	// Initialize chat handler (only if OpenAI service is available)
 	var chatHandler *handlers.ChatHandler
@@ -206,6 +210,7 @@ func main() {
 		routes.SetupDocumentRoutes(api, documentHandler, permissionHandler, signatureHandler, authMiddleware, documentMiddleware)
 		routes.RegisterInvitationRoutes(api, invitationHandler, authMiddleware)
 		routes.SetupUserSignatureRoutes(api, userSignatureHandler, authMiddleware)
+		routes.SetupMacroRoutes(api, macroHandler, authMiddleware)
 
 		// Setup chat routes (only if OpenAI service is available)
 		if chatHandler != nil {
