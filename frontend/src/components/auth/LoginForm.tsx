@@ -44,7 +44,7 @@ export const LoginForm: React.FC = () => {
     try {
       setError('');
       await verifyOtp(data);
-      router.push('/'); // Redirect to dashboard
+      router.push('/macros'); // Redirect to macros page
     } catch (error: any) {
       setError(error.message || t('login.invalidOtp'));
     }
