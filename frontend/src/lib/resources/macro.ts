@@ -1,8 +1,8 @@
 import { apiClient } from '../api';
-import type { Macro, CreateMacroRequest, UpdateMacroRequest, MacroFilter } from '@/types/macro';
+import type { Macro, Process, CreateMacroRequest, UpdateMacroRequest, MacroFilter } from '@/types/macro';
 
 // Re-export types for convenience
-export type { Macro, CreateMacroRequest, UpdateMacroRequest, MacroFilter } from '@/types/macro';
+export type { Macro, Process, CreateMacroRequest, UpdateMacroRequest, MacroFilter } from '@/types/macro';
 
 // API Response types
 interface MacroListResponse {
@@ -26,7 +26,7 @@ interface MacroResponse {
 interface ProcessListResponse {
   success: boolean;
   message: string;
-  data: any[]; // Process/Document type
+  data: Process[];
   pagination: {
     page: number;
     limit: number;

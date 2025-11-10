@@ -67,5 +67,18 @@
     "description": "Description",
     "noProcesses": "Aucun processus pour le moment",
     "noProcessesDescription": "Créez votre premier processus pour ce macro pour commencer"
-  }
+  },
+  "errorLoadingMacro": "Échec du chargement du macro",
+  "error": "Erreur",
+  "macroNotFound": "Macro non trouvé",
+  "active": "Actif",
+  "inactive": "Inactif",
+  "addProcess": "Ajouter un Processus",
+  "macroInformation": "Informations du Macro",
+  "code": "Code",
+  "processCount": "Processus",
+  "status": "Statut",
+  "createdAt": "Créé",
+  "noProcesses": "Aucun processus trouvé pour ce macro",
+  "addFirstProcess": "Ajouter le Premier Processus"
 }
