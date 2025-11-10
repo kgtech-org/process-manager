@@ -135,27 +135,31 @@ type DocumentMetadata struct {
 	ChangeHistory     []ChangeHistoryEntry `json:"changeHistory" bson:"change_history"`
 }
 
-// Document represents a process document
+// Document represents a process document (Micro-processus)
 type Document struct {
-	ID            primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Reference     string             `json:"reference" bson:"reference"`
-	Title         string             `json:"title" bson:"title"`
-	Version       string             `json:"version" bson:"version"`
-	Status        DocumentStatus     `json:"status" bson:"status"`
-	CreatedBy     primitive.ObjectID `json:"createdBy" bson:"created_by"`
-	Contributors  Contributors       `json:"contributors" bson:"contributors"`
-	Metadata      DocumentMetadata   `json:"metadata" bson:"metadata"`
-	ProcessGroups []ProcessGroup     `json:"processGroups" bson:"process_groups"`
-	Annexes       []Annex            `json:"annexes" bson:"annexes"`
-	PdfUrl        string             `json:"pdfUrl,omitempty" bson:"pdf_url,omitempty"`
-	CreatedAt     time.Time          `json:"createdAt" bson:"created_at"`
-	UpdatedAt     time.Time          `json:"updatedAt" bson:"updated_at"`
-	ApprovedAt    *time.Time         `json:"approvedAt,omitempty" bson:"approved_at,omitempty"`
+	ID            primitive.ObjectID  `json:"id" bson:"_id,omitempty"`
+	MacroID       *primitive.ObjectID `json:"macroId,omitempty" bson:"macro_id,omitempty"`       // Link to Macro (M1, M2, etc.)
+	ProcessCode   string              `json:"processCode,omitempty" bson:"process_code,omitempty"` // New format: M1_P1, M2_P1, etc.
+	Reference     string              `json:"reference" bson:"reference"`                          // Legacy reference
+	Title         string              `json:"title" bson:"title"`
+	Version       string              `json:"version" bson:"version"`
+	Status        DocumentStatus      `json:"status" bson:"status"`
+	CreatedBy     primitive.ObjectID  `json:"createdBy" bson:"created_by"`
+	Contributors  Contributors        `json:"contributors" bson:"contributors"`
+	Metadata      DocumentMetadata    `json:"metadata" bson:"metadata"`
+	ProcessGroups []ProcessGroup      `json:"processGroups" bson:"process_groups"`
+	Annexes       []Annex             `json:"annexes" bson:"annexes"`
+	PdfUrl        string              `json:"pdfUrl,omitempty" bson:"pdf_url,omitempty"`
+	CreatedAt     time.Time           `json:"createdAt" bson:"created_at"`
+	UpdatedAt     time.Time           `json:"updatedAt" bson:"updated_at"`
+	ApprovedAt    *time.Time          `json:"approvedAt,omitempty" bson:"approved_at,omitempty"`
 }
 
 // DocumentResponse represents the API response for a document
 type DocumentResponse struct {
 	ID            string           `json:"id"`
+	MacroID       string           `json:"macroId,omitempty"`
+	ProcessCode   string           `json:"processCode,omitempty"`
 	Reference     string           `json:"reference"`
 	Title         string           `json:"title"`
 	Version       string           `json:"version"`
@@ -173,8 +177,9 @@ type DocumentResponse struct {
 
 // ToResponse converts a Document to DocumentResponse
 func (d *Document) ToResponse() DocumentResponse {
-	return DocumentResponse{
+	resp := DocumentResponse{
 		ID:            d.ID.Hex(),
+		ProcessCode:   d.ProcessCode,
 		Reference:     d.Reference,
 		Title:         d.Title,
 		Version:       d.Version,
@@ -189,10 +194,19 @@ func (d *Document) ToResponse() DocumentResponse {
 		UpdatedAt:     d.UpdatedAt,
 		ApprovedAt:    d.ApprovedAt,
 	}
+
+	// Include MacroID if present
+	if d.MacroID != nil {
+		resp.MacroID = d.MacroID.Hex()
+	}
+
+	return resp
 }
 
 // CreateDocumentRequest represents the request to create a document
 type CreateDocumentRequest struct {
+	MacroID       *string          `json:"macroId"`        // Optional: Link to macro
+	ProcessCode   string           `json:"processCode"`    // Optional: New format M1_P1, M2_P1
 	Reference     string           `json:"reference" binding:"required"`
 	Title         string           `json:"title" binding:"required"`
 	Version       string           `json:"version" binding:"required"`
