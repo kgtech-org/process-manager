@@ -41,6 +41,9 @@ WORKDIR /root/
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 
+# Copy resources directory for seeding
+COPY --from=builder /app/resources ./resources
+
 # Copy static files if they exist
 RUN mkdir -p ./static ./config
 

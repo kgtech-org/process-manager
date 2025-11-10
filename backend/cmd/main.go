@@ -257,7 +257,7 @@ func seedData() {
 
 	// Seed macros
 	macroService := services.NewMacroService(db)
-	seedFilePath := "backend/resources/macros_seed.json"
+	seedFilePath := "resources/macros_seed.json"
 	if err := macroService.InitializeMacros(ctx, seedFilePath); err != nil {
 		log.Printf("Failed to seed macros: %v", err)
 	}
