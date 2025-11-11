@@ -97,11 +97,11 @@ func main() {
 	// Initialize PDF service
 	pdfService := services.NewPDFService(minioService, openaiService)
 
-	// Initialize document service
-	documentService := services.NewDocumentService(db.Database, userService, pdfService)
-
 	// Initialize macro service
 	macroService := services.NewMacroService(db)
+
+	// Initialize document service (depends on macroService)
+	documentService := services.NewDocumentService(db.Database, userService, pdfService, macroService)
 
 	// Initialize chat service
 	var chatService *services.ChatService
