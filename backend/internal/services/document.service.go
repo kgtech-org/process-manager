@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/kodesonik/process-manager/internal/models"
@@ -19,27 +21,107 @@ type DocumentService struct {
 	invitationCollection *mongo.Collection
 	userService          *UserService
 	pdfService           *PDFService
+	macroService         *MacroService
 }
 
-func NewDocumentService(db *mongo.Database, userService *UserService, pdfService *PDFService) *DocumentService {
+func NewDocumentService(db *mongo.Database, userService *UserService, pdfService *PDFService, macroService *MacroService) *DocumentService {
 	return &DocumentService{
 		collection:           db.Collection("documents"),
 		versionCollection:    db.Collection("document_versions"),
 		invitationCollection: db.Collection("invitations"),
 		userService:          userService,
 		pdfService:           pdfService,
+		macroService:         macroService,
 	}
+}
+
+// validateTasks validates task codes against the process code
+func validateTasks(processCode string, tasks []models.Task) error {
+	if len(tasks) == 0 {
+		return fmt.Errorf("at least one task is required")
+	}
+
+	// Task code pattern: M\d+_P\d+_T\d+
+	taskCodePattern := regexp.MustCompile(`^M\d+_P\d+_T\d+$`)
+
+	// Validate each task
+	seenOrders := make(map[int]bool)
+	for i, task := range tasks {
+		// Validate task code format
+		if !taskCodePattern.MatchString(task.Code) {
+			return fmt.Errorf("task %d: invalid task code format '%s' (expected format: M1_P1_T1)", i+1, task.Code)
+		}
+
+		// Validate task code matches process code
+		if !strings.HasPrefix(task.Code, processCode+"_T") {
+			return fmt.Errorf("task %d: task code '%s' does not match process code '%s'", i+1, task.Code, processCode)
+		}
+
+		// Validate task description is not empty
+		if strings.TrimSpace(task.Description) == "" {
+			return fmt.Errorf("task %d (%s): description is required", i+1, task.Code)
+		}
+
+		// Validate task order is positive
+		if task.Order < 1 {
+			return fmt.Errorf("task %d (%s): order must be at least 1", i+1, task.Code)
+		}
+
+		// Check for duplicate orders
+		if seenOrders[task.Order] {
+			return fmt.Errorf("task %d (%s): duplicate task order %d", i+1, task.Code, task.Order)
+		}
+		seenOrders[task.Order] = true
+	}
+
+	return nil
 }
 
 // Create creates a new document
 func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocumentRequest, userID primitive.ObjectID) (*models.Document, error) {
-	// Check if reference already exists
-	exists, err := s.referenceExists(ctx, req.Reference)
-	if err != nil {
-		return nil, err
+	// Convert MacroID from string to ObjectID if provided
+	var macroID *primitive.ObjectID
+	if req.MacroID != nil && *req.MacroID != "" {
+		objID, err := primitive.ObjectIDFromHex(*req.MacroID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid macro ID: %w", err)
+		}
+		macroID = &objID
 	}
-	if exists {
-		return nil, errors.New("document reference already exists")
+
+	// Generate ProcessCode if not provided and MacroID exists
+	processCode := req.ProcessCode
+	if processCode == "" && macroID != nil {
+		// Get macro to extract code
+		macro, err := s.macroService.GetMacroByID(ctx, *macroID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get macro: %w", err)
+		}
+
+		// Get next process number for this macro
+		nextNumber, err := s.macroService.GetNextProcessNumber(ctx, *macroID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate process code: %w", err)
+		}
+
+		processCode = fmt.Sprintf("%s_P%d", macro.Code, nextNumber)
+	}
+
+	// Generate reference if not provided (use process code)
+	reference := req.Reference
+	if reference == "" {
+		reference = processCode
+	}
+
+	// Check if reference already exists (only if not empty)
+	if reference != "" {
+		exists, err := s.referenceExists(ctx, reference)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			return nil, errors.New("document reference already exists")
+		}
 	}
 
 	// Get user details to add as author
@@ -71,6 +153,7 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 		InvitedAt:  now,
 	}
 	req.Contributors.Authors = append(req.Contributors.Authors, ownerContributor)
+
 	if req.Metadata.Objectives == nil {
 		req.Metadata.Objectives = make([]string, 0)
 	}
@@ -92,20 +175,46 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 	if req.Annexes == nil {
 		req.Annexes = make([]models.Annex, 0)
 	}
+	if req.Stakeholders == nil {
+		req.Stakeholders = make([]string, 0)
+	}
+	if req.Tasks == nil {
+		req.Tasks = make([]models.Task, 0)
+	}
+
+	// Validate tasks if any are provided
+	if len(req.Tasks) > 0 {
+		if err := validateTasks(processCode, req.Tasks); err != nil {
+			return nil, fmt.Errorf("task validation failed: %w", err)
+		}
+	}
+
+	// Set default version if not provided
+	version := req.Version
+	if version == "" {
+		version = "1.0"
+	}
 
 	document := &models.Document{
-		ID:            primitive.NewObjectID(),
-		Reference:     req.Reference,
-		Title:         req.Title,
-		Version:       req.Version,
-		Status:        models.DocumentStatusDraft,
-		CreatedBy:     userID,
-		Contributors:  req.Contributors,
-		Metadata:      req.Metadata,
-		ProcessGroups: req.ProcessGroups,
-		Annexes:       req.Annexes,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		ID:               primitive.NewObjectID(),
+		MacroID:          macroID,
+		ProcessCode:      processCode,
+		Reference:        reference,
+		Title:            req.Title,
+		ShortDescription: req.ShortDescription,
+		Description:      req.Description,
+		IsActive:         req.IsActive,
+		Stakeholders:     req.Stakeholders,
+		Tasks:            req.Tasks,
+		Version:          version,
+		Status:           models.DocumentStatusDraft,
+		CreatedBy:        userID,
+		Contributors:     req.Contributors,
+		Metadata:         req.Metadata,
+		ProcessGroups:    req.ProcessGroups,
+		Annexes:          req.Annexes,
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	}
 
 	_, err = s.collection.InsertOne(ctx, document)
@@ -345,6 +454,27 @@ func (s *DocumentService) Update(ctx context.Context, id primitive.ObjectID, req
 
 	if req.Title != nil {
 		update["title"] = *req.Title
+	}
+	if req.ShortDescription != nil {
+		update["short_description"] = *req.ShortDescription
+	}
+	if req.Description != nil {
+		update["description"] = *req.Description
+	}
+	if req.IsActive != nil {
+		update["is_active"] = *req.IsActive
+	}
+	if req.Stakeholders != nil {
+		update["stakeholders"] = *req.Stakeholders
+	}
+	if req.Tasks != nil {
+		// Validate tasks before updating
+		if len(*req.Tasks) > 0 {
+			if err := validateTasks(document.ProcessCode, *req.Tasks); err != nil {
+				return nil, fmt.Errorf("task validation failed: %w", err)
+			}
+		}
+		update["tasks"] = *req.Tasks
 	}
 	if req.Version != nil {
 		update["version"] = *req.Version

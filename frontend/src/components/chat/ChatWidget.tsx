@@ -8,10 +8,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { chatService, ChatThread, ChatMessage } from '@/services/chat.service';
 import { useToast } from '@/hooks/use-toast';
+import { useChatContext } from '@/contexts/chat.context';
 import { cn } from '@/lib/utils';
 
 export function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, toggleChat, closeChat } = useChatContext();
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [currentThread, setCurrentThread] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -164,7 +165,7 @@ export function ChatWidget() {
   if (!isOpen) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={toggleChat}
         className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-orange-500 text-white shadow-lg hover:bg-orange-600 transition-colors flex items-center justify-center z-50"
       >
         <MessageCircle className="h-6 w-6" />
@@ -194,7 +195,7 @@ export function ChatWidget() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsOpen(false)}
+            onClick={closeChat}
             className="h-8 w-8 text-white hover:bg-orange-600"
           >
             <X className="h-4 w-4" />

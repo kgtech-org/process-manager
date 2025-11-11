@@ -118,6 +118,13 @@ type Annex struct {
 	Files   []FileAttachment       `json:"files,omitempty" bson:"files,omitempty"`
 }
 
+// Task represents a single task within a process
+type Task struct {
+	Code        string `json:"code" bson:"code"`               // M1_P1_T1, M1_P1_T2, etc.
+	Description string `json:"description" bson:"description"` // Task description
+	Order       int    `json:"order" bson:"order"`             // Task order/sequence
+}
+
 // ChangeHistoryEntry represents a single change in the document history
 type ChangeHistoryEntry struct {
 	Version     string    `json:"version" bson:"version"`
@@ -145,6 +152,8 @@ type Document struct {
 	ShortDescription string              `json:"shortDescription,omitempty" bson:"short_description,omitempty"` // Brief description
 	Description      string              `json:"description,omitempty" bson:"description,omitempty"`           // Detailed description
 	IsActive         bool                `json:"isActive" bson:"is_active"`                                   // Active status
+	Stakeholders     []string            `json:"stakeholders" bson:"stakeholders"`                            // Implicated departments/stakeholders
+	Tasks            []Task              `json:"tasks" bson:"tasks"`                                         // Process tasks
 	Version          string              `json:"version" bson:"version"`
 	Status           DocumentStatus      `json:"status" bson:"status"`
 	CreatedBy        primitive.ObjectID  `json:"createdBy" bson:"created_by"`
@@ -168,6 +177,8 @@ type DocumentResponse struct {
 	ShortDescription string           `json:"shortDescription,omitempty"`
 	Description      string           `json:"description,omitempty"`
 	IsActive         bool             `json:"isActive"`
+	Stakeholders     []string         `json:"stakeholders"`
+	Tasks            []Task           `json:"tasks"`
 	Version          string           `json:"version"`
 	Status           DocumentStatus   `json:"status"`
 	CreatedBy        string           `json:"createdBy"`
@@ -191,6 +202,8 @@ func (d *Document) ToResponse() DocumentResponse {
 		ShortDescription: d.ShortDescription,
 		Description:      d.Description,
 		IsActive:         d.IsActive,
+		Stakeholders:     d.Stakeholders,
+		Tasks:            d.Tasks,
 		Version:          d.Version,
 		Status:           d.Status,
 		CreatedBy:        d.CreatedBy.Hex(),
@@ -214,27 +227,37 @@ func (d *Document) ToResponse() DocumentResponse {
 
 // CreateDocumentRequest represents the request to create a document
 type CreateDocumentRequest struct {
-	MacroID       *string          `json:"macroId"`        // Optional: Link to macro
-	ProcessCode   string           `json:"processCode"`    // Optional: New format M1_P1, M2_P1
-	Reference     string           `json:"reference" binding:"required"`
-	Title         string           `json:"title" binding:"required"`
-	Version       string           `json:"version" binding:"required"`
-	Contributors  Contributors     `json:"contributors"`
-	Metadata      DocumentMetadata `json:"metadata"`
-	ProcessGroups []ProcessGroup   `json:"processGroups"`
-	Annexes       []Annex          `json:"annexes"`
+	MacroID          *string          `json:"macroId" binding:"required"` // Required: Link to macro
+	ProcessCode      string           `json:"processCode"`                // Optional: Auto-generated if not provided
+	Reference        string           `json:"reference"`                  // Optional: Legacy reference
+	Title            string           `json:"title" binding:"required"`
+	ShortDescription string           `json:"shortDescription"`
+	Description      string           `json:"description" binding:"required"`
+	IsActive         bool             `json:"isActive"`
+	Stakeholders     []string         `json:"stakeholders"`
+	Tasks            []Task           `json:"tasks" binding:"required,min=1"` // At least 1 task required
+	Version          string           `json:"version"`
+	Contributors     Contributors     `json:"contributors"`
+	Metadata         DocumentMetadata `json:"metadata"`
+	ProcessGroups    []ProcessGroup   `json:"processGroups"`
+	Annexes          []Annex          `json:"annexes"`
 }
 
 // UpdateDocumentRequest represents the request to update a document
 type UpdateDocumentRequest struct {
-	Title         *string           `json:"title"`
-	Version       *string           `json:"version"`
-	Status        *DocumentStatus   `json:"status"`
-	Contributors  *Contributors     `json:"contributors"`
-	Metadata      *DocumentMetadata `json:"metadata"`
-	ProcessGroups *[]ProcessGroup   `json:"processGroups"`
-	Annexes       *[]Annex          `json:"annexes"`
-	IsAutosave    *bool             `json:"isAutosave"` // Skip activity logging for autosave operations
+	Title            *string           `json:"title"`
+	ShortDescription *string           `json:"shortDescription"`
+	Description      *string           `json:"description"`
+	IsActive         *bool             `json:"isActive"`
+	Stakeholders     *[]string         `json:"stakeholders"`
+	Tasks            *[]Task           `json:"tasks"`
+	Version          *string           `json:"version"`
+	Status           *DocumentStatus   `json:"status"`
+	Contributors     *Contributors     `json:"contributors"`
+	Metadata         *DocumentMetadata `json:"metadata"`
+	ProcessGroups    *[]ProcessGroup   `json:"processGroups"`
+	Annexes          *[]Annex          `json:"annexes"`
+	IsAutosave       *bool             `json:"isAutosave"` // Skip activity logging for autosave operations
 }
 
 // DocumentFilter represents filtering options for documents

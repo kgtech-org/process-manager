@@ -6,10 +6,12 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/lib/i18n';
+import { useChatContext } from '@/contexts/chat.context';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TokenStatus } from '@/components/auth/TokenStatus';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { MessageCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -147,6 +149,7 @@ const getAdminItems = (t: any) => [
 export const Navigation: React.FC = () => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
+  const { isOpen: isChatOpen, toggleChat } = useChatContext();
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -298,6 +301,26 @@ export const Navigation: React.FC = () => {
           {/* Language Switcher */}
           <div className="border-t border-gray-200 px-4 py-2">
             <LanguageSwitcher />
+          </div>
+
+          {/* Chat Button */}
+          <div className="border-t border-gray-200 px-4 py-3">
+            <Button
+              variant="ghost"
+              onClick={toggleChat}
+              className={`w-full justify-start gap-3 text-sm font-medium transition-colors ${
+                isChatOpen
+                  ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+              title={isChatOpen ? 'Fermer le chat' : 'Ouvrir le chat'}
+            >
+              <MessageCircle className={`h-5 w-5 ${isChatOpen ? 'text-orange-600' : ''}`} />
+              <span>{isChatOpen ? 'Fermer le chat' : 'Assistant Processus'}</span>
+              {isChatOpen && (
+                <span className="ml-auto h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
+              )}
+            </Button>
           </div>
 
           {/* Token Status */}
