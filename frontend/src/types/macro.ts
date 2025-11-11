@@ -11,6 +11,20 @@ export interface Macro {
   description: string;
   createdBy: string;
   processCount?: number;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Process {
+  id: string;
+  processCode: string; // M1_P1, M1_P2, etc.
+  title: string;
+  description?: string;
+  shortDescription?: string;
+  macroId: string;
+  isActive?: boolean;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }

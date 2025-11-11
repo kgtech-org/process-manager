@@ -254,6 +254,13 @@ func seedData() {
 	} else {
 		log.Println("✅ Job positions seeded successfully")
 	}
+
+	// Seed macros
+	macroService := services.NewMacroService(db)
+	seedFilePath := "resources/macros_seed.json"
+	if err := macroService.InitializeMacros(ctx, seedFilePath); err != nil {
+		log.Printf("Failed to seed macros: %v", err)
+	}
 }
 
 func seedDepartments(ctx context.Context, db *services.DatabaseService) error {
