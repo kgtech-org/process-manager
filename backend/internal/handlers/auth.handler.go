@@ -20,16 +20,18 @@ type AuthHandler struct {
 	jwtService   *services.JWTService
 	emailService *services.EmailService
 	otpService   *services.OTPService
+	pinService   *services.PinService
 	minioService *services.MinIOService
 }
 
 // NewAuthHandler creates a new auth handler instance
-func NewAuthHandler(userService *services.UserService, jwtService *services.JWTService, emailService *services.EmailService, otpService *services.OTPService, minioService *services.MinIOService) *AuthHandler {
+func NewAuthHandler(userService *services.UserService, jwtService *services.JWTService, emailService *services.EmailService, otpService *services.OTPService, pinService *services.PinService, minioService *services.MinIOService) *AuthHandler {
 	return &AuthHandler{
 		userService:  userService,
 		jwtService:   jwtService,
 		emailService: emailService,
 		otpService:   otpService,
+		pinService:   pinService,
 		minioService: minioService,
 	}
 }
@@ -626,3 +628,188 @@ func (h *AuthHandler) DeleteAvatar(c *gin.Context) {
 
 	helpers.SendSuccess(c, "Profile picture deleted successfully", response)
 }
+
+// ============================================
+// PIN Authentication Endpoints
+// ============================================
+
+// SetPin sets or updates a user's PIN
+// POST /api/auth/set-pin
+func (h *AuthHandler) SetPin(c *gin.Context) {
+	var req models.SetPinRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	// Get authenticated user from context
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendUnauthorized(c, "User not authenticated", "AUTH_REQUIRED")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Set PIN
+	err := h.pinService.SetPin(ctx, user.ID, req.Pin, req.ConfirmPin)
+	if err != nil {
+		helpers.SendBadRequest(c, err.Error())
+		return
+	}
+
+	helpers.SendSuccess(c, "PIN set successfully", nil)
+}
+
+// VerifyPin verifies a user's PIN and logs them in
+// POST /api/auth/verify-pin
+func (h *AuthHandler) VerifyPin(c *gin.Context) {
+	var req models.VerifyPinRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Verify PIN
+	user, err := h.pinService.VerifyPin(ctx, req.Email, req.Pin)
+	if err != nil {
+		// Check if account is locked
+		isLocked, _ := h.pinService.IsLocked(ctx, req.Email)
+		if isLocked {
+			helpers.SendForbidden(c, err.Error(), "PIN_LOCKED")
+			return
+		}
+		helpers.SendBadRequest(c, err.Error())
+		return
+	}
+
+	// Check if user can login
+	if !user.CanLogin() {
+		helpers.SendForbidden(c, "Account is not active or is pending validation", "ACCOUNT_INACTIVE")
+		return
+	}
+
+	// Generate access token
+	accessToken, err := h.jwtService.GenerateAccessToken(user)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Create refresh token in Redis
+	refreshToken, err := h.otpService.CreateRefreshToken(ctx, user.ID.Hex())
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Create token pair
+	tokenPair := &models.TokenPair{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresAt:    time.Now().Add(15 * time.Minute), // Access token expiry
+	}
+
+	// Update last login
+	if err := h.userService.UpdateLastLogin(ctx, user.ID); err != nil {
+		// Log error but continue
+		fmt.Printf("Failed to update last login: %v\n", err)
+	}
+
+	// Send login response
+	helpers.SendLoginResponse(c, user, tokenPair)
+}
+
+// RequestPinReset sends an OTP for PIN reset
+// POST /api/auth/request-pin-reset
+func (h *AuthHandler) RequestPinReset(c *gin.Context) {
+	var req models.RequestPinResetRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	// Find user by email
+	user, err := h.userService.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		// Don't reveal if user exists or not for security
+		helpers.SendSuccess(c, "If the email exists in our system, an OTP has been sent", nil)
+		return
+	}
+
+	// Generate OTP
+	otp, err := h.otpService.GenerateOTP(ctx, user.Email)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	// Send OTP email for PIN reset
+	fullName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+	if err := h.emailService.SendOTPEmail(user.Email, fullName, otp); err != nil {
+		fmt.Printf("Failed to send PIN reset email to %s: %v\n", user.Email, err)
+	}
+
+	helpers.SendSuccess(c, "If the email exists in our system, an OTP has been sent", nil)
+}
+
+// ResetPin resets a user's PIN after OTP verification
+// POST /api/auth/reset-pin
+func (h *AuthHandler) ResetPin(c *gin.Context) {
+	var req models.ResetPinRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Reset PIN (OTP verification happens inside this method)
+	err := h.pinService.ResetPin(ctx, req.Email, req.Otp, req.NewPin, req.ConfirmPin)
+	if err != nil {
+		helpers.SendBadRequest(c, err.Error())
+		return
+	}
+
+	helpers.SendSuccess(c, "PIN reset successfully", nil)
+}
+
+// CheckPinStatus checks if a user has PIN set up
+// POST /api/auth/check-pin-status
+func (h *AuthHandler) CheckPinStatus(c *gin.Context) {
+	var req models.CheckPinStatusRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	hasPin, isLocked, err := h.pinService.CheckPinStatus(ctx, req.Email)
+	if err != nil {
+		// Don't reveal if user exists
+		response := gin.H{
+			"hasPin":   false,
+			"isLocked": false,
+		}
+		helpers.SendSuccess(c, "Status retrieved", response)
+		return
+	}
+
+	response := gin.H{
+		"hasPin":   hasPin,
+		"isLocked": isLocked,
+	}
+
+	helpers.SendSuccess(c, "Status retrieved", response)
+}
+
