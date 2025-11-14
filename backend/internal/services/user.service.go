@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -654,18 +655,27 @@ func (s *UserService) EnsureDefaultAdmin(ctx context.Context) error {
 
 // CreateUserFromRegistration creates a user from the 3-step registration process
 func (s *UserService) CreateUserFromRegistration(ctx context.Context, email string, req *models.Step3RegistrationRequest) (*models.User, error) {
+	log.Printf("🔧 CreateUserFromRegistration: Starting for email: %s\n", email)
+
 	// Convert string IDs to ObjectIDs
+	log.Printf("🔧 CreateUserFromRegistration: Converting department ID: %s\n", req.DepartmentID)
 	departmentID, err := primitive.ObjectIDFromHex(req.DepartmentID)
 	if err != nil {
+		log.Printf("❌ CreateUserFromRegistration: Invalid department ID: %v\n", err)
 		return nil, fmt.Errorf("invalid department ID: %w", err)
 	}
-	
+	log.Println("✓ CreateUserFromRegistration: Department ID converted successfully")
+
+	log.Printf("🔧 CreateUserFromRegistration: Converting job position ID: %s\n", req.JobPositionID)
 	jobPositionID, err := primitive.ObjectIDFromHex(req.JobPositionID)
 	if err != nil {
+		log.Printf("❌ CreateUserFromRegistration: Invalid job position ID: %v\n", err)
 		return nil, fmt.Errorf("invalid job position ID: %w", err)
 	}
+	log.Println("✓ CreateUserFromRegistration: Job position ID converted successfully")
 
 	// Create new user
+	log.Println("🔧 CreateUserFromRegistration: Building user struct")
 	now := time.Now()
 	user := &models.User{
 		Email:         email,
@@ -680,23 +690,35 @@ func (s *UserService) CreateUserFromRegistration(ctx context.Context, email stri
 		Verified:      true, // Email was verified in step 2
 		CreatedAt:     now,
 		UpdatedAt:     now,
+		// PIN fields default to zero values (empty strings, false, 0, nil)
+		HasPin:      false,
+		PinAttempts: 0,
 	}
+	log.Printf("✓ CreateUserFromRegistration: User struct created: %s %s (%s)\n", user.FirstName, user.LastName, user.Email)
 
 	// Validate user
+	log.Println("🔧 CreateUserFromRegistration: Validating email")
 	if !user.ValidateEmail() {
+		log.Println("❌ CreateUserFromRegistration: Invalid email format")
 		return nil, models.ErrInvalidEmail
 	}
+	log.Println("✓ CreateUserFromRegistration: Email validated")
 
 	// Insert user into database
+	log.Println("🔧 CreateUserFromRegistration: Inserting user into MongoDB")
 	result, err := s.userCollection.InsertOne(ctx, user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
+			log.Printf("❌ CreateUserFromRegistration: Duplicate email: %s\n", email)
 			return nil, models.ErrEmailExists
 		}
+		log.Printf("❌ CreateUserFromRegistration: MongoDB insert failed: %v\n", err)
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
+	log.Printf("✓ CreateUserFromRegistration: User inserted with ID: %v\n", result.InsertedID)
 
 	user.ID = result.InsertedID.(primitive.ObjectID)
+	log.Printf("✅ CreateUserFromRegistration: User created successfully: %s\n", user.ID.Hex())
 	return user, nil
 }
 

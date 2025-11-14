@@ -12,9 +12,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, otp: string, temporaryToken: string) => Promise<User>;
+  loginWithPin: (email: string, pin: string) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (user: User) => void;
+  setUserPin: (pin: string, confirmPin: string) => Promise<void>;
 }
 
 // Create Context
@@ -68,16 +70,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, otp: string, temporaryToken: string): Promise<User> => {
     try {
       setIsLoading(true);
-      
+
       const loginResponse = await authService.verifyLoginOtp(
         { otp },
         temporaryToken
       );
-      
+
       setUser(loginResponse.user);
       return loginResponse.user;
     } catch (error) {
       setUser(null);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithPin = async (email: string, pin: string): Promise<User> => {
+    try {
+      setIsLoading(true);
+
+      const loginResponse = await authService.verifyPin(email, pin);
+
+      setUser(loginResponse.user);
+      return loginResponse.user;
+    } catch (error) {
+      setUser(null);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const setUserPin = async (pin: string, confirmPin: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      await authService.setPin(pin, confirmPin);
+      // Refresh user to get updated hasPin status
+      await refreshUser();
+    } catch (error) {
       throw error;
     } finally {
       setIsLoading(false);
@@ -195,9 +226,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user && authService.isAuthenticated(),
     isLoading,
     login,
+    loginWithPin,
     logout,
     refreshUser,
     updateUser,
+    setUserPin,
   };
 
   return (

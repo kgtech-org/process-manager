@@ -126,6 +126,68 @@ class AuthService {
   }
 
   // ============================
+  // PIN AUTHENTICATION
+  // ============================
+
+  /**
+   * Check if user has PIN set up
+   */
+  async checkPinStatus(email: string): Promise<{ hasPin: boolean; isLocked: boolean }> {
+    const response = await apiClient.post<{ hasPin: boolean; isLocked: boolean }>('/auth/check-pin-status', { email });
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to check PIN status');
+    }
+    return response.data;
+  }
+
+  /**
+   * Verify PIN and complete login
+   */
+  async verifyPin(email: string, pin: string): Promise<LoginResponse> {
+    const response = await apiClient.post<LoginResponse>('/auth/verify-pin', { email, pin });
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'PIN verification failed');
+    }
+
+    // Store tokens
+    const { accessToken, refreshToken } = response.data;
+    TokenManager.setTokens(accessToken, refreshToken);
+
+    return response.data;
+  }
+
+  /**
+   * Set or update user's PIN (requires authentication)
+   */
+  async setPin(pin: string, confirmPin: string): Promise<void> {
+    const response = await apiClient.post('/auth/set-pin', { pin, confirmPin });
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to set PIN');
+    }
+  }
+
+  /**
+   * Request OTP for PIN reset
+   */
+  async requestPinReset(email: string): Promise<RegistrationStep1Response> {
+    const response = await apiClient.post<RegistrationStep1Response>('/auth/request-pin-reset', { email });
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to request PIN reset');
+    }
+    return response.data;
+  }
+
+  /**
+   * Reset PIN with OTP verification
+   */
+  async resetPin(email: string, otp: string, newPin: string, confirmPin: string): Promise<void> {
+    const response = await apiClient.post('/auth/reset-pin', { email, otp, newPin, confirmPin });
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to reset PIN');
+    }
+  }
+
+  // ============================
   // TOKEN MANAGEMENT
   // ============================
 

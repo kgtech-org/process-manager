@@ -72,6 +72,7 @@ func main() {
 	userService := services.InitUserService(db)
 	emailService := services.NewEmailService()
 	otpService := services.NewOTPService(redisService.Client)
+	pinService := services.NewPinService(db, otpService)
 	activityLogService := services.InitActivityLogService(db)
 
 	// Initialize Firebase service
@@ -122,7 +123,7 @@ func main() {
 	documentMiddleware := middleware.NewDocumentMiddleware(db.Database)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService, minioService)
+	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService, pinService, minioService)
 	userHandler := handlers.NewUserHandler(userService, emailService)
 	departmentHandler := handlers.NewDepartmentHandler(db)
 	jobPositionHandler := handlers.NewJobPositionHandler(db)

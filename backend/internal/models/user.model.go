@@ -52,6 +52,15 @@ type User struct {
 	RejectedBy      *primitive.ObjectID `bson:"rejected_by,omitempty" json:"rejectedBy,omitempty"`
 	RejectedAt      *time.Time          `bson:"rejected_at,omitempty" json:"rejectedAt,omitempty"`
 	RejectionReason string              `bson:"rejection_reason,omitempty" json:"rejectionReason,omitempty"`
+
+	// PIN Authentication
+	PinHash      string     `bson:"pin_hash,omitempty" json:"-"`                    // bcrypt hash of PIN (never sent to client)
+	PinSalt      string     `bson:"pin_salt,omitempty" json:"-"`                    // Salt for additional security (never sent to client)
+	HasPin       bool       `bson:"has_pin" json:"hasPin"`                          // Whether user has set up PIN
+	PinSetAt     *time.Time `bson:"pin_set_at,omitempty" json:"pinSetAt,omitempty"` // When PIN was set
+	PinAttempts  int        `bson:"pin_attempts" json:"-"`                          // Failed PIN attempts (never sent to client)
+	PinLockedAt  *time.Time `bson:"pin_locked_at,omitempty" json:"-"`               // When PIN was locked (never sent to client)
+
 	CreatedAt       time.Time           `bson:"created_at" json:"createdAt"`
 	UpdatedAt       time.Time           `bson:"updated_at" json:"updatedAt"`
 }
@@ -103,6 +112,36 @@ type UpdateUserRoleRequest struct {
 	Role UserRole `json:"role" validate:"required,oneof=admin manager user"`
 }
 
+// SetPinRequest represents the request payload for setting/updating a PIN
+type SetPinRequest struct {
+	Pin        string `json:"pin" validate:"required,len=6,numeric"`
+	ConfirmPin string `json:"confirmPin" validate:"required,len=6,numeric"`
+}
+
+// VerifyPinRequest represents the request payload for PIN verification
+type VerifyPinRequest struct {
+	Email string `json:"email" validate:"required,email"`
+	Pin   string `json:"pin" validate:"required,len=6,numeric"`
+}
+
+// RequestPinResetRequest represents the request to initiate PIN reset
+type RequestPinResetRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+// ResetPinRequest represents the request to reset PIN with OTP
+type ResetPinRequest struct {
+	Email      string `json:"email" validate:"required,email"`
+	Otp        string `json:"otp" validate:"required,len=6,numeric"`
+	NewPin     string `json:"newPin" validate:"required,len=6,numeric"`
+	ConfirmPin string `json:"confirmPin" validate:"required,len=6,numeric"`
+}
+
+// CheckPinStatusRequest represents the request to check if user has PIN
+type CheckPinStatusRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
 // ============================================
 // User Response Models
 // ============================================
@@ -129,6 +168,8 @@ type UserResponse struct {
 	RejectedBy      *primitive.ObjectID `json:"rejectedBy,omitempty"`
 	RejectedAt      *time.Time          `json:"rejectedAt,omitempty"`
 	RejectionReason string              `json:"rejectionReason,omitempty"`
+	HasPin          bool                `json:"hasPin"`            // Whether user has set up PIN
+	PinSetAt        *time.Time          `json:"pinSetAt,omitempty"` // When PIN was set
 	CreatedAt       time.Time           `json:"createdAt"`
 	UpdatedAt       time.Time           `json:"updatedAt"`
 }
@@ -222,6 +263,8 @@ func (u *User) ToResponse() UserResponse {
 		RejectedBy:      u.RejectedBy,
 		RejectedAt:      u.RejectedAt,
 		RejectionReason: u.RejectionReason,
+		HasPin:          u.HasPin,
+		PinSetAt:        u.PinSetAt,
 		CreatedAt:       u.CreatedAt,
 		UpdatedAt:       u.UpdatedAt,
 	}

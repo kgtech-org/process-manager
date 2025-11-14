@@ -21,7 +21,14 @@ func SetupAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandler,
 		auth.POST("/verify-otp", authHandler.VerifyOTP)
 		auth.POST("/refresh", authHandler.RefreshToken)
 
+		// PIN Authentication
+		auth.POST("/check-pin-status", authHandler.CheckPinStatus)         // Check if user has PIN set up
+		auth.POST("/verify-pin", authHandler.VerifyPin)                   // Login with PIN
+		auth.POST("/request-pin-reset", authHandler.RequestPinReset)     // Request OTP for PIN reset
+		auth.POST("/reset-pin", authHandler.ResetPin)                    // Reset PIN with OTP
+
 		// Protected routes
+		auth.POST("/set-pin", authMiddleware.RequireAuth(), authHandler.SetPin) // Set/update PIN (requires auth)
 		auth.GET("/me", authMiddleware.RequireAuth(), authHandler.GetMe)
 		auth.POST("/logout", authMiddleware.RequireAuth(), authHandler.Logout)
 		auth.PUT("/profile", authMiddleware.RequireAuth(), authHandler.UpdateProfile)

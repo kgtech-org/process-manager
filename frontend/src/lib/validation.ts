@@ -145,6 +145,9 @@ export const userSchema = z.object({
   validatedAt: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  // PIN Authentication
+  hasPin: z.boolean().optional(),
+  pinSetAt: z.string().optional(),
 });
 
 export type User = z.infer<typeof userSchema>;
