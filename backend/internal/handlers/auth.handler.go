@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -435,49 +436,67 @@ func (h *AuthHandler) RegisterStep2(c *gin.Context) {
 // RegisterStep3 handles step 3 of registration (complete profile)
 // POST /api/auth/register/step3
 func (h *AuthHandler) RegisterStep3(c *gin.Context) {
+	log.Println("📝 RegisterStep3: Starting registration step 3")
+
 	// Get registration token from header
 	regToken := c.GetHeader("X-Registration-Token")
 	if regToken == "" {
+		log.Println("❌ RegisterStep3: No registration token provided")
 		helpers.SendError(c, models.ErrInvalidToken)
 		return
 	}
+	log.Printf("✓ RegisterStep3: Registration token received: %s...\n", regToken[:10])
 
 	var req models.Step3RegistrationRequest
 	if err := helpers.BindAndValidate(c, &req); err != nil {
+		log.Printf("❌ RegisterStep3: Validation failed: %v\n", err)
 		helpers.SendValidationErrors(c, err)
 		return
 	}
+	log.Printf("✓ RegisterStep3: Request validated - DeptID: %s, JobPosID: %s\n", req.DepartmentID, req.JobPositionID)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Get email from registration token
+	log.Println("🔍 RegisterStep3: Getting email from registration token")
 	email, err := h.otpService.GetEmailFromRegistrationToken(ctx, regToken)
 	if err != nil {
+		log.Printf("❌ RegisterStep3: Failed to get email from token: %v\n", err)
 		helpers.SendError(c, err)
 		return
 	}
+	log.Printf("✓ RegisterStep3: Email retrieved: %s\n", email)
 
 	// Check if user already exists (double-check)
+	log.Println("🔍 RegisterStep3: Checking for existing user")
 	existingUser, err := h.userService.GetUserByEmail(ctx, email)
 	if err == nil && existingUser != nil {
+		log.Printf("❌ RegisterStep3: User already exists: %s\n", email)
 		helpers.SendError(c, models.ErrEmailExists)
 		return
 	}
+	log.Println("✓ RegisterStep3: No existing user found")
 
 	// Create user in database
+	log.Println("📝 RegisterStep3: Creating user in database")
 	createdUser, err := h.userService.CreateUserFromRegistration(ctx, email, &req)
 	if err != nil {
+		log.Printf("❌ RegisterStep3: Failed to create user: %v\n", err)
 		helpers.SendError(c, err)
 		return
 	}
+	log.Printf("✓ RegisterStep3: User created successfully: %s (ID: %s)\n", createdUser.Email, createdUser.ID.Hex())
 
 	// Delete registration token after successful registration
+	log.Println("🗑️  RegisterStep3: Deleting registration token")
 	h.otpService.DeleteRegistrationToken(ctx, regToken)
 
 	// Send registration pending email to admins
 	fullName := createdUser.FirstName + " " + createdUser.LastName
+	log.Printf("📧 RegisterStep3: Sending registration pending email for %s\n", fullName)
 	if err := h.emailService.SendRegistrationPendingEmail(createdUser.Email, fullName); err != nil {
+		log.Printf("⚠️  RegisterStep3: Failed to send email (non-critical): %v\n", err)
 		// Log error but don't fail the registration
 	}
 
@@ -490,6 +509,7 @@ func (h *AuthHandler) RegisterStep3(c *gin.Context) {
 		Message:   "Registration completed successfully. Your account is pending admin validation.",
 	}
 
+	log.Println("✅ RegisterStep3: Registration completed successfully")
 	helpers.SendCreated(c, "Registration successful. Your account is pending admin validation.", response)
 }
 

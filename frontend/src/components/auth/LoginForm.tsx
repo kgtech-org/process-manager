@@ -20,7 +20,7 @@ type LoginStep = 'email' | 'pin' | 'otp' | 'pin-setup';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
-  const { loginWithPin } = useAuth();
+  const { login, loginWithPin } = useAuth();
   const { step: otpStep, email: otpEmail, isLoading: otpLoading, requestOtp, verifyOtp, goBackToEmail } = useLogin();
   const [currentStep, setCurrentStep] = useState<LoginStep>('email');
   const [email, setEmail] = useState<string>('');
@@ -90,10 +90,14 @@ export const LoginForm: React.FC = () => {
       setError('');
       setIsLoading(true);
 
-      await verifyOtp(data);
+      // Use auth context's login method which handles tokens and user state
+      const user = await login(email, data.otp, temporaryToken);
+
+      // Check if user has PIN (from the user data returned)
+      const userHasPin = user.hasPin || false;
 
       // After first OTP login, check if user needs to set up PIN
-      if (!hasPin) {
+      if (!userHasPin) {
         setCurrentStep('pin-setup');
       } else {
         router.push('/macros');
