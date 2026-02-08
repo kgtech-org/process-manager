@@ -1,85 +1,85 @@
 services:
   # MongoDB Database (same as production)
-  mongodb:
-    image: mongo:6.0
-    container_name: process-manager-mongodb
-    restart: always
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: process_manager
-    volumes:
-      - mongodb_data:/data/db
-      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    networks:
-      - process-manager
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/process_manager --quiet
-      interval: 30s
-      timeout: 10s
-      retries: 5
+  # mongodb:
+  #   image: mongo:6.0
+  #   container_name: process-manager-mongodb
+  #   restart: always
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: admin
+  #     MONGO_INITDB_ROOT_PASSWORD: password
+  #     MONGO_INITDB_DATABASE: process_manager
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #     - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+  #   networks:
+  #     - process-manager
+  #   healthcheck:
+  #     test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/process_manager --quiet
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
 
   # Mongo Express - MongoDB Admin UI
-  mongo-express:
-    image: mongo-express:latest
-    container_name: process-manager-mongo-express
-    restart: always
-    ports:
-      - "8081:8081"
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: password
-      ME_CONFIG_MONGODB_URL: mongodb://admin:password@mongodb:27017/
-      ME_CONFIG_MONGODB_SERVER: mongodb
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: admin123
-      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    networks:
-      - process-manager
+  # mongo-express:
+  #   image: mongo-express:latest
+  #   container_name: process-manager-mongo-express
+  #   restart: always
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+  #     ME_CONFIG_MONGODB_ADMINPASSWORD: password
+  #     ME_CONFIG_MONGODB_URL: mongodb://admin:password@mongodb:27017/
+  #     ME_CONFIG_MONGODB_SERVER: mongodb
+  #     ME_CONFIG_BASICAUTH_USERNAME: admin
+  #     ME_CONFIG_BASICAUTH_PASSWORD: admin123
+  #     ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+  #   depends_on:
+  #     mongodb:
+  #       condition: service_healthy
+  #   networks:
+  #     - process-manager
 
   # Redis Cache (same as production)
-  redis:
-    image: redis:7-alpine
-    container_name: process-manager-redis
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - process-manager
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: process-manager-redis
+  #   restart: always
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - process-manager
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
 
   # MinIO Object Storage (same as production)
-  minio:
-    image: minio/minio:latest
-    container_name: process-manager-minio
-    restart: always
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    networks:
-      - process-manager
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
+  # minio:
+  #   image: minio/minio:latest
+  #   container_name: process-manager-minio
+  #   restart: always
+  #   ports:
+  #     - "9000:9000"
+  #     - "9001:9001"
+  #   environment:
+  #     MINIO_ROOT_USER: minioadmin
+  #     MINIO_ROOT_PASSWORD: minioadmin123
+  #   volumes:
+  #     - minio_data:/data
+  #   command: server /data --console-address ":9001"
+  #   networks:
+  #     - process-manager
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+  #     interval: 30s
+  #     timeout: 20s
+      # retries: 3
 
   # Go Backend API - Development with Air hot-reload
   backend:
@@ -92,12 +92,12 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/process_manager?authSource=admin
-      - REDIS_URL=redis://redis:6379
+      - MONGODB_URI=mongodb://kodesonik:Forzaa12@mongodb:27017/process_manager?authSource=admin
+      - REDIS_URL=redis://:Forzaa12@redis:6379
       - MINIO_ENDPOINT=minio:9000
       - UPLOAD_BASE_URL=http://localhost/files
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_ACCESS_KEY=kodesonik
+      - MINIO_SECRET_KEY=Forzaa12
       - MINIO_BUCKET_NAME=process-documents
       - MINIO_USE_SSL=false
       - JWT_SECRET=your-supersec
@@ -116,13 +116,13 @@ services:
       - MAILER_API_URL=https://mail.k-j.store/send
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
-    depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
+    # depends_on:
+    #   mongodb:
+    #     condition: service_healthy
+    #   redis:
+    #     condition: service_healthy
+    #   minio:
+    #     condition: service_healthy
     volumes:
       # Mount source code for hot-reload
       - ./backend:/app
@@ -132,6 +132,7 @@ services:
       - ./backend/serviceAccountKey.json:/app/serviceAccountKey.json:ro
     networks:
       - process-manager
+      - devops_default
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s
@@ -168,6 +169,7 @@ services:
       - /app/.next
     networks:
       - process-manager
+      - devops_default
 
   # Nginx Reverse Proxy
   nginx:
@@ -185,6 +187,7 @@ services:
       - backend
     networks:
       - process-manager
+      - devops_default
 
 volumes:
   mongodb_data:
@@ -195,5 +198,7 @@ volumes:
     driver: local
 
 networks:
+  devops_default:
+    external: true
   process-manager:
     driver: bridge
