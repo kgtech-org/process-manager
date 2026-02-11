@@ -21,16 +21,18 @@ type AuthHandler struct {
 	emailService *services.EmailService
 	otpService   *services.OTPService
 	minioService *services.MinIOService
+	pinService   *services.PinService
 }
 
 // NewAuthHandler creates a new auth handler instance
-func NewAuthHandler(userService *services.UserService, jwtService *services.JWTService, emailService *services.EmailService, otpService *services.OTPService, minioService *services.MinIOService) *AuthHandler {
+func NewAuthHandler(userService *services.UserService, jwtService *services.JWTService, emailService *services.EmailService, otpService *services.OTPService, minioService *services.MinIOService, pinService *services.PinService) *AuthHandler {
 	return &AuthHandler{
 		userService:  userService,
 		jwtService:   jwtService,
 		emailService: emailService,
 		otpService:   otpService,
 		minioService: minioService,
+		pinService:   pinService,
 	}
 }
 
@@ -87,7 +89,20 @@ func (h *AuthHandler) RequestOTP(c *gin.Context) {
 	isDevelopment := os.Getenv("GIN_MODE") == "debug" || os.Getenv("DEVELOPMENT_MODE") == "true"
 
 	// Send OTP response with temporary token
-	helpers.SendOTPResponseWithToken(c, tempToken, otp, isDevelopment)
+	// helpers.SendOTPResponseWithToken(c, tempToken, otp, isDevelopment)
+	// Custom response to include HasPin
+	response := gin.H{
+		"temporaryToken":   tempToken,
+		"expiresInMinutes": 5,
+		"nextStep":         2,
+		"hasPin":           user.HasPin,
+	}
+
+	if isDevelopment {
+		response["otp"] = otp
+	}
+
+	helpers.SendSuccess(c, "OTP sent to your email address", response)
 }
 
 // VerifyOTP verifies the OTP and logs in the user
@@ -296,6 +311,156 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 	}
 
 	helpers.SendSuccess(c, "Profile updated successfully", userResponse)
+}
+
+// ============================================
+// PIN Authentication
+// ============================================
+
+// SetPin sets a new PIN for the user (requires auth)
+// POST /api/auth/pin
+func (h *AuthHandler) SetPin(c *gin.Context) {
+	var req struct {
+		Pin string `json:"pin" binding:"required,len=6,numeric"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendInternalError(c, models.ErrUserNotFound)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	if err := h.pinService.SetPin(ctx, user.ID, req.Pin); err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	helpers.SendSuccess(c, "PIN set successfully", nil)
+}
+
+// CheckPinStatus checks if the user has a PIN set
+// GET /api/auth/pin/status
+func (h *AuthHandler) CheckPinStatus(c *gin.Context) {
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendInternalError(c, models.ErrUserNotFound)
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"hasPin":   user.HasPin,
+		"isLocked": h.pinService.IsLocked(user),
+	})
+}
+
+// VerifyPin verifies the PIN for sensitive actions (requires auth)
+// POST /api/auth/pin/verify
+func (h *AuthHandler) VerifyPin(c *gin.Context) {
+	var req struct {
+		Pin string `json:"pin" binding:"required,len=6,numeric"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	user, exists := middleware.GetCurrentUser(c)
+	if !exists {
+		helpers.SendInternalError(c, models.ErrUserNotFound)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Re-fetch user to get latest attempts/lock status
+	freshUser, err := h.userService.GetUserByID(ctx, user.ID)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	valid, err := h.pinService.VerifyPin(ctx, freshUser, req.Pin)
+	if err != nil {
+		helpers.SendError(c, err)
+		return
+	}
+
+	if valid {
+		helpers.SendSuccess(c, "PIN verified", nil)
+	}
+}
+
+// LoginWithPin logs in a user using their PIN
+// POST /api/auth/login-pin
+func (h *AuthHandler) LoginWithPin(c *gin.Context) {
+	var req struct {
+		Email string `json:"email" binding:"required,email"`
+		Pin   string `json:"pin" binding:"required,len=6,numeric"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Get user by email
+	user, err := h.userService.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		// Generic error for security
+		helpers.SendError(c, models.ErrUserNotFound)
+		return
+	}
+
+	if !user.HasPin {
+		helpers.SendError(c, fmt.Errorf("PIN not set up for this account"))
+		return
+	}
+
+	// Verify PIN
+	valid, err := h.pinService.VerifyPin(ctx, user, req.Pin)
+	if err != nil {
+		helpers.SendError(c, err)
+		return
+	}
+
+	if valid {
+		// Generate tokens
+		// Generate access token
+		accessToken, err := h.jwtService.GenerateAccessToken(user)
+		if err != nil {
+			helpers.SendInternalError(c, err)
+			return
+		}
+
+		// Create refresh token in Redis
+		refreshToken, err := h.otpService.CreateRefreshToken(ctx, user.ID.Hex())
+		if err != nil {
+			helpers.SendInternalError(c, err)
+			return
+		}
+
+		// Create token pair
+		tokenPair := &models.TokenPair{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+			ExpiresAt:    time.Now().Add(15 * time.Minute),
+		}
+
+		// Update last login
+		h.userService.UpdateLastLogin(ctx, user.ID)
+
+		helpers.SendLoginResponse(c, user, tokenPair)
+	}
 }
 
 // RevokeAllTokens revokes all refresh tokens for current user

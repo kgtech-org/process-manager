@@ -1,7 +1,7 @@
 'use client';
 
 import React, { ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 // AuthGuard Props
@@ -22,20 +22,26 @@ const AuthLoadingFallback: React.FC = () => (
 );
 
 // Authentication Guard Component
-export const AuthGuard: React.FC<AuthGuardProps> = ({ 
-  children, 
+export const AuthGuard: React.FC<AuthGuardProps> = ({
+  children,
   redirectTo = '/login',
   fallback = <AuthLoadingFallback />,
 }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Redirect unauthenticated users after loading is complete
-    if (!isLoading && !isAuthenticated) {
-      router.push(redirectTo);
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.push(redirectTo);
+      } else if (user && !user.hasPin && pathname !== '/setup-pin') {
+        // Redirect to PIN setup if user hasn't set up a PIN yet
+        router.push('/setup-pin');
+      }
     }
-  }, [isAuthenticated, isLoading, router, redirectTo]);
+  }, [isAuthenticated, isLoading, user, router, redirectTo, pathname]);
 
   // Show loading fallback while checking authentication
   if (isLoading) {
