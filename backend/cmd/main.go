@@ -72,6 +72,7 @@ func main() {
 	userService := services.InitUserService(db)
 	emailService := services.NewEmailService()
 	otpService := services.NewOTPService(redisService.Client)
+	pinService := services.NewPinService(db.Database)
 	activityLogService := services.InitActivityLogService(db)
 
 	// Initialize Firebase service
@@ -122,7 +123,7 @@ func main() {
 	documentMiddleware := middleware.NewDocumentMiddleware(db.Database)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService, minioService)
+	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService, minioService, pinService)
 	userHandler := handlers.NewUserHandler(userService, emailService)
 	departmentHandler := handlers.NewDepartmentHandler(db)
 	jobPositionHandler := handlers.NewJobPositionHandler(db)
@@ -147,7 +148,8 @@ func main() {
 
 	// CORS configuration
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://localhost:3000", "https://localhost:3000"}
+	corsConfig.AllowAllOrigins = true
+	// corsConfig.AllowOrigins = []string{"http://localhost:3000", "https://localhost:3000"}
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept-Language", "X-Language"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}

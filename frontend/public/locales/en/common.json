@@ -19,6 +19,7 @@
     "backToUsers": "Back to Users"
   },
   "common": {
+    "back": "Back",
     "welcome": "Welcome",
     "loading": "Loading...",
     "save": "Save",

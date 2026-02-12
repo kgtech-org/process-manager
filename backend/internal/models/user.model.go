@@ -52,8 +52,17 @@ type User struct {
 	RejectedBy      *primitive.ObjectID `bson:"rejected_by,omitempty" json:"rejectedBy,omitempty"`
 	RejectedAt      *time.Time          `bson:"rejected_at,omitempty" json:"rejectedAt,omitempty"`
 	RejectionReason string              `bson:"rejection_reason,omitempty" json:"rejectionReason,omitempty"`
-	CreatedAt       time.Time           `bson:"created_at" json:"createdAt"`
-	UpdatedAt       time.Time           `bson:"updated_at" json:"updatedAt"`
+
+	// PIN Authentication
+	PinHash     string     `bson:"pin_hash" json:"-"`     // bcrypt hash of PIN
+	PinSalt     string     `bson:"pin_salt" json:"-"`     // Salt for additional security
+	HasPin      bool       `bson:"has_pin" json:"hasPin"` // Whether user has set up PIN
+	PinSetAt    *time.Time `bson:"pin_set_at,omitempty" json:"pinSetAt,omitempty"`
+	PinAttempts int        `bson:"pin_attempts" json:"-"`            // Failed PIN attempts
+	PinLockedAt *time.Time `bson:"pin_locked_at,omitempty" json:"-"` // When PIN was locked due to failed attempts
+
+	CreatedAt time.Time `bson:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bson:"updated_at" json:"updatedAt"`
 }
 
 // ============================================
@@ -109,28 +118,29 @@ type UpdateUserRoleRequest struct {
 
 // UserResponse represents the user data sent in API responses
 type UserResponse struct {
-	ID              primitive.ObjectID  `json:"id"`
-	Email           string              `json:"email"`
-	FirstName       string              `json:"firstName"`
-	LastName        string              `json:"lastName"`
-	Role            UserRole            `json:"role"`
-	Status          UserStatus          `json:"status"`
-	Active          bool                `json:"active"`
-	Verified        bool                `json:"verified"`
-	Avatar          string              `json:"avatar,omitempty"`
-	Phone           string              `json:"phone,omitempty"`
-	DepartmentID    *primitive.ObjectID `json:"departmentId,omitempty"`
-	JobPositionID   *primitive.ObjectID `json:"jobPositionId,omitempty"`
-	Department      *DepartmentResponse `json:"department,omitempty"`
+	ID              primitive.ObjectID   `json:"id"`
+	Email           string               `json:"email"`
+	FirstName       string               `json:"firstName"`
+	LastName        string               `json:"lastName"`
+	Role            UserRole             `json:"role"`
+	Status          UserStatus           `json:"status"`
+	Active          bool                 `json:"active"`
+	Verified        bool                 `json:"verified"`
+	Avatar          string               `json:"avatar,omitempty"`
+	Phone           string               `json:"phone,omitempty"`
+	DepartmentID    *primitive.ObjectID  `json:"departmentId,omitempty"`
+	JobPositionID   *primitive.ObjectID  `json:"jobPositionId,omitempty"`
+	Department      *DepartmentResponse  `json:"department,omitempty"`
 	JobPosition     *JobPositionResponse `json:"jobPosition,omitempty"`
-	LastLogin       *time.Time          `json:"lastLogin,omitempty"`
-	ValidatedBy     *primitive.ObjectID `json:"validatedBy,omitempty"`
-	ValidatedAt     *time.Time          `json:"validatedAt,omitempty"`
-	RejectedBy      *primitive.ObjectID `json:"rejectedBy,omitempty"`
-	RejectedAt      *time.Time          `json:"rejectedAt,omitempty"`
-	RejectionReason string              `json:"rejectionReason,omitempty"`
-	CreatedAt       time.Time           `json:"createdAt"`
-	UpdatedAt       time.Time           `json:"updatedAt"`
+	LastLogin       *time.Time           `json:"lastLogin,omitempty"`
+	ValidatedBy     *primitive.ObjectID  `json:"validatedBy,omitempty"`
+	ValidatedAt     *time.Time           `json:"validatedAt,omitempty"`
+	RejectedBy      *primitive.ObjectID  `json:"rejectedBy,omitempty"`
+	RejectedAt      *time.Time           `json:"rejectedAt,omitempty"`
+	RejectionReason string               `json:"rejectionReason,omitempty"`
+	HasPin          bool                 `json:"hasPin"`
+	CreatedAt       time.Time            `json:"createdAt"`
+	UpdatedAt       time.Time            `json:"updatedAt"`
 }
 
 // ============================================
@@ -139,16 +149,16 @@ type UserResponse struct {
 
 // UserFilterOptions represents options for filtering users
 type UserFilterOptions struct {
-	Status     UserStatus `json:"status,omitempty"`
-	Role       UserRole   `json:"role,omitempty"`
-	DepartmentID string   `json:"departmentId,omitempty"`
-	Verified   *bool      `json:"verified,omitempty"`
-	Active     *bool      `json:"active,omitempty"`
-	Search     string     `json:"search,omitempty"`
-	Page       int        `json:"page"`
-	Limit      int        `json:"limit"`
-	SortBy     string     `json:"sortBy"`
-	SortOrder  string     `json:"sortOrder"`
+	Status       UserStatus `json:"status,omitempty"`
+	Role         UserRole   `json:"role,omitempty"`
+	DepartmentID string     `json:"departmentId,omitempty"`
+	Verified     *bool      `json:"verified,omitempty"`
+	Active       *bool      `json:"active,omitempty"`
+	Search       string     `json:"search,omitempty"`
+	Page         int        `json:"page"`
+	Limit        int        `json:"limit"`
+	SortBy       string     `json:"sortBy"`
+	SortOrder    string     `json:"sortOrder"`
 }
 
 // ============================================
@@ -222,6 +232,7 @@ func (u *User) ToResponse() UserResponse {
 		RejectedBy:      u.RejectedBy,
 		RejectedAt:      u.RejectedAt,
 		RejectionReason: u.RejectionReason,
+		HasPin:          u.HasPin,
 		CreatedAt:       u.CreatedAt,
 		UpdatedAt:       u.UpdatedAt,
 	}
@@ -257,7 +268,6 @@ func (u *User) BeforeUpdate() {
 // ============================================
 // Database Helper Functions (moved to service)
 // ============================================
-
 
 // CreateUserIndexes creates MongoDB indexes for the user collection
 func CreateUserIndexes(ctx context.Context) []bson.D {

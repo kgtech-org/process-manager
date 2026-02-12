@@ -12,6 +12,17 @@ import {
   EmailVerificationData,
 } from './validation';
 
+// PIN Data Types
+export interface PinStatusResponse {
+  hasPin: boolean;
+  isLocked: boolean;
+}
+
+export interface PinVerifyResponse {
+  success: boolean;
+  message: string;
+}
+
 // Authentication Response Types
 export interface AuthTokens {
   accessToken: string;
@@ -44,11 +55,11 @@ export interface RegistrationStep3Response {
 
 // Authentication Service
 class AuthService {
-  
+
   // ============================
   // REGISTRATION FLOW
   // ============================
-  
+
   /**
    * Step 1: Send registration email and get OTP
    */
@@ -141,7 +152,7 @@ class AuthService {
     const response = await apiClient.post<AuthTokens>('/auth/refresh', {
       refresh_token: refreshToken,
     });
-    
+
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Token refresh failed');
     }
@@ -157,7 +168,7 @@ class AuthService {
    */
   async logout(): Promise<void> {
     const refreshToken = TokenManager.getRefreshToken();
-    
+
     try {
       if (refreshToken) {
         await apiClient.post('/auth/logout', {
@@ -252,6 +263,55 @@ class AuthService {
   }
 
   // ============================
+  // PIN AUTHENTICATION
+  // ============================
+
+  /**
+   * Set a new PIN for the user
+   */
+  async setPin(pin: string): Promise<void> {
+    const response = await apiClient.post('/auth/pin', { pin });
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to set PIN');
+    }
+  }
+
+  /**
+   * Verify PIN (for sensitive actions)
+   */
+  async verifyPin(pin: string): Promise<boolean> {
+    const response = await apiClient.post<PinVerifyResponse>('/auth/pin/verify', { pin });
+    return response.success && !!response.data;
+  }
+
+  /**
+   * Check if user has PIN set
+   */
+  async checkPinStatus(): Promise<PinStatusResponse> {
+    const response = await apiClient.get<PinStatusResponse>('/auth/pin/status');
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to check PIN status');
+    }
+    return response.data;
+  }
+
+  /**
+   * Login with PIN
+   */
+  async loginWithPin(email: string, pin: string): Promise<LoginResponse> {
+    const response = await apiClient.post<LoginResponse>('/auth/login-pin', { email, pin });
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Login failed');
+    }
+
+    // Store tokens
+    const { accessToken, refreshToken } = response.data;
+    TokenManager.setTokens(accessToken, refreshToken);
+
+    return response.data;
+  }
+
+  // ============================
   // ORGANIZATIONAL DATA
   // ============================
 
@@ -270,10 +330,10 @@ class AuthService {
    * Get all job positions for registration
    */
   async getJobPositions(departmentId?: string): Promise<JobPosition[]> {
-    const url = departmentId 
+    const url = departmentId
       ? `/job-positions?departmentId=${departmentId}`
       : '/job-positions';
-    
+
     const response = await apiClient.get<JobPosition[]>(url);
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to fetch job positions');

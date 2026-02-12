@@ -19,6 +19,7 @@
     "backToUsers": "Retour aux Utilisateurs"
   },
   "common": {
+    "back": "Retour",
     "welcome": "Bienvenue",
     "loading": "Chargement...",
     "save": "Enregistrer",

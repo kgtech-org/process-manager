@@ -40,6 +40,7 @@ export type RegistrationStep3Data = z.infer<typeof registrationStep3Schema>;
 // Login - OTP Request
 export const loginRequestSchema = z.object({
   email: emailSchema,
+  forceOtp: z.boolean().optional(),
 });
 
 export type LoginRequestData = z.infer<typeof loginRequestSchema>;
@@ -140,6 +141,7 @@ export const userSchema = z.object({
   departmentId: z.string().optional(),
   jobPositionId: z.string().optional(),
   avatar: z.string().optional(),
+  hasPin: z.boolean().optional(),
   emailVerified: z.boolean(),
   lastLogin: z.string().optional(),
   validatedAt: z.string().optional(),

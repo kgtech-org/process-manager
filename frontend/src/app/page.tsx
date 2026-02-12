@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,9 +30,14 @@ export default function HomePage() {
   const { t } = useTranslation('landing');
   const router = useRouter();
 
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, user, router]);
+
   if (isAuthenticated && user) {
-    router.push('/dashboard');
-    return null;
+    return null; // Prevent flashing content while redirecting
   }
 
   return (
