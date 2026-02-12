@@ -27,7 +27,8 @@ export const LoginForm: React.FC = () => {
     hasPin,
     showPinInput,
     switchToOtp,
-    switchToPin
+    switchToPin,
+    resendOtp
   } = useLogin();
   const [error, setError] = useState<string>('');
   const { t } = useTranslation('auth');
@@ -134,8 +135,8 @@ export const LoginForm: React.FC = () => {
               onSuccess={(data) => {
                 router.push('/macros');
               }}
-              onForgotPin={() => switchToOtp()} // Fallback to OTP if PIN is forgotten
-              onBack={() => switchToOtp()}
+              onForgotPin={() => resendOtp()} // Trigger OTP send + switch to OTP screen
+              onBack={() => resendOtp()} // Trigger OTP send + switch to OTP screen
             />
           )}
 
@@ -173,7 +174,7 @@ export const LoginForm: React.FC = () => {
                     type="button"
                     variant="ghost"
                     className="w-full"
-                    onClick={handleGoBack}
+                    onClick={resendOtp} // Use resendOtp with force flag
                     disabled={isLoading}
                   >
                     {t('login.resendOtp')}

@@ -10,7 +10,8 @@ import (
 
 // LoginRequest represents the request payload for user login (OTP request)
 type LoginRequest struct {
-	Email string `json:"email" validate:"required,email"`
+	Email    string `json:"email" validate:"required,email"`
+	ForceOTP bool   `json:"forceOtp"`
 }
 
 // ============================================
@@ -113,7 +114,6 @@ type OTPToken struct {
 	Attempts  int       `json:"attempts"`
 	CreatedAt time.Time `json:"createdAt"`
 }
-
 
 // TokenPair represents an access and refresh token pair
 type TokenPair struct {

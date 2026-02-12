@@ -40,6 +40,7 @@ export type RegistrationStep3Data = z.infer<typeof registrationStep3Schema>;
 // Login - OTP Request
 export const loginRequestSchema = z.object({
   email: emailSchema,
+  forceOtp: z.boolean().optional(),
 });
 
 export type LoginRequestData = z.infer<typeof loginRequestSchema>;

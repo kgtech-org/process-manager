@@ -38,8 +38,8 @@ export const useLogin = () => {
         email: data.email,
         temporaryToken: response.temporaryToken,
         isLoading: false,
-        hasPin: (response as any).hasPin || false, // Use type assertion until interfaces are updated
-        showPinInput: (response as any).hasPin || false,
+        hasPin: (response as any).hasPin || false,
+        showPinInput: ((response as any).hasPin || false) && !data.forceOtp,
       }));
 
 
@@ -112,6 +112,8 @@ export const useLogin = () => {
       email: '',
       temporaryToken: '',
       isLoading: false,
+      hasPin: false,
+      showPinInput: false,
     });
   }, []);
 
@@ -123,6 +125,14 @@ export const useLogin = () => {
     setState(prev => ({ ...prev, showPinInput: true }));
   }, []);
 
+  // Resend OTP
+  const resendOtp = useCallback(async () => {
+    if (state.email) {
+      // Force OTP resend
+      await requestOtp({ email: state.email, forceOtp: true });
+    }
+  }, [state.email, requestOtp]);
+
   return {
     ...state,
     requestOtp,
@@ -131,5 +141,6 @@ export const useLogin = () => {
     resetLogin,
     switchToOtp,
     switchToPin,
+    resendOtp,
   };
 };

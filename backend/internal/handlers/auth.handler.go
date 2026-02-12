@@ -62,6 +62,23 @@ func (h *AuthHandler) RequestOTP(c *gin.Context) {
 		return
 	}
 
+	// Check if user has PIN and if OTP is forced
+	// If user has PIN and ForceOTP is false, we don't send OTP yet
+	// The user will be prompted to enter PIN first
+	if user.HasPin && !req.ForceOTP {
+		// We still return a successful response but indicate PIN is required
+		// We don't generate a temp token because one isn't needed for PIN login
+		response := gin.H{
+			"temporaryToken":   "", // Not needed for PIN login
+			"expiresInMinutes": 0,
+			"nextStep":         2, // Frontend will see hasPin and switch to PIN input
+			"hasPin":           true,
+		}
+
+		helpers.SendSuccess(c, "Please enter your PIN", response)
+		return
+	}
+
 	// Generate and store OTP
 	otp, err := h.otpService.GenerateOTP(ctx, user.Email)
 	if err != nil {
