@@ -15,6 +15,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { DocumentResource } from '@/lib/resources/document';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ProcessForm } from '@/components/macros/ProcessForm';
 
 export default function MacroDetailPage() {
   const params = useParams();
@@ -30,6 +32,7 @@ export default function MacroDetailPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const isAdmin = user?.role === 'admin';
+  const [isCreateProcessModalOpen, setIsCreateProcessModalOpen] = useState(false);
 
   useEffect(() => {
     const loadMacro = async () => {
@@ -58,8 +61,6 @@ export default function MacroDetailPage() {
         setProcessesLoading(false);
       }
     };
-
-
 
     if (macroId) {
       loadMacro();
@@ -96,6 +97,44 @@ export default function MacroDetailPage() {
       toast({
         variant: 'destructive',
         title: t('messages.updateFailed') || 'Update failed',
+        description: error.message || t('messages.error'),
+      });
+    }
+  };
+
+  const handleCreateProcess = async (data: any) => {
+    if (!macro) return;
+    try {
+      const payload = {
+        macroId: macroId,
+        title: data.title,
+        processCode: data.processCode || undefined,
+        description: data.description || '',
+        shortDescription: data.shortDescription || '',
+        isActive: data.isActive,
+        // Required by backend: at least one task
+        tasks: [{
+          code: data.processCode ? `${data.processCode}_T1` : 'T1',
+          description: 'Initial Task',
+          order: 1,
+          isActive: true
+        }]
+      };
+
+      await DocumentResource.create(payload as any); // Type assertion if needed locally
+      toast({
+        title: t('messages.createSuccess', { defaultValue: 'Process created successfully' }),
+      });
+      setIsCreateProcessModalOpen(false);
+      // Refresh processes
+      const response = await MacroResource.getProcesses(macroId, 1, 100);
+      const newData = response.data;
+      setProcesses(isAdmin ? newData : newData.filter(p => p.isActive));
+    } catch (error: any) {
+      console.error('Failed to create process:', error);
+      toast({
+        variant: 'destructive',
+        title: t('messages.createFailed', { defaultValue: 'Failed to create process' }),
         description: error.message || t('messages.error'),
       });
     }
@@ -191,15 +230,11 @@ export default function MacroDetailPage() {
                 />
               </div>
             )}
-            <Button variant="outline" size="sm" onClick={() => router.push(`/macros/${macroId}/edit`)}>
-              <Edit className="w-4 h-4 mr-2" />
-              {t('edit', { defaultValue: 'Edit' })}
-            </Button>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              {t('addProcess', { defaultValue: 'Add Process' })}
-            </Button>
           </div>
+          <Button variant="outline" size="sm" onClick={() => router.push(`/macros/${macroId}/edit`)}>
+            <Edit className="w-4 h-4 mr-2" />
+            {t('edit', { defaultValue: 'Edit' })}
+          </Button>
         </div>
       </div>
 
@@ -251,7 +286,7 @@ export default function MacroDetailPage() {
             <CardTitle>
               {t('processes', { defaultValue: 'Processes' })} ({processes.length})
             </CardTitle>
-            <Button size="sm">
+            <Button size="sm" onClick={() => setIsCreateProcessModalOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               {t('addProcess', { defaultValue: 'Add Process' })}
             </Button>
@@ -270,7 +305,7 @@ export default function MacroDetailPage() {
               <p className="text-gray-600 mb-4">
                 {t('noProcesses', { defaultValue: 'No processes found for this macro' })}
               </p>
-              <Button size="sm">
+              <Button size="sm" onClick={() => setIsCreateProcessModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 {t('addFirstProcess', { defaultValue: 'Add First Process' })}
               </Button>
@@ -339,6 +374,15 @@ export default function MacroDetailPage() {
           )}
         </CardContent>
       </Card>
-    </div >
+
+      <Dialog open={isCreateProcessModalOpen} onOpenChange={setIsCreateProcessModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t('addNewProcess', { defaultValue: 'Add New Process' })}</DialogTitle>
+          </DialogHeader>
+          <ProcessForm onSubmit={handleCreateProcess} />
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

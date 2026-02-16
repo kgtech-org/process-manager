@@ -74,6 +74,7 @@
   "active": "Actif",
   "inactive": "Inactif",
   "addProcess": "Ajouter un Processus",
+  "processTitle": "Titre du Processus",
   "macroInformation": "Informations du Macro",
   "code": "Code",
   "processCount": "Processus",

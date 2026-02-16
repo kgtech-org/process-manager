@@ -18,12 +18,17 @@ import { Switch } from '@/components/ui/switch';
 import { useTranslation } from '@/lib/i18n';
 import { Macro } from '@/lib/resources/macro';
 
+// If no code is present, we could auto-generate or ask user. 
+// For now, let's add a hidden code field that auto-generates M{random} if not present,
+// or better, let's add the Code field to the form as it is required.
 const formSchema = z.object({
+    code: z.string().min(1, 'Code is required'), // Added code validation
     name: z.string().min(1, 'Name is required'),
     shortDescription: z.string().optional(),
     description: z.string().optional(),
     isActive: z.boolean().default(true),
 });
+
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -58,19 +63,34 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                     </div>
                 )}
 
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{t('name', { defaultValue: 'Name' })}</FormLabel>
-                            <FormControl>
-                                <Input placeholder={t('namePlaceholder', { defaultValue: 'Enter macro name' })} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <FormField
+                        control={form.control}
+                        name="code"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t('code', { defaultValue: 'Code' })}</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="M1" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-2">
+                                <FormLabel>{t('name', { defaultValue: 'Name' })}</FormLabel>
+                                <FormControl>
+                                    <Input placeholder={t('namePlaceholder', { defaultValue: 'Enter macro name' })} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
 
                 <FormField
                     control={form.control}
@@ -82,7 +102,7 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                                 <Input placeholder={t('shortDescriptionPlaceholder', { defaultValue: 'Brief summary' })} {...field} />
                             </FormControl>
                             <FormDescription>
-                                {t('shortDescriptionHelp', { defaultValue: 'A brief summary of the macro (1-2 sentences)' })}
+                                {t('shortDescriptionHelp', { defaultValue: 'A brief summary (1-2 sentences)' })}
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -94,11 +114,11 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>{t('description', { defaultValue: 'Description' })}</FormLabel>
+                            <FormLabel>{t('description', { defaultValue: 'Detailed Description' })}</FormLabel>
                             <FormControl>
                                 <Textarea
-                                    placeholder={t('descriptionPlaceholder', { defaultValue: 'Detailed description' })}
-                                    rows={5}
+                                    placeholder={t('descriptionPlaceholder', { defaultValue: 'Detailed description of the macro domain...' })}
+                                    className="min-h-[120px]"
                                     {...field}
                                 />
                             </FormControl>
@@ -111,13 +131,13 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                     control={form.control}
                     name="isActive"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
                             <div className="space-y-0.5">
                                 <FormLabel className="text-base">
-                                    {t('active', { defaultValue: 'Active' })}
+                                    {t('active', { defaultValue: 'Active Status' })}
                                 </FormLabel>
                                 <FormDescription>
-                                    {t('activeDescription', { defaultValue: 'Enable or disable this macro' })}
+                                    {t('activeDescription', { defaultValue: 'Inactive macros are hidden from standard users' })}
                                 </FormDescription>
                             </div>
                             <FormControl>
@@ -130,12 +150,22 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                     )}
                 />
 
-                <div className="flex justify-end space-x-4">
+                <div className="flex justify-end space-x-4 pt-4">
+                    <Button type="button" variant="outline" onClick={() => form.reset()}>
+                        {t('cancel', { defaultValue: 'Reset' })}
+                    </Button>
                     <Button type="submit" disabled={isLoading}>
-                        {isLoading ? t('saving', { defaultValue: 'Saving...' }) : t('save', { defaultValue: 'Save Changes' })}
+                        {isLoading ? (
+                            <>
+                                <span className="mr-2 animate-spin">⏳</span>
+                                {t('saving', { defaultValue: 'Saving...' })}
+                            </>
+                        ) : (
+                            t('save', { defaultValue: 'Save Changes' })
+                        )}
                     </Button>
                 </div>
             </form>
-        </Form>
+        </Form >
     );
 }

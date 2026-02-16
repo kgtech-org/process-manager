@@ -8,7 +8,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FileText, Download, Edit } from 'lucide-react';
+import { ArrowLeft, FileText, Download, Edit, Plus } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Switch } from '@/components/ui/switch';
@@ -37,6 +37,7 @@ export default function ProcessDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<ApplicationTask | null>(null);
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -97,8 +98,14 @@ export default function ProcessDetailPage() {
   const handleUpdateTask = async (data: any) => {
     if (!process || !process.tasks || !editingTask) return;
 
+    // Ensure code is fully qualified if it's relative
+    let taskCode = data.code;
+    if (taskCode && !taskCode.startsWith(process.processCode + '_') && !taskCode.startsWith('M')) {
+      taskCode = `${process.processCode}_${taskCode}`;
+    }
+
     const updatedTasks = process.tasks.map(t =>
-      t.code === editingTask.code ? { ...t, ...data } : t
+      t.code === editingTask.code ? { ...t, ...data, code: taskCode } : t
     );
 
     try {
@@ -112,6 +119,39 @@ export default function ProcessDetailPage() {
       toast({
         variant: 'destructive',
         title: t('messages.updateFailed', { defaultValue: 'Update failed' }),
+        description: error.message,
+      });
+    }
+  };
+
+  const handleCreateTask = async (data: any) => {
+    if (!process) return;
+
+    // Ensure code is fully qualified
+    let taskCode = data.code;
+    if (taskCode && !taskCode.startsWith(process.processCode + '_') && !taskCode.startsWith('M')) {
+      taskCode = `${process.processCode}_${taskCode}`;
+    }
+
+    const newTask = {
+      ...data,
+      code: taskCode
+    };
+
+    const currentTasks = process.tasks || [];
+    const updatedTasks = [...currentTasks, newTask];
+
+    try {
+      await DocumentResource.update(processId, { tasks: updatedTasks });
+      setProcess({ ...process, tasks: updatedTasks } as any);
+      setIsCreateTaskModalOpen(false);
+      toast({
+        title: t('messages.createSuccess', { defaultValue: 'Task created successfully' }),
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.createFailed', { defaultValue: 'Failed to create task' }),
         description: error.message,
       });
     }
@@ -261,7 +301,15 @@ export default function ProcessDetailPage() {
             <TabsContent value="tasks" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Process Tasks</CardTitle>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Process Tasks</CardTitle>
+                    {isAdmin && (
+                      <Button size="sm" onClick={() => setIsCreateTaskModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t('addTask', { defaultValue: 'Add Task' })}
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -397,11 +445,28 @@ export default function ProcessDetailPage() {
       <Dialog open={!!editingTask} onOpenChange={(open) => !open && setEditingTask(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Task</DialogTitle>
+            <DialogTitle>{t('editTask', { defaultValue: 'Edit Task' })}</DialogTitle>
           </DialogHeader>
           {editingTask && (
             <TaskForm initialData={editingTask} onSubmit={handleUpdateTask} />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateTaskModalOpen} onOpenChange={setIsCreateTaskModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('addNewTask', { defaultValue: 'Add New Task' })}</DialogTitle>
+          </DialogHeader>
+          <TaskForm
+            initialData={{
+              code: `T${(process.tasks?.length || 0) + 1}`,
+              description: '',
+              order: (process.tasks?.length || 0) + 1,
+              isActive: true
+            } as any}
+            onSubmit={handleCreateTask}
+          />
         </DialogContent>
       </Dialog>
     </div>

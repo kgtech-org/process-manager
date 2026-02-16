@@ -10,6 +10,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/lib/i18n';
 import { useAuth } from '@/hooks/useAuth';
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MacroForm } from './MacroForm';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+
 interface MacroListProps {
   initialFilters?: MacroFilter;
 }
@@ -176,6 +181,29 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
     }
   };
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleCreateMacro = async (data: any) => {
+    try {
+      setIsEditing(true);
+      await MacroResource.create(data);
+      toast({
+        title: t('messages.createSuccess') || 'Macro created successfully',
+      });
+      setIsCreateModalOpen(false);
+      loadMacros(true);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.createFailed') || 'Failed to create macro',
+        description: error.message || t('messages.error'),
+      });
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
   if (loading && macros.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -186,7 +214,24 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
 
   return (
     <div className="space-y-6">
-      <MacroSearch onSearch={handleSearch} initialFilters={filters} />
+      <div className="flex justify-between items-center">
+        <MacroSearch onSearch={handleSearch} initialFilters={filters} />
+        {isAdmin && (
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('newMacro', { defaultValue: 'New Macro' })}
+          </Button>
+        )}
+      </div>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{t('newMacro', { defaultValue: 'New Macro' })}</DialogTitle>
+          </DialogHeader>
+          <MacroForm onSubmit={handleCreateMacro} isLoading={isEditing} />
+        </DialogContent>
+      </Dialog>
 
       {macros.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">

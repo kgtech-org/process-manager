@@ -184,6 +184,17 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 
 	// Validate tasks if any are provided
 	if len(req.Tasks) > 0 {
+		// Auto-fix task codes that are provided as relative codes (e.g. "T1")
+		for i := range req.Tasks {
+			if !strings.HasPrefix(req.Tasks[i].Code, processCode+"_") {
+				// If it doesn't start with processCode, assume it's a suffix and prepend it
+				// But only if it looks like a task suffix (T\d+)
+				if strings.HasPrefix(req.Tasks[i].Code, "T") {
+					req.Tasks[i].Code = fmt.Sprintf("%s_%s", processCode, req.Tasks[i].Code)
+				}
+			}
+		}
+
 		if err := validateTasks(processCode, req.Tasks); err != nil {
 			return nil, fmt.Errorf("task validation failed: %w", err)
 		}
