@@ -67,9 +67,10 @@ type UpdateMacroRequest struct {
 
 // MacroFilter represents filtering options for macros
 type MacroFilter struct {
-	Search *string `json:"search"` // Search in name, code, or description
-	Page   int     `json:"page"`
-	Limit  int     `json:"limit"`
+	Search   *string `json:"search"` // Search in name, code, or description
+	Page     int     `json:"page"`
+	Limit    int     `json:"limit"`
+	IsActive *bool   `json:"isActive"` // Filter by active status
 }
 
 // MacroWithProcesses represents a macro with its associated processes

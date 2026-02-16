@@ -30,10 +30,7 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
 
   const limit = 12;
 
-  // Load initial macros or when filters change
-  useEffect(() => {
-    loadMacros(true);
-  }, [filters]);
+
 
   // Refs to track latest values without causing observer recreation
   const hasMoreRef = useRef(hasMore);
@@ -69,7 +66,7 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
     return () => observer.disconnect();
   }, [observerTarget.current]); // Only recreate when target element changes
 
-  const loadMacros = async (reset = false) => {
+  const loadMacros = useCallback(async (reset = false) => {
     try {
       setLoading(true);
       const response = await MacroResource.getAll({
@@ -79,7 +76,8 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
       });
       const data = response.data;
       // Filter out inactive macros for non-admin users
-      const filteredData = isAdmin ? data : data.filter(m => m.isActive);
+      const userIsAdmin = user?.role === 'admin';
+      const filteredData = userIsAdmin ? data : data.filter((m: Macro) => m.isActive);
       setMacros(filteredData);
       setCurrentPage(1);
       setTotal(response.pagination.total);
@@ -93,7 +91,12 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, limit, t, toast, user]);
+
+  // Load initial macros or when filters/auth changes
+  useEffect(() => {
+    loadMacros(true);
+  }, [loadMacros]);
 
   const loadMoreMacros = async () => {
     if (!hasMore || loadingMore) return;

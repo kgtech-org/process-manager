@@ -65,7 +65,7 @@ export default function MacroDetailPage() {
       loadMacro();
       loadProcesses();
     }
-  }, [macroId, t]);
+  }, [macroId, t, isAdmin]);
 
   const handleToggleMacroActive = async (checked: boolean) => {
     if (!macro) return;
