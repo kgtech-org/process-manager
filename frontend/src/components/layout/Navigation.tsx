@@ -193,7 +193,13 @@ export const Navigation: React.FC = () => {
   const isManager = user?.role === 'manager';
   const hasAdminAccess = isAdmin || isManager;
 
-  const navigationItems = getNavigationItems(t);
+  const navigationItems = getNavigationItems(t).filter(item => {
+    // Hide Documents menu for ALL users as per requirement
+    if (item.href === '/documents') {
+      return false;
+    }
+    return true;
+  });
   const adminItems = isAdmin ? getAdminItems(t) : getManagerItems(t);
 
   return (
@@ -308,11 +314,10 @@ export const Navigation: React.FC = () => {
             <Button
               variant="ghost"
               onClick={toggleChat}
-              className={`w-full justify-start gap-3 text-sm font-medium transition-colors ${
-                isChatOpen
-                  ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
+              className={`w-full justify-start gap-3 text-sm font-medium transition-colors ${isChatOpen
+                ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
               title={isChatOpen ? 'Fermer le chat' : 'Ouvrir le chat'}
             >
               <MessageCircle className={`h-5 w-5 ${isChatOpen ? 'text-orange-600' : ''}`} />

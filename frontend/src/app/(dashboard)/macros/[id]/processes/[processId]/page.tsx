@@ -2,42 +2,28 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { MacroResource, Macro } from '@/lib/resources/macro';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FileText, Download } from 'lucide-react';
+import { ArrowLeft, FileText, Download, Edit } from 'lucide-react';
 import { apiClient } from '@/lib/api';
-
-interface ProcessDetail {
-  id: string;
-  processCode: string;
-  title: string;
-  description?: string;
-  shortDescription?: string;
-  version: string;
-  status: string;
-  macroId: string;
-  isActive: boolean;
-  reference: string;
-  metadata: {
-    objectives: string[];
-    implicatedActors: string[];
-    managementRules: string[];
-    terminology: string[];
-  };
-  contributors: {
-    authors: Array<{ userId: string; name: string; role: string }>;
-    verifiers: Array<{ userId: string; name: string; role: string }>;
-    validators: Array<{ userId: string; name: string; role: string }>;
-  };
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { useAuth } from '@/hooks/useAuth';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { DocumentResource, Document, ApplicationTask } from '@/lib/resources/document';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { TaskForm } from "@/components/macros/TaskForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AnnexEditor } from '@/components/documents/AnnexEditor';
+import { DiagramEditor } from '@/components/documents/DiagramEditor';
 
 export default function ProcessDetailPage() {
   const params = useParams();
@@ -47,16 +33,16 @@ export default function ProcessDetailPage() {
   const processId = params.processId as string;
 
   const [macro, setMacro] = useState<Macro | null>(null);
-  const [process, setProcess] = useState<ProcessDetail | null>(null);
+  const [process, setProcess] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<ApplicationTask | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
 
-        // Load macro and process in parallel
         const [macroData, processResponse] = await Promise.all([
           MacroResource.getById(macroId),
           apiClient.get(`/documents/${processId}`)
@@ -81,6 +67,93 @@ export default function ProcessDetailPage() {
       loadData();
     }
   }, [macroId, processId]);
+
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const { toast } = useToast();
+
+  const handleToggleTaskActive = async (taskCode: string, checked: boolean) => {
+    if (!process || !process.tasks) return;
+
+    const updatedTasks = process.tasks.map(t =>
+      t.code === taskCode ? { ...t, isActive: checked } : t
+    );
+
+    try {
+      await DocumentResource.update(processId, { tasks: updatedTasks });
+      setProcess({ ...process, tasks: updatedTasks } as any);
+      toast({
+        title: t('messages.updateSuccess', { defaultValue: 'Task updated successfully' }),
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.updateFailed', { defaultValue: 'Update failed' }),
+        description: error.message,
+      });
+    }
+  };
+
+  const handleUpdateTask = async (data: any) => {
+    if (!process || !process.tasks || !editingTask) return;
+
+    const updatedTasks = process.tasks.map(t =>
+      t.code === editingTask.code ? { ...t, ...data } : t
+    );
+
+    try {
+      await DocumentResource.update(processId, { tasks: updatedTasks });
+      setProcess({ ...process, tasks: updatedTasks } as any);
+      setEditingTask(null);
+      toast({
+        title: t('messages.updateSuccess', { defaultValue: 'Task updated successfully' }),
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.updateFailed', { defaultValue: 'Update failed' }),
+        description: error.message,
+      });
+    }
+  };
+
+  const [activeTab, setActiveTab] = useState('tasks');
+
+  const handleCreateAnnex = async (annex: { title: string; type: any; content: any }) => {
+    if (!process) return;
+    try {
+      await DocumentResource.createAnnex(processId, annex);
+      const updatedDoc = await apiClient.get(`/documents/${processId}`);
+      if (updatedDoc.success) setProcess(updatedDoc.data);
+      toast({ title: t('messages.createSuccess', { defaultValue: 'Annex created' }) });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Failed to create annex', description: error.message });
+    }
+  };
+
+  const handleUpdateAnnex = async (annexId: string, updates: any) => {
+    if (!process) return;
+    try {
+      await DocumentResource.updateAnnex(processId, annexId, updates);
+      // Optimistically update or refetch
+      const updatedDoc = await apiClient.get(`/documents/${processId}`);
+      if (updatedDoc.success) setProcess(updatedDoc.data);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Failed to update annex', description: error.message });
+    }
+  };
+
+  const handleDeleteAnnex = async (annexId: string) => {
+    if (!process) return;
+    try {
+      await DocumentResource.deleteAnnex(processId, annexId);
+      const updatedDoc = await apiClient.get(`/documents/${processId}`);
+      if (updatedDoc.success) setProcess(updatedDoc.data);
+      toast({ title: t('messages.deleteSuccess', { defaultValue: 'Annex deleted' }) });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Failed to delete annex', description: error.message });
+    }
+  };
 
   if (loading) {
     return (
@@ -116,7 +189,7 @@ export default function ProcessDetailPage() {
   const breadcrumbItems = [
     { label: 'Macros', href: '/macros' },
     { label: `${macro.code} - ${macro.name}`, href: `/macros/${macroId}` },
-    { label: `${process.processCode} - ${process.title}` },
+    { label: `${process.processCode || 'P'} - ${process.title}` },
   ];
 
   const statusColors: Record<string, string> = {
@@ -127,203 +200,210 @@ export default function ProcessDetailPage() {
   };
 
   return (
-    <div className="p-8">
-      {/* Breadcrumb */}
-      <Breadcrumb items={breadcrumbItems} className="mb-6" />
+    <div className="container mx-auto py-6 space-y-6">
+      <Breadcrumb
+        items={[
+          { label: t('macros'), href: '/macros' },
+          { label: macro.name, href: `/macros/${macroId}` },
+          { label: process.title, href: '#' },
+        ]}
+      />
 
-      {/* Back Button */}
-      <Button
-        onClick={() => router.push(`/macros/${macroId}`)}
-        variant="ghost"
-        size="sm"
-        className="mb-4"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Macro
-      </Button>
-
-      {/* Process Header */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center space-x-3 mb-2">
-              <Badge variant="secondary" className="text-lg px-3 py-1 font-mono">
-                {process.processCode}
-              </Badge>
-              <Badge
-                variant={process.isActive ? 'default' : 'secondary'}
-                className="capitalize"
-              >
-                {process.isActive ? 'Active' : 'Inactive'}
-              </Badge>
-              <Badge
-                className={statusColors[process.status] || 'bg-gray-100 text-gray-800'}
-              >
-                {process.status}
-              </Badge>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {process.title}
-            </h1>
-            {process.shortDescription && (
-              <p className="text-gray-600 text-lg">{process.shortDescription}</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">{process.title}</h1>
+            <Badge variant="outline" className="text-lg py-1">{process.processCode}</Badge>
+            {isAdmin && (
+              <div className="flex items-center gap-2 ml-4 bg-gray-50 p-2 rounded-lg border">
+                <span className="text-sm font-medium text-gray-600">Active</span>
+                <Switch
+                  checked={process.isActive}
+                  onCheckedChange={async (checked) => {
+                    try {
+                      await DocumentResource.update(processId, { isActive: checked });
+                      setProcess({ ...process, isActive: checked } as any);
+                      toast({ title: "Status updated" });
+                    } catch (e) {
+                      toast({ variant: "destructive", title: "Failed to update status" });
+                    }
+                  }}
+                />
+              </div>
             )}
           </div>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm">
-              Edit
+          <p className="text-muted-foreground mt-2 text-lg">{process.description}</p>
+        </div>
+
+        <div className="flex gap-2">
+          {isAdmin && (
+            <Button variant="outline" onClick={() => router.push(`/macros/${macroId}/processes/${processId}/edit`)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Process
             </Button>
-            <Button size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
-          </div>
+          )}
+          <Button variant="outline" onClick={() => window.open(process.pdfUrl, '_blank')} disabled={!process.pdfUrl}>
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
         </div>
       </div>
 
-      {/* Process Information */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {process.description ? (
-              <p className="text-gray-700 whitespace-pre-wrap">{process.description}</p>
-            ) : (
-              <p className="text-gray-500 italic">No description available</p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <Tabs defaultValue="tasks" className="w-full" onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="tasks">Tasks</TabsTrigger>
+              <TabsTrigger value="annexes">Annexes</TabsTrigger>
+              <TabsTrigger value="diagram">Process Map</TabsTrigger>
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Version</p>
-              <p className="font-medium">{process.version}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Reference</p>
-              <p className="font-medium font-mono text-sm">{process.reference}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Created</p>
-              <p className="font-medium">
-                {new Date(process.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Last Updated</p>
-              <p className="font-medium">
-                {new Date(process.updatedAt).toLocaleDateString()}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            <TabsContent value="tasks" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Process Tasks</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {process.tasks?.filter(t => isAdmin || t.isActive).sort((a, b) => a.order - b.order).map((task) => (
+                      <div key={task.code} className="flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="secondary" className="font-mono">{task.code}</Badge>
+                            {isAdmin && (
+                              <Badge variant={task.isActive ? "default" : "destructive"} className="text-[10px] h-5">
+                                {task.isActive ? "Active" : "Inactive"}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-700 mt-1">{task.description}</p>
+                        </div>
+                        {isAdmin && (
+                          <div className="flex items-center gap-3 ml-4">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={task.isActive}
+                                onCheckedChange={(checked) => handleToggleTaskActive(task.code, checked)}
+                                className="scale-75"
+                              />
+                            </div>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingTask(task)}>
+                              <Edit className="h-4 w-4 text-gray-500" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {(!process.tasks || process.tasks.length === 0) && (
+                      <div className="text-center py-8 text-gray-500">
+                        No tasks defined for this process.
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="annexes">
+              <AnnexEditor
+                documentId={processId}
+                annexes={process.annexes || []}
+                onCreateAnnex={handleCreateAnnex}
+                onUpdateAnnex={handleUpdateAnnex}
+                onDeleteAnnex={handleDeleteAnnex}
+                readOnly={!isAdmin}
+              />
+            </TabsContent>
+
+            <TabsContent value="diagram" className="h-[600px] border rounded-lg bg-white overflow-hidden">
+              <DiagramEditor
+                readOnly={!isAdmin}
+                initialShapes={
+                  process.annexes?.find(a => a.type === 'diagram' && a.title === 'Process Map')?.content?.shapes || []
+                }
+                onChange={async (shapes) => {
+                  const mapAnnex = process.annexes?.find(a => a.type === 'diagram' && a.title === 'Process Map');
+                  if (mapAnnex) {
+                    await handleUpdateAnnex(mapAnnex.id, { content: { shapes } });
+                  } else {
+                    await handleCreateAnnex({
+                      title: 'Process Map',
+                      type: 'diagram',
+                      content: { shapes }
+                    });
+                  }
+                }}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <div className="md:col-span-1 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Version</p>
+                <p className="font-medium">{process.version}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Reference</p>
+                <p className="font-medium font-mono text-sm">{process.reference}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Created</p>
+                <p className="font-medium">
+                  {new Date(process.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Last Updated</p>
+                <p className="font-medium">
+                  {new Date(process.updatedAt).toLocaleDateString()}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {process.contributors.authors.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>Authors</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {process.contributors.authors.map((author, index) => (
+                  <div key={index} className="flex items-center justify-between text-sm">
+                    <span>{author.name}</span>
+                    <Badge variant="outline">{author.title}</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {process.metadata.objectives.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>Objectives</CardTitle></CardHeader>
+              <CardContent>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {process.metadata.objectives.map((obj, i) => <li key={i}>{obj}</li>)}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
 
-      {/* Metadata Sections */}
-      {process.metadata.objectives.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Objectives</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc list-inside space-y-2">
-              {process.metadata.objectives.map((objective, index) => (
-                <li key={index} className="text-gray-700">{objective}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {process.metadata.implicatedActors.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Implicated Actors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {process.metadata.implicatedActors.map((actor, index) => (
-                <Badge key={index} variant="outline">{actor}</Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {process.metadata.managementRules.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Management Rules</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc list-inside space-y-2">
-              {process.metadata.managementRules.map((rule, index) => (
-                <li key={index} className="text-gray-700">{rule}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Contributors */}
-      {(process.contributors.authors.length > 0 ||
-        process.contributors.verifiers.length > 0 ||
-        process.contributors.validators.length > 0) && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Contributors</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {process.contributors.authors.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2">Authors</h4>
-                <div className="space-y-2">
-                  {process.contributors.authors.map((author, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span>{author.name}</span>
-                      <Badge variant="outline">{author.role}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {process.contributors.verifiers.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2">Verifiers</h4>
-                <div className="space-y-2">
-                  {process.contributors.verifiers.map((verifier, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span>{verifier.name}</span>
-                      <Badge variant="outline">{verifier.role}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {process.contributors.validators.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2">Validators</h4>
-                <div className="space-y-2">
-                  {process.contributors.validators.map((validator, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span>{validator.name}</span>
-                      <Badge variant="outline">{validator.role}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <Dialog open={!!editingTask} onOpenChange={(open) => !open && setEditingTask(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+          </DialogHeader>
+          {editingTask && (
+            <TaskForm initialData={editingTask} onSubmit={handleUpdateTask} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

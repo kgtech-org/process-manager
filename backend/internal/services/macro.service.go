@@ -15,9 +15,9 @@ import (
 
 // MacroService handles macro-related database operations
 type MacroService struct {
-	db               *DatabaseService
-	macroCollection  *mongo.Collection
-	docCollection    *mongo.Collection
+	db              *DatabaseService
+	macroCollection *mongo.Collection
+	docCollection   *mongo.Collection
 }
 
 // NewMacroService creates a new macro service instance
@@ -52,6 +52,7 @@ func (s *MacroService) CreateMacro(ctx context.Context, req *models.CreateMacroR
 		Name:             req.Name,
 		ShortDescription: req.ShortDescription,
 		Description:      req.Description,
+		IsActive:         true,
 		CreatedBy:        createdByID,
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
@@ -175,6 +176,9 @@ func (s *MacroService) UpdateMacro(ctx context.Context, id primitive.ObjectID, r
 	}
 	if req.Description != nil {
 		setFields["description"] = *req.Description
+	}
+	if req.IsActive != nil {
+		setFields["is_active"] = *req.IsActive
 	}
 
 	// Update macro

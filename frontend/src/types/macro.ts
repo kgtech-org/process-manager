@@ -40,6 +40,7 @@ export interface UpdateMacroRequest {
   name?: string;
   shortDescription?: string;
   description?: string;
+  isActive?: boolean;
 }
 
 export interface MacroFilter {
