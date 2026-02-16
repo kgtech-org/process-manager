@@ -10,14 +10,14 @@ import (
 type DocumentStatus string
 
 const (
-	DocumentStatusDraft          DocumentStatus = "draft"
-	DocumentStatusAuthorReview   DocumentStatus = "author_review"
-	DocumentStatusAuthorSigned   DocumentStatus = "author_signed"
-	DocumentStatusVerifierReview DocumentStatus = "verifier_review"
-	DocumentStatusVerifierSigned DocumentStatus = "verifier_signed"
+	DocumentStatusDraft           DocumentStatus = "draft"
+	DocumentStatusAuthorReview    DocumentStatus = "author_review"
+	DocumentStatusAuthorSigned    DocumentStatus = "author_signed"
+	DocumentStatusVerifierReview  DocumentStatus = "verifier_review"
+	DocumentStatusVerifierSigned  DocumentStatus = "verifier_signed"
 	DocumentStatusValidatorReview DocumentStatus = "validator_review"
-	DocumentStatusApproved       DocumentStatus = "approved"
-	DocumentStatusArchived       DocumentStatus = "archived"
+	DocumentStatusApproved        DocumentStatus = "approved"
+	DocumentStatusArchived        DocumentStatus = "archived"
 )
 
 // ContributorTeam represents the team a contributor belongs to
@@ -122,6 +122,7 @@ type Annex struct {
 type Task struct {
 	Code        string `json:"code" bson:"code"`               // M1_P1_T1, M1_P1_T2, etc.
 	Description string `json:"description" bson:"description"` // Task description
+	IsActive    bool   `json:"isActive" bson:"is_active"`      // Active status
 	Order       int    `json:"order" bson:"order"`             // Task order/sequence
 }
 
@@ -135,25 +136,25 @@ type ChangeHistoryEntry struct {
 
 // DocumentMetadata represents the metadata section of a document
 type DocumentMetadata struct {
-	Objectives        []string             `json:"objectives" bson:"objectives"`
-	ImplicatedActors  []string             `json:"implicatedActors" bson:"implicated_actors"`
-	ManagementRules   []string             `json:"managementRules" bson:"management_rules"`
-	Terminology       []string             `json:"terminology" bson:"terminology"`
-	ChangeHistory     []ChangeHistoryEntry `json:"changeHistory" bson:"change_history"`
+	Objectives       []string             `json:"objectives" bson:"objectives"`
+	ImplicatedActors []string             `json:"implicatedActors" bson:"implicated_actors"`
+	ManagementRules  []string             `json:"managementRules" bson:"management_rules"`
+	Terminology      []string             `json:"terminology" bson:"terminology"`
+	ChangeHistory    []ChangeHistoryEntry `json:"changeHistory" bson:"change_history"`
 }
 
 // Document represents a process document (Micro-processus)
 type Document struct {
 	ID               primitive.ObjectID  `json:"id" bson:"_id,omitempty"`
-	MacroID          *primitive.ObjectID `json:"macroId,omitempty" bson:"macro_id,omitempty"`       // Link to Macro (M1, M2, etc.)
+	MacroID          *primitive.ObjectID `json:"macroId,omitempty" bson:"macro_id,omitempty"`         // Link to Macro (M1, M2, etc.)
 	ProcessCode      string              `json:"processCode,omitempty" bson:"process_code,omitempty"` // New format: M1_P1, M2_P1, etc.
 	Reference        string              `json:"reference" bson:"reference"`                          // Legacy reference
 	Title            string              `json:"title" bson:"title"`
 	ShortDescription string              `json:"shortDescription,omitempty" bson:"short_description,omitempty"` // Brief description
-	Description      string              `json:"description,omitempty" bson:"description,omitempty"`           // Detailed description
-	IsActive         bool                `json:"isActive" bson:"is_active"`                                   // Active status
-	Stakeholders     []string            `json:"stakeholders" bson:"stakeholders"`                            // Implicated departments/stakeholders
-	Tasks            []Task              `json:"tasks" bson:"tasks"`                                         // Process tasks
+	Description      string              `json:"description,omitempty" bson:"description,omitempty"`            // Detailed description
+	IsActive         bool                `json:"isActive" bson:"is_active"`                                     // Active status
+	Stakeholders     []string            `json:"stakeholders" bson:"stakeholders"`                              // Implicated departments/stakeholders
+	Tasks            []Task              `json:"tasks" bson:"tasks"`                                            // Process tasks
 	Version          string              `json:"version" bson:"version"`
 	Status           DocumentStatus      `json:"status" bson:"status"`
 	CreatedBy        primitive.ObjectID  `json:"createdBy" bson:"created_by"`

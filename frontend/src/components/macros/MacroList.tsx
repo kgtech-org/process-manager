@@ -8,12 +8,15 @@ import type { Macro } from '@/types/macro';
 import { Loader2, Layers } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/lib/i18n';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MacroListProps {
   initialFilters?: MacroFilter;
 }
 
 export function MacroList({ initialFilters = {} }: MacroListProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const { toast } = useToast();
   const { t } = useTranslation('macros');
   const [macros, setMacros] = useState<Macro[]>([]);
@@ -27,10 +30,7 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
 
   const limit = 12;
 
-  // Load initial macros or when filters change
-  useEffect(() => {
-    loadMacros(true);
-  }, [filters]);
+
 
   // Refs to track latest values without causing observer recreation
   const hasMoreRef = useRef(hasMore);
@@ -66,7 +66,7 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
     return () => observer.disconnect();
   }, [observerTarget.current]); // Only recreate when target element changes
 
-  const loadMacros = async (reset = false) => {
+  const loadMacros = useCallback(async (reset = false) => {
     try {
       setLoading(true);
       const response = await MacroResource.getAll({
@@ -74,7 +74,11 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
         page: 1,
         limit,
       });
-      setMacros(response.data);
+      const data = response.data;
+      // Filter out inactive macros for non-admin users
+      const userIsAdmin = user?.role === 'admin';
+      const filteredData = userIsAdmin ? data : data.filter((m: Macro) => m.isActive);
+      setMacros(filteredData);
       setCurrentPage(1);
       setTotal(response.pagination.total);
       setHasMore(response.data.length === limit && response.pagination.totalPages > 1);
@@ -87,7 +91,12 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, limit, t, toast, user]);
+
+  // Load initial macros or when filters/auth changes
+  useEffect(() => {
+    loadMacros(true);
+  }, [loadMacros]);
 
   const loadMoreMacros = async () => {
     if (!hasMore || loadingMore) return;
@@ -147,6 +156,24 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
         description: error.message || t('messages.error'),
       });
     }
+
+  };
+
+  const handleToggleActive = async (id: string, isActive: boolean) => {
+    try {
+      await MacroResource.update(id, { isActive });
+      toast({
+        title: t('messages.updateSuccess') || 'Macro updated successfully',
+      });
+      // Optionally update local state to reflect change immediately or reload
+      setMacros(prev => prev.map(m => m.id === id ? { ...m, isActive } : m));
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.updateFailed') || 'Update failed',
+        description: error.message || t('messages.error'),
+      });
+    }
   };
 
   if (loading && macros.length === 0) {
@@ -179,6 +206,8 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
                 key={macro.id}
                 macro={macro}
                 onDelete={handleDelete}
+                onToggleActive={handleToggleActive}
+                isAdmin={isAdmin}
               />
             ))}
           </div>

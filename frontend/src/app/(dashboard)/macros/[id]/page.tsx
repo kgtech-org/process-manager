@@ -9,7 +9,12 @@ import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, FileText } from 'lucide-react';
+
+import { ArrowLeft, Plus, FileText, Edit } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { DocumentResource } from '@/lib/resources/document';
 
 export default function MacroDetailPage() {
   const params = useParams();
@@ -22,6 +27,9 @@ export default function MacroDetailPage() {
   const [loading, setLoading] = useState(true);
   const [processesLoading, setProcessesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     const loadMacro = async () => {
@@ -41,7 +49,9 @@ export default function MacroDetailPage() {
       try {
         setProcessesLoading(true);
         const response = await MacroResource.getProcesses(macroId, 1, 100);
-        setProcesses(response.data);
+        const data = response.data;
+        // Filter out inactive processes for non-admin users
+        setProcesses(isAdmin ? data : data.filter(p => p.isActive));
       } catch (err) {
         console.error('Failed to load processes:', err);
       } finally {
@@ -49,11 +59,47 @@ export default function MacroDetailPage() {
       }
     };
 
+
+
     if (macroId) {
       loadMacro();
       loadProcesses();
     }
-  }, [macroId, t]);
+  }, [macroId, t, isAdmin]);
+
+  const handleToggleMacroActive = async (checked: boolean) => {
+    if (!macro) return;
+    try {
+      await MacroResource.update(macroId, { isActive: checked });
+      setMacro({ ...macro, isActive: checked });
+      toast({
+        title: t('messages.updateSuccess') || 'Macro updated successfully',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.updateFailed') || 'Update failed',
+        description: error.message || t('messages.error'),
+      });
+    }
+  };
+
+  const handleToggleProcessActive = async (processId: string, checked: boolean) => {
+    try {
+      // Use DocumentResource to update process (document)
+      await DocumentResource.update(processId, { isActive: checked });
+      setProcesses(prev => prev.map(p => p.id === processId ? { ...p, isActive: checked } : p));
+      toast({
+        title: t('messages.updateSuccess') || 'Process updated successfully',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.updateFailed') || 'Update failed',
+        description: error.message || t('messages.error'),
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -136,7 +182,17 @@ export default function MacroDetailPage() {
             )}
           </div>
           <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm">
+            {isAdmin && (
+              <div className="flex items-center space-x-2 mr-2">
+                <span className="text-sm text-gray-500">{macro.isActive ? t('active') : t('inactive')}</span>
+                <Switch
+                  checked={macro.isActive}
+                  onCheckedChange={handleToggleMacroActive}
+                />
+              </div>
+            )}
+            <Button variant="outline" size="sm" onClick={() => router.push(`/macros/${macroId}/edit`)}>
+              <Edit className="w-4 h-4 mr-2" />
               {t('edit', { defaultValue: 'Edit' })}
             </Button>
             <Button size="sm">
@@ -252,7 +308,15 @@ export default function MacroDetailPage() {
                           </p>
                         )}
                       </div>
-                      <div className="ml-4">
+                      <div className="ml-4 flex items-center space-x-2">
+                        {isAdmin && (
+                          <div className="flex items-center space-x-2" onClick={(e) => e.preventDefault()}>
+                            <Switch
+                              checked={process.isActive}
+                              onCheckedChange={(checked) => handleToggleProcessActive(process.id, checked)}
+                            />
+                          </div>
+                        )}
                         <svg
                           className="w-5 h-5 text-gray-400"
                           fill="none"
@@ -275,6 +339,6 @@ export default function MacroDetailPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 }

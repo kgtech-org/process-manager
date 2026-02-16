@@ -12,6 +12,13 @@ export type DocumentStatus =
   | 'approved'
   | 'archived';
 
+export interface ApplicationTask {
+  code: string;
+  description: string;
+  isActive: boolean;
+  order: number;
+}
+
 export type ContributorTeam = 'authors' | 'verifiers' | 'validators';
 export type SignatureStatus = 'joined' | 'pending' | 'signed' | 'rejected';
 export type AnnexType = 'diagram' | 'table' | 'text' | 'file';
@@ -95,8 +102,14 @@ export interface DocumentMetadata {
 
 export interface Document {
   id: string;
+  macroId?: string;
+  processCode?: string;
   reference: string;
   title: string;
+  shortDescription?: string;
+  description?: string;
+  stakeholders?: string[];
+  tasks?: ApplicationTask[];
   version: string;
   status: DocumentStatus;
   createdBy: string;
@@ -108,6 +121,7 @@ export interface Document {
   createdAt: string;
   updatedAt: string;
   approvedAt?: string;
+  isActive: boolean;
 }
 
 export interface DocumentVersion {
@@ -128,6 +142,7 @@ export interface CreateDocumentRequest {
   metadata?: DocumentMetadata;
   processGroups?: ProcessGroup[];
   annexes?: Annex[];
+  isActive?: boolean;
 }
 
 export interface UpdateDocumentRequest {
@@ -138,7 +153,8 @@ export interface UpdateDocumentRequest {
   metadata?: DocumentMetadata;
   processGroups?: ProcessGroup[];
   annexes?: Annex[];
-  isAutosave?: boolean; // Skip activity logging for autosave operations
+  isActive?: boolean;
+  tasks?: ApplicationTask[];
 }
 
 export interface DocumentFilter {

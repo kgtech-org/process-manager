@@ -53,6 +53,12 @@ func (h *MacroHandler) GetMacros(c *gin.Context) {
 	if search := c.Query("search"); search != "" {
 		filter.Search = &search
 	}
+	// Check user role for filtering
+	userRole, _ := middleware.GetCurrentUserRole(c)
+	if userRole != models.RoleAdmin {
+		isActive := true
+		filter.IsActive = &isActive
+	}
 
 	// Get macros
 	macros, total, err := h.macroService.GetAllMacros(ctx, filter)
@@ -218,8 +224,16 @@ func (h *MacroHandler) GetMacroProcesses(c *gin.Context) {
 		}
 	}
 
+	// Check user role for filtering
+	var isActive *bool
+	userRole, _ := middleware.GetCurrentUserRole(c)
+	if userRole != models.RoleAdmin {
+		active := true
+		isActive = &active
+	}
+
 	// Get processes
-	processes, total, err := h.macroService.GetProcessesByMacroID(ctx, objID, limit, page)
+	processes, total, err := h.macroService.GetProcessesByMacroID(ctx, objID, limit, page, isActive)
 	if err != nil {
 		helpers.SendInternalError(c, err)
 		return

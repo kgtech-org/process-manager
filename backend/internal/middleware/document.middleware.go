@@ -116,6 +116,23 @@ func (m *DocumentMiddleware) RequireDocumentAccess() gin.HandlerFunc {
 			return
 		}
 
+		// Check if document is public (Approved or Archived)
+		isPublic, err := m.isDocumentPublic(ctx, docID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Failed to verify document access",
+				"code":    "INTERNAL_ERROR",
+			})
+			c.Abort()
+			return
+		}
+
+		if isPublic {
+			c.Next()
+			return
+		}
+
 		// Log unauthorized access attempt
 		fmt.Printf("Unauthorized document access attempt - User: %s, Document: %s\n", user.ID.Hex(), docID.Hex())
 
@@ -177,6 +194,29 @@ func (m *DocumentMiddleware) hasAcceptedInvitation(ctx context.Context, docID, u
 		"invited_user_id": userID,
 		"status":          models.InvitationStatusAccepted,
 	}).Decode(&invitation)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
+// isDocumentPublic checks if the document is in a public status (Approved or Archived)
+func (m *DocumentMiddleware) isDocumentPublic(ctx context.Context, docID primitive.ObjectID) (bool, error) {
+	var document models.Document
+	err := m.documentCollection.FindOne(ctx, bson.M{
+		"_id": docID,
+		"status": bson.M{
+			"$in": []models.DocumentStatus{
+				models.DocumentStatusApproved,
+				models.DocumentStatusArchived,
+			},
+		},
+	}).Decode(&document)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {

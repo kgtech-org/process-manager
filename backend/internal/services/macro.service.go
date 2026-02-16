@@ -15,9 +15,9 @@ import (
 
 // MacroService handles macro-related database operations
 type MacroService struct {
-	db               *DatabaseService
-	macroCollection  *mongo.Collection
-	docCollection    *mongo.Collection
+	db              *DatabaseService
+	macroCollection *mongo.Collection
+	docCollection   *mongo.Collection
 }
 
 // NewMacroService creates a new macro service instance
@@ -52,6 +52,7 @@ func (s *MacroService) CreateMacro(ctx context.Context, req *models.CreateMacroR
 		Name:             req.Name,
 		ShortDescription: req.ShortDescription,
 		Description:      req.Description,
+		IsActive:         true,
 		CreatedBy:        createdByID,
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
@@ -107,9 +108,13 @@ func (s *MacroService) GetAllMacros(ctx context.Context, filter *models.MacroFil
 		query["$or"] = []bson.M{
 			{"code": searchRegex},
 			{"name": searchRegex},
-			{"short_description": searchRegex},
 			{"description": searchRegex},
 		}
+	}
+
+	// Active status filter
+	if filter.IsActive != nil {
+		query["is_active"] = *filter.IsActive
 	}
 
 	// Count total documents
@@ -176,6 +181,9 @@ func (s *MacroService) UpdateMacro(ctx context.Context, id primitive.ObjectID, r
 	if req.Description != nil {
 		setFields["description"] = *req.Description
 	}
+	if req.IsActive != nil {
+		setFields["is_active"] = *req.IsActive
+	}
 
 	// Update macro
 	result := s.macroCollection.FindOneAndUpdate(
@@ -221,9 +229,14 @@ func (s *MacroService) DeleteMacro(ctx context.Context, id primitive.ObjectID) e
 }
 
 // GetProcessesByMacroID retrieves all processes (documents) belonging to a macro
-func (s *MacroService) GetProcessesByMacroID(ctx context.Context, macroID primitive.ObjectID, limit int, page int) ([]models.DocumentResponse, int64, error) {
+func (s *MacroService) GetProcessesByMacroID(ctx context.Context, macroID primitive.ObjectID, limit int, page int, isActive *bool) ([]models.DocumentResponse, int64, error) {
 	// Build query
 	query := bson.M{"macro_id": macroID}
+
+	// Active status filter
+	if isActive != nil {
+		query["is_active"] = *isActive
+	}
 
 	// Count total documents
 	total, err := s.docCollection.CountDocuments(ctx, query)

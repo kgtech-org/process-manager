@@ -374,10 +374,12 @@ func (s *DocumentService) ListUserAccessible(ctx context.Context, userID primiti
 	// Build access query: user is creator OR contributor OR has invitation
 	accessQuery := bson.M{
 		"$or": []bson.M{
-			{"created_by": userID}, // User is creator
+			{"created_by": userID},                      // User is creator
 			{"contributors.authors.user_id": userID},    // User is author
 			{"contributors.verifiers.user_id": userID},  // User is verifier
 			{"contributors.validators.user_id": userID}, // User is validator
+			// Public documents (Approved or Archived) are accessible to all authenticated users
+			{"status": bson.M{"$in": []models.DocumentStatus{models.DocumentStatusApproved, models.DocumentStatusArchived}}},
 		},
 	}
 
