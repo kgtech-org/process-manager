@@ -8,7 +8,24 @@ import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FileText, Download, Edit } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { ArrowLeft, FileText, Edit, Plus, GripVertical } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Switch } from '@/components/ui/switch';
@@ -23,7 +40,77 @@ import {
 import { TaskForm } from "@/components/macros/TaskForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AnnexEditor } from '@/components/documents/AnnexEditor';
-import { DiagramEditor } from '@/components/documents/DiagramEditor';
+
+// Sortable Task Item Component
+interface SortableTaskItemProps {
+  task: ApplicationTask;
+  isAdmin: boolean;
+  onToggleActive: (code: string, checked: boolean) => void;
+  onEdit: (task: ApplicationTask) => void;
+}
+
+function SortableTaskItem({ task, isAdmin, onToggleActive, onEdit }: SortableTaskItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.code });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors ${isDragging ? 'bg-blue-50 border-blue-200 shadow-sm' : ''}`}
+    >
+      <div className="flex-1 flex gap-3">
+        {isAdmin && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="mt-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 flex-shrink-0"
+          >
+            <GripVertical className="h-5 w-5" />
+          </div>
+        )}
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant="secondary" className="font-mono">{task.code}</Badge>
+            {isAdmin && (
+              <Badge variant={task.isActive ? "default" : "destructive"} className="text-[10px] h-5">
+                {task.isActive ? "Active" : "Inactive"}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-gray-700 mt-1">{task.description}</p>
+        </div>
+      </div>
+      {isAdmin && (
+        <div className="flex items-center gap-3 ml-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={task.isActive}
+              onCheckedChange={(checked) => onToggleActive(task.code, checked)}
+              className="scale-75"
+            />
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => onEdit(task)}>
+            <Edit className="h-4 w-4 text-gray-500" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ProcessDetailPage() {
   const params = useParams();
@@ -37,6 +124,14 @@ export default function ProcessDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<ApplicationTask | null>(null);
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     const loadData = async () => {
@@ -51,7 +146,12 @@ export default function ProcessDetailPage() {
         setMacro(macroData);
 
         if (processResponse.success && processResponse.data) {
-          setProcess(processResponse.data);
+          // Ensure tasks are sorted by order
+          const processData = processResponse.data;
+          if (processData.tasks) {
+            processData.tasks.sort((a: ApplicationTask, b: ApplicationTask) => a.order - b.order);
+          }
+          setProcess(processData);
         } else {
           setError('Process not found');
         }
@@ -71,6 +171,53 @@ export default function ProcessDetailPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const { toast } = useToast();
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !process?.tasks) return;
+
+    const oldIndex = process.tasks.findIndex((t) => t.code === active.id);
+    const newIndex = process.tasks.findIndex((t) => t.code === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Create new array with updated order
+    const newTasks = arrayMove(process.tasks, oldIndex, newIndex).map((t, index) => ({
+      ...t,
+      order: index + 1
+    }));
+
+    // Optimistically update state
+    setProcess({ ...process, tasks: newTasks } as any);
+
+    try {
+      await DocumentResource.update(processId, { tasks: newTasks });
+      toast({
+        title: t('messages.orderUpdated', { defaultValue: 'Task order updated' }),
+      });
+    } catch (error: any) {
+      console.error('Failed to update task order:', error);
+      // Revert state (re-fetch would be safer but this is a simple revert)
+      const revertedTasks = arrayMove(newTasks, newIndex, oldIndex).map((t, index) => ({
+        ...t,
+        order: index + 1 // technically this logic assumes simple swap, re-fetching is better
+      }));
+      // Better to just reload
+      const updatedDoc = await apiClient.get(`/documents/${processId}`);
+      if (updatedDoc.success) {
+        if (updatedDoc.data.tasks) {
+          updatedDoc.data.tasks.sort((a: ApplicationTask, b: ApplicationTask) => a.order - b.order);
+        }
+        setProcess(updatedDoc.data);
+      }
+
+      toast({
+        variant: 'destructive',
+        title: t('messages.updateFailed', { defaultValue: 'Failed to update task order' }),
+        description: error.message,
+      });
+    }
+  };
 
   const handleToggleTaskActive = async (taskCode: string, checked: boolean) => {
     if (!process || !process.tasks) return;
@@ -97,9 +244,18 @@ export default function ProcessDetailPage() {
   const handleUpdateTask = async (data: any) => {
     if (!process || !process.tasks || !editingTask) return;
 
+    // Ensure code is fully qualified if it's relative
+    let taskCode = data.code;
+    if (taskCode && !taskCode.startsWith(process.processCode + '_') && !taskCode.startsWith('M')) {
+      taskCode = `${process.processCode}_${taskCode}`;
+    }
+
     const updatedTasks = process.tasks.map(t =>
-      t.code === editingTask.code ? { ...t, ...data } : t
+      t.code === editingTask.code ? { ...t, ...data, code: taskCode } : t
     );
+
+    // Sort tasks to maintain order
+    updatedTasks.sort((a, b) => a.order - b.order);
 
     try {
       await DocumentResource.update(processId, { tasks: updatedTasks });
@@ -112,6 +268,42 @@ export default function ProcessDetailPage() {
       toast({
         variant: 'destructive',
         title: t('messages.updateFailed', { defaultValue: 'Update failed' }),
+        description: error.message,
+      });
+    }
+  };
+
+  const handleCreateTask = async (data: any) => {
+    if (!process) return;
+
+    // Ensure code is fully qualified
+    let taskCode = data.code;
+    if (taskCode && !taskCode.startsWith(process.processCode + '_') && !taskCode.startsWith('M')) {
+      taskCode = `${process.processCode}_${taskCode}`;
+    }
+
+    const newTask = {
+      ...data,
+      code: taskCode
+    };
+
+    const currentTasks = process.tasks || [];
+    const updatedTasks = [...currentTasks, newTask];
+
+    // Ensure sorting
+    updatedTasks.sort((a, b) => a.order - b.order);
+
+    try {
+      await DocumentResource.update(processId, { tasks: updatedTasks });
+      setProcess({ ...process, tasks: updatedTasks } as any);
+      setIsCreateTaskModalOpen(false);
+      toast({
+        title: t('messages.createSuccess', { defaultValue: 'Task created successfully' }),
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: t('messages.createFailed', { defaultValue: 'Failed to create task' }),
         description: error.message,
       });
     }
@@ -214,23 +406,6 @@ export default function ProcessDetailPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold">{process.title}</h1>
             <Badge variant="outline" className="text-lg py-1">{process.processCode}</Badge>
-            {isAdmin && (
-              <div className="flex items-center gap-2 ml-4 bg-gray-50 p-2 rounded-lg border">
-                <span className="text-sm font-medium text-gray-600">Active</span>
-                <Switch
-                  checked={process.isActive}
-                  onCheckedChange={async (checked) => {
-                    try {
-                      await DocumentResource.update(processId, { isActive: checked });
-                      setProcess({ ...process, isActive: checked } as any);
-                      toast({ title: "Status updated" });
-                    } catch (e) {
-                      toast({ variant: "destructive", title: "Failed to update status" });
-                    }
-                  }}
-                />
-              </div>
-            )}
           </div>
           <p className="text-muted-foreground mt-2 text-lg">{process.description}</p>
         </div>
@@ -242,64 +417,59 @@ export default function ProcessDetailPage() {
               Edit Process
             </Button>
           )}
-          <Button variant="outline" onClick={() => window.open(process.pdfUrl, '_blank')} disabled={!process.pdfUrl}>
-            <Download className="mr-2 h-4 w-4" />
-            Export PDF
-          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <Tabs defaultValue="tasks" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="tasks">Tasks</TabsTrigger>
               <TabsTrigger value="annexes">Annexes</TabsTrigger>
-              <TabsTrigger value="diagram">Process Map</TabsTrigger>
             </TabsList>
 
             <TabsContent value="tasks" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Process Tasks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {process.tasks?.filter(t => isAdmin || t.isActive).sort((a, b) => a.order - b.order).map((task) => (
-                      <div key={task.code} className="flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="secondary" className="font-mono">{task.code}</Badge>
-                            {isAdmin && (
-                              <Badge variant={task.isActive ? "default" : "destructive"} className="text-[10px] h-5">
-                                {task.isActive ? "Active" : "Inactive"}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-700 mt-1">{task.description}</p>
-                        </div>
-                        {isAdmin && (
-                          <div className="flex items-center gap-3 ml-4">
-                            <div className="flex items-center gap-2">
-                              <Switch
-                                checked={task.isActive}
-                                onCheckedChange={(checked) => handleToggleTaskActive(task.code, checked)}
-                                className="scale-75"
-                              />
-                            </div>
-                            <Button size="sm" variant="ghost" onClick={() => setEditingTask(task)}>
-                              <Edit className="h-4 w-4 text-gray-500" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {(!process.tasks || process.tasks.length === 0) && (
-                      <div className="text-center py-8 text-gray-500">
-                        No tasks defined for this process.
-                      </div>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Process Tasks</CardTitle>
+                    {isAdmin && (
+                      <Button size="sm" onClick={() => setIsCreateTaskModalOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t('addTask', { defaultValue: 'Add Task' })}
+                      </Button>
                     )}
                   </div>
+                </CardHeader>
+                <CardContent>
+                  {process.tasks && process.tasks.length > 0 ? (
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={process.tasks.map(t => t.code)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-4">
+                          {process.tasks.map((task) => (
+                            <SortableTaskItem
+                              key={task.code}
+                              task={task}
+                              isAdmin={isAdmin || false}
+                              onToggleActive={handleToggleTaskActive}
+                              onEdit={setEditingTask}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No tasks defined for this process.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -314,27 +484,6 @@ export default function ProcessDetailPage() {
                 readOnly={!isAdmin}
               />
             </TabsContent>
-
-            <TabsContent value="diagram" className="h-[600px] border rounded-lg bg-white overflow-hidden">
-              <DiagramEditor
-                readOnly={!isAdmin}
-                initialShapes={
-                  process.annexes?.find(a => a.type === 'diagram' && a.title === 'Process Map')?.content?.shapes || []
-                }
-                onChange={async (shapes) => {
-                  const mapAnnex = process.annexes?.find(a => a.type === 'diagram' && a.title === 'Process Map');
-                  if (mapAnnex) {
-                    await handleUpdateAnnex(mapAnnex.id, { content: { shapes } });
-                  } else {
-                    await handleCreateAnnex({
-                      title: 'Process Map',
-                      type: 'diagram',
-                      content: { shapes }
-                    });
-                  }
-                }}
-              />
-            </TabsContent>
           </Tabs>
         </div>
 
@@ -344,6 +493,30 @@ export default function ProcessDetailPage() {
               <CardTitle>Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Status</p>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={process.isActive ? "default" : "secondary"}>
+                      {process.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                    {isAdmin && (
+                      <Switch
+                        checked={process.isActive}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            await DocumentResource.update(processId, { isActive: checked });
+                            setProcess({ ...process, isActive: checked } as any);
+                            toast({ title: "Status updated" });
+                          } catch (e) {
+                            toast({ variant: "destructive", title: "Failed to update status" });
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Version</p>
                 <p className="font-medium">{process.version}</p>
@@ -397,11 +570,28 @@ export default function ProcessDetailPage() {
       <Dialog open={!!editingTask} onOpenChange={(open) => !open && setEditingTask(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Task</DialogTitle>
+            <DialogTitle>{t('editTask', { defaultValue: 'Edit Task' })}</DialogTitle>
           </DialogHeader>
           {editingTask && (
             <TaskForm initialData={editingTask} onSubmit={handleUpdateTask} />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateTaskModalOpen} onOpenChange={setIsCreateTaskModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('addNewTask', { defaultValue: 'Add New Task' })}</DialogTitle>
+          </DialogHeader>
+          <TaskForm
+            initialData={{
+              code: `T${(process.tasks?.length || 0) + 1}`,
+              description: '',
+              order: (process.tasks?.length || 0) + 1,
+              isActive: true
+            } as any}
+            onSubmit={handleCreateTask}
+          />
         </DialogContent>
       </Dialog>
     </div>

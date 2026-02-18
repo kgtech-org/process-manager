@@ -56,8 +56,27 @@ export function TaskForm({ initialData, onSubmit, isLoading }: TaskFormProps) {
                         <FormItem>
                             <FormLabel>{t('code', { defaultValue: 'Code' })}</FormLabel>
                             <FormControl>
-                                <Input placeholder="M1_P1_T1" {...field} />
+                                <div className="flex gap-2">
+                                    <Input placeholder="M1_P1_T1" {...field} />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            // Simple auto-generate logic based on order if applicable
+                                            // In a real app, we might need context from parent
+                                            const order = form.getValues('order');
+                                            if (order) {
+                                                field.onChange(`T${order}`);
+                                            }
+                                        }}
+                                    >
+                                        Auto
+                                    </Button>
+                                </div>
                             </FormControl>
+                            <FormDescription>
+                                {t('codeHelp', { defaultValue: 'Unique identifier for the task' })}
+                            </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -71,11 +90,14 @@ export function TaskForm({ initialData, onSubmit, isLoading }: TaskFormProps) {
                             <FormLabel>{t('description', { defaultValue: 'Description' })}</FormLabel>
                             <FormControl>
                                 <Textarea
-                                    placeholder={t('descriptionPlaceholder', { defaultValue: 'Task description' })}
-                                    rows={3}
+                                    placeholder={t('descriptionPlaceholder', { defaultValue: 'Detailed task description' })}
+                                    className="min-h-[150px]"
                                     {...field}
                                 />
                             </FormControl>
+                            <FormDescription>
+                                {t('descriptionHelp', { defaultValue: 'Describe the actions required for this task' })}
+                            </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -119,6 +141,9 @@ export function TaskForm({ initialData, onSubmit, isLoading }: TaskFormProps) {
                 />
 
                 <div className="flex justify-end space-x-4">
+                    <Button type="button" variant="outline" onClick={() => form.reset()}>
+                        {t('cancel', { defaultValue: 'Reset' })}
+                    </Button>
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? t('saving', { defaultValue: 'Saving...' }) : t('save', { defaultValue: 'Save Changes' })}
                     </Button>

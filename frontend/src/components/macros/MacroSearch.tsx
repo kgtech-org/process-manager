@@ -19,12 +19,9 @@ export function MacroSearch({ onSearch, initialFilters = {} }: MacroSearchProps)
   // Debounced search - triggers automatically after 500ms of no typing
   useEffect(() => {
     const timer = setTimeout(() => {
-      const filters: MacroFilter = {};
-
-      // Only add properties if they have values
-      if (searchQuery) {
-        filters.search = searchQuery;
-      }
+      const filters: MacroFilter = {
+        search: searchQuery
+      };
 
       onSearch(filters);
     }, 500);

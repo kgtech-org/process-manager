@@ -2,8 +2,6 @@
 
 import { MacroList } from '@/components/macros/MacroList';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 
 export default function MacrosPage() {
@@ -18,12 +16,6 @@ export default function MacrosPage() {
             {t('subtitle')}
           </p>
         </div>
-        <Button asChild>
-          <Link href="/macros/new">
-            <Plus className="h-4 w-4 mr-2" />
-            {t('newMacro')}
-          </Link>
-        </Button>
       </div>
 
       <MacroList />

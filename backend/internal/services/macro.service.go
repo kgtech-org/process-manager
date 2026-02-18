@@ -18,14 +18,16 @@ type MacroService struct {
 	db              *DatabaseService
 	macroCollection *mongo.Collection
 	docCollection   *mongo.Collection
+	pdfService      *PDFService
 }
 
 // NewMacroService creates a new macro service instance
-func NewMacroService(db *DatabaseService) *MacroService {
+func NewMacroService(db *DatabaseService, pdfService *PDFService) *MacroService {
 	return &MacroService{
 		db:              db,
 		macroCollection: db.Collection("macros"),
 		docCollection:   db.Collection("documents"),
+		pdfService:      pdfService,
 	}
 }
 
@@ -131,7 +133,27 @@ func (s *MacroService) GetAllMacros(ctx context.Context, filter *models.MacroFil
 			opts.SetSkip(int64((filter.Page - 1) * filter.Limit))
 		}
 	}
-	opts.SetSort(bson.D{{Key: "code", Value: 1}}) // Sort by code ascending
+	// Determine sort
+	sortField := "name" // Default sort by name (alphabetical)
+	if filter.SortBy != "" {
+		switch filter.SortBy {
+		case "createdAt":
+			sortField = "created_at"
+		case "updatedAt":
+			sortField = "updated_at"
+		case "code":
+			sortField = "code"
+		case "name":
+			sortField = "name"
+		}
+	}
+
+	sortOrder := 1 // Default ASC
+	if filter.SortOrder == "desc" {
+		sortOrder = -1
+	}
+
+	opts.SetSort(bson.D{{Key: sortField, Value: sortOrder}})
 
 	// Find macros
 	cursor, err := s.macroCollection.Find(ctx, query, opts)
@@ -252,7 +274,10 @@ func (s *MacroService) GetProcessesByMacroID(ctx context.Context, macroID primit
 			opts.SetSkip(int64((page - 1) * limit))
 		}
 	}
-	opts.SetSort(bson.D{{Key: "process_code", Value: 1}}) // Sort by process code
+	opts.SetSort(bson.D{
+		{Key: "order", Value: 1},        // Primary sort by custom order
+		{Key: "process_code", Value: 1}, // Secondary sort by code
+	})
 
 	// Find documents
 	cursor, err := s.docCollection.Find(ctx, query, opts)
@@ -283,6 +308,98 @@ func (s *MacroService) GetProcessCountByMacroID(ctx context.Context, macroID pri
 		return 0, fmt.Errorf("failed to count processes: %w", err)
 	}
 	return count, nil
+}
+
+// ExportPDF generates and exports the macro as PDF
+func (s *MacroService) ExportPDF(ctx context.Context, id primitive.ObjectID) (string, error) {
+	// Get existing macro
+	macro, err := s.GetMacroByID(ctx, id)
+	if err != nil {
+		return "", err
+	}
+
+	// Get all processes for this macro (no pagination, only active ones)
+	active := true
+	_, _, err = s.GetProcessesByMacroID(ctx, id, 0, 0, &active)
+	if err != nil {
+		return "", fmt.Errorf("failed to get processes: %w", err)
+	}
+
+	// Convert DocumentResponse back to Document for PDF service
+	// This is a bit inefficient but necessary since PDF service expects []models.Document
+	// Ideally we should refactor PDF service to accept a more generic interface or use DocumentResponse
+	// For now, let's fetch the raw documents again
+	// Build query
+	query := bson.M{
+		"macro_id":  id,
+		"is_active": true,
+	}
+	opts := options.Find().SetSort(bson.D{
+		{Key: "order", Value: 1},
+		{Key: "process_code", Value: 1},
+	})
+
+	cursor, err := s.docCollection.Find(ctx, query, opts)
+	if err != nil {
+		return "", fmt.Errorf("failed to find processes: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var rawProcesses []models.Document
+	if err := cursor.All(ctx, &rawProcesses); err != nil {
+		return "", fmt.Errorf("failed to decode processes: %w", err)
+	}
+
+	// Generate PDF if service is available
+	if s.pdfService == nil {
+		return "", fmt.Errorf("PDF service not available")
+	}
+
+	fmt.Printf("📄 [EXPORT] Generating new PDF for macro: %s (%s)\n", macro.Name, macro.Code)
+	pdfURL, err := s.pdfService.GenerateMacroPDF(ctx, macro, rawProcesses)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate PDF: %w", err)
+	}
+
+	fmt.Printf("✅ [EXPORT] PDF generated successfully: %s\n", pdfURL)
+	return pdfURL, nil
+}
+
+// ReorderProcesses updates the order of processes in a macro
+func (s *MacroService) ReorderProcesses(ctx context.Context, macroID primitive.ObjectID, processIDs []string) error {
+	// Verify macro exists
+	_, err := s.GetMacroByID(ctx, macroID)
+	if err != nil {
+		return err
+	}
+
+	// Create write models for bulk update
+	var writes []mongo.WriteModel
+	for i, processID := range processIDs {
+		objID, err := primitive.ObjectIDFromHex(processID)
+		if err != nil {
+			return fmt.Errorf("invalid process ID %s: %w", processID, err)
+		}
+
+		// Update order field (i + 1 so it's 1-based)
+		update := mongo.NewUpdateOneModel().
+			SetFilter(bson.M{"_id": objID, "macro_id": macroID}).
+			SetUpdate(bson.M{"$set": bson.M{"order": i + 1}})
+
+		writes = append(writes, update)
+	}
+
+	if len(writes) == 0 {
+		return nil
+	}
+
+	// Execute bulk write
+	_, err = s.docCollection.BulkWrite(ctx, writes)
+	if err != nil {
+		return fmt.Errorf("failed to reorder processes: %w", err)
+	}
+
+	return nil
 }
 
 // ============================================

@@ -20,7 +20,7 @@ export const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
       }
 
       if (user.role !== 'admin') {
-        router.push('/dashboard');
+        router.push('/macros');
         return;
       }
     }
@@ -49,7 +49,7 @@ export const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
           <p className="text-gray-600 mb-4">You need administrator privileges to access this page.</p>
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/macros')}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
           >
             Return to Dashboard

@@ -12,6 +12,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, otp: string, temporaryToken: string) => Promise<User>;
+  loginWithPin: (email: string, pin: string) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (user: User) => void;
@@ -45,7 +46,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const initializeAuth = async () => {
     try {
       setIsLoading(true);
-      
+
       // Check if user is authenticated
       if (!authService.isAuthenticated()) {
         setUser(null);
@@ -68,12 +69,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, otp: string, temporaryToken: string): Promise<User> => {
     try {
       setIsLoading(true);
-      
+
       const loginResponse = await authService.verifyLoginOtp(
         { otp },
         temporaryToken
       );
-      
+
       setUser(loginResponse.user);
       return loginResponse.user;
     } catch (error) {
@@ -189,12 +190,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithPin = async (email: string, pin: string): Promise<User> => {
+    try {
+      setIsLoading(true);
+
+      const loginResponse = await authService.loginWithPin(email, pin);
+
+      setUser(loginResponse.user);
+      return loginResponse.user;
+    } catch (error) {
+      setUser(null);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Context value
   const contextValue: AuthContextType = {
     user,
     isAuthenticated: !!user && authService.isAuthenticated(),
     isLoading,
     login,
+    loginWithPin,
     logout,
     refreshUser,
     updateUser,
@@ -210,10 +228,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 // Custom hook to use auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
+
   return context;
 };

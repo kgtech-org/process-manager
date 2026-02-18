@@ -27,6 +27,8 @@ export interface Process {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  pdfUrl?: string;
+  order?: number;
 }
 
 export interface CreateMacroRequest {
@@ -47,6 +49,9 @@ export interface MacroFilter {
   search?: string;
   page?: number;
   limit?: number;
+  isActive?: boolean;
+  sortBy?: 'name' | 'createdAt' | 'updatedAt';
+  order?: 'asc' | 'desc';
 }
 
 export interface MacroListResponse {
