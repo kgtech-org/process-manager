@@ -105,7 +105,8 @@ def import_data():
             'description': macro_desc,
             'created_by': CREATED_BY_ID,
             'created_at': datetime.now(),
-            'updated_at': datetime.now()
+            'updated_at': datetime.now(),
+            'is_active': True 
         }
         
         # Upsert Macro
@@ -320,7 +321,8 @@ def import_data():
                 task_obj = {
                     'code': t_code,
                     'description': t_content,
-                    'order': len(current_tasks) + 1
+                    'order': len(current_tasks) + 1,
+                    'is_active': True
                 }
                 current_tasks.append(task_obj)
         

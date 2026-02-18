@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-import { ArrowLeft, Plus, FileText, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, Edit, Download } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
@@ -343,7 +343,21 @@ export default function MacroDetailPage() {
                           </p>
                         )}
                       </div>
-                      <div className="ml-4 flex items-center space-x-2">
+                      <div className="ml-4 flex items-center gap-2">
+                        {process.pdfUrl && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              window.open(process.pdfUrl, '_blank');
+                            }}
+                            title={t('exportPdf', { defaultValue: 'Export PDF' })}
+                          >
+                            <Download className="h-4 w-4 text-gray-500" />
+                          </Button>
+                        )}
                         {isAdmin && (
                           <div className="flex items-center space-x-2" onClick={(e) => e.preventDefault()}>
                             <Switch

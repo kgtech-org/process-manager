@@ -12,21 +12,22 @@ func SetupMacroRoutes(router *gin.RouterGroup, macroHandler *handlers.MacroHandl
 	{
 		// Public read access (authenticated users can view macros)
 		macros.Use(authMiddleware.RequireAuth())
-		macros.GET("/", macroHandler.GetMacros)                   // List all macros with pagination
-		macros.GET("/:id", macroHandler.GetMacro)                 // Get specific macro
+		macros.GET("/", macroHandler.GetMacros)                      // List all macros with pagination
+		macros.GET("/:id", macroHandler.GetMacro)                    // Get specific macro
 		macros.GET("/:id/processes", macroHandler.GetMacroProcesses) // Get processes in macro
 
 		// Manager-level operations - require manager or admin role
 		managerOps := macros.Group("").Use(authMiddleware.RequireManager())
 		{
-			managerOps.POST("/", macroHandler.CreateMacro)        // Create new macro
-			managerOps.PUT("/:id", macroHandler.UpdateMacro)      // Update macro
+			managerOps.POST("/", macroHandler.CreateMacro)                          // Create new macro
+			managerOps.PUT("/:id", macroHandler.UpdateMacro)                        // Update macro
+			managerOps.PUT("/:id/reorder-processes", macroHandler.ReorderProcesses) // Reorder processes
 		}
 
 		// Admin-only operations - high-risk operations
 		adminOps := macros.Group("").Use(authMiddleware.RequireAdmin())
 		{
-			adminOps.DELETE("/:id", macroHandler.DeleteMacro)     // Delete macro (admin only)
+			adminOps.DELETE("/:id", macroHandler.DeleteMacro) // Delete macro (admin only)
 		}
 	}
 }

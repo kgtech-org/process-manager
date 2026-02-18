@@ -163,6 +163,7 @@ type Document struct {
 	ProcessGroups    []ProcessGroup      `json:"processGroups" bson:"process_groups"`
 	Annexes          []Annex             `json:"annexes" bson:"annexes"`
 	PdfUrl           string              `json:"pdfUrl,omitempty" bson:"pdf_url,omitempty"`
+	Order            int                 `json:"order" bson:"order"`
 	CreatedAt        time.Time           `json:"createdAt" bson:"created_at"`
 	UpdatedAt        time.Time           `json:"updatedAt" bson:"updated_at"`
 	ApprovedAt       *time.Time          `json:"approvedAt,omitempty" bson:"approved_at,omitempty"`
@@ -188,6 +189,7 @@ type DocumentResponse struct {
 	ProcessGroups    []ProcessGroup   `json:"processGroups"`
 	Annexes          []Annex          `json:"annexes"`
 	PdfUrl           string           `json:"pdfUrl,omitempty"`
+	Order            int              `json:"order"`
 	CreatedAt        time.Time        `json:"createdAt"`
 	UpdatedAt        time.Time        `json:"updatedAt"`
 	ApprovedAt       *time.Time       `json:"approvedAt,omitempty"`
@@ -213,6 +215,7 @@ func (d *Document) ToResponse() DocumentResponse {
 		ProcessGroups:    d.ProcessGroups,
 		Annexes:          d.Annexes,
 		PdfUrl:           d.PdfUrl,
+		Order:            d.Order,
 		CreatedAt:        d.CreatedAt,
 		UpdatedAt:        d.UpdatedAt,
 		ApprovedAt:       d.ApprovedAt,
@@ -242,6 +245,7 @@ type CreateDocumentRequest struct {
 	Metadata         DocumentMetadata `json:"metadata"`
 	ProcessGroups    []ProcessGroup   `json:"processGroups"`
 	Annexes          []Annex          `json:"annexes"`
+	PdfUrl           string           `json:"pdfUrl"`
 }
 
 // UpdateDocumentRequest represents the request to update a document
@@ -291,4 +295,9 @@ type UpdateAnnexRequest struct {
 	Type    *AnnexType              `json:"type"`
 	Content *map[string]interface{} `json:"content"`
 	Order   *int                    `json:"order"`
+}
+
+// ReorderProcessesRequest represents the request to reorder processes
+type ReorderProcessesRequest struct {
+	ProcessIDs []string `json:"processIds" binding:"required"`
 }

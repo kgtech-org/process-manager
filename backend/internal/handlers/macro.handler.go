@@ -58,6 +58,21 @@ func (h *MacroHandler) GetMacros(c *gin.Context) {
 	if userRole != models.RoleAdmin {
 		isActive := true
 		filter.IsActive = &isActive
+	} else {
+		// For admins, allow filtering by status
+		if isActiveStr := c.Query("isActive"); isActiveStr != "" {
+			if isActive, err := strconv.ParseBool(isActiveStr); err == nil {
+				filter.IsActive = &isActive
+			}
+		}
+	}
+
+	// Parse sorting
+	if sortBy := c.Query("sortBy"); sortBy != "" {
+		filter.SortBy = sortBy
+	}
+	if order := c.Query("order"); order != "" {
+		filter.SortOrder = order
 	}
 
 	// Get macros
@@ -248,4 +263,32 @@ func (h *MacroHandler) GetMacroProcesses(c *gin.Context) {
 		Total:      int(total),
 		TotalPages: totalPages,
 	})
+}
+
+// ReorderProcesses reorders processes in a macro
+// PUT /api/macros/:id/reorder-processes
+func (h *MacroHandler) ReorderProcesses(c *gin.Context) {
+	macroID := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(macroID)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid macro ID format")
+		return
+	}
+
+	var req models.ReorderProcessesRequest
+	if err := helpers.BindAndValidate(c, &req); err != nil {
+		helpers.SendValidationErrors(c, err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	err = h.macroService.ReorderProcesses(ctx, objID, req.ProcessIDs)
+	if err != nil {
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	helpers.SendSuccess(c, "Processes reordered successfully", nil)
 }

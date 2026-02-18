@@ -131,7 +131,27 @@ func (s *MacroService) GetAllMacros(ctx context.Context, filter *models.MacroFil
 			opts.SetSkip(int64((filter.Page - 1) * filter.Limit))
 		}
 	}
-	opts.SetSort(bson.D{{Key: "code", Value: 1}}) // Sort by code ascending
+	// Determine sort
+	sortField := "name" // Default sort by name (alphabetical)
+	if filter.SortBy != "" {
+		switch filter.SortBy {
+		case "createdAt":
+			sortField = "created_at"
+		case "updatedAt":
+			sortField = "updated_at"
+		case "code":
+			sortField = "code"
+		case "name":
+			sortField = "name"
+		}
+	}
+
+	sortOrder := 1 // Default ASC
+	if filter.SortOrder == "desc" {
+		sortOrder = -1
+	}
+
+	opts.SetSort(bson.D{{Key: sortField, Value: sortOrder}})
 
 	// Find macros
 	cursor, err := s.macroCollection.Find(ctx, query, opts)
@@ -252,7 +272,10 @@ func (s *MacroService) GetProcessesByMacroID(ctx context.Context, macroID primit
 			opts.SetSkip(int64((page - 1) * limit))
 		}
 	}
-	opts.SetSort(bson.D{{Key: "process_code", Value: 1}}) // Sort by process code
+	opts.SetSort(bson.D{
+		{Key: "order", Value: 1},        // Primary sort by custom order
+		{Key: "process_code", Value: 1}, // Secondary sort by code
+	})
 
 	// Find documents
 	cursor, err := s.docCollection.Find(ctx, query, opts)
@@ -283,6 +306,43 @@ func (s *MacroService) GetProcessCountByMacroID(ctx context.Context, macroID pri
 		return 0, fmt.Errorf("failed to count processes: %w", err)
 	}
 	return count, nil
+}
+
+// ReorderProcesses updates the order of processes in a macro
+func (s *MacroService) ReorderProcesses(ctx context.Context, macroID primitive.ObjectID, processIDs []string) error {
+	// Verify macro exists
+	_, err := s.GetMacroByID(ctx, macroID)
+	if err != nil {
+		return err
+	}
+
+	// Create write models for bulk update
+	var writes []mongo.WriteModel
+	for i, processID := range processIDs {
+		objID, err := primitive.ObjectIDFromHex(processID)
+		if err != nil {
+			return fmt.Errorf("invalid process ID %s: %w", processID, err)
+		}
+
+		// Update order field (i + 1 so it's 1-based)
+		update := mongo.NewUpdateOneModel().
+			SetFilter(bson.M{"_id": objID, "macro_id": macroID}).
+			SetUpdate(bson.M{"$set": bson.M{"order": i + 1}})
+
+		writes = append(writes, update)
+	}
+
+	if len(writes) == 0 {
+		return nil
+	}
+
+	// Execute bulk write
+	_, err = s.docCollection.BulkWrite(ctx, writes)
+	if err != nil {
+		return fmt.Errorf("failed to reorder processes: %w", err)
+	}
+
+	return nil
 }
 
 // ============================================

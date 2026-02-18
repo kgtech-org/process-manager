@@ -130,19 +130,17 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
   };
 
   const handleSearch = useCallback((newFilters: MacroFilter) => {
-    // Only update if filters actually changed
     setFilters((prevFilters) => {
-      const hasChanged = prevFilters.search !== newFilters.search;
+      const updatedFilters = { ...prevFilters, ...newFilters };
 
-      if (!hasChanged) {
-        return prevFilters; // Return same reference if values unchanged
+      // Simple equality check to prevent loops if values are identical
+      if (JSON.stringify(prevFilters) === JSON.stringify(updatedFilters)) {
+        return prevFilters;
       }
 
-      // Reset pagination when filters change
-      setCurrentPage(1);
-      setHasMore(true);
-      return newFilters;
+      return updatedFilters;
     });
+    // Pagination reset is handled by loadMacros when filters change
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -214,14 +212,47 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <MacroSearch onSearch={handleSearch} initialFilters={filters} />
-        {isAdmin && (
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('newMacro', { defaultValue: 'New Macro' })}
-          </Button>
-        )}
+      <div className="flex justify-between items-center gap-4">
+        <div className="flex-1">
+          <MacroSearch onSearch={handleSearch} initialFilters={filters} />
+        </div>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <select
+              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              value={filters.isActive === undefined ? 'all' : filters.isActive.toString()}
+              onChange={(e) => {
+                const value = e.target.value;
+                const isActive = value === 'all' ? undefined : value === 'true';
+                handleSearch({ ...filters, isActive });
+              }}
+            >
+              <option value="all">{t('filter.all', { defaultValue: 'All Status' })}</option>
+              <option value="true">{t('filter.active', { defaultValue: 'Active' })}</option>
+              <option value="false">{t('filter.inactive', { defaultValue: 'Inactive' })}</option>
+            </select>
+          )}
+          <select
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            value={`${filters.sortBy || 'name'}-${filters.order || 'asc'}`}
+            onChange={(e) => {
+              const [sortBy, order] = e.target.value.split('-');
+              handleSearch({ ...filters, sortBy: sortBy as any, order: order as any });
+            }}
+          >
+            <option value="name-asc">{t('sort.nameAsc', { defaultValue: 'Name (A-Z)' })}</option>
+            <option value="name-desc">{t('sort.nameDesc', { defaultValue: 'Name (Z-A)' })}</option>
+            <option value="createdAt-desc">{t('sort.newest', { defaultValue: 'Newest First' })}</option>
+            <option value="createdAt-asc">{t('sort.oldest', { defaultValue: 'Oldest First' })}</option>
+            <option value="updatedAt-desc">{t('sort.updated', { defaultValue: 'Recently Updated' })}</option>
+          </select>
+          {isAdmin && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('newMacro', { defaultValue: 'New Macro' })}
+            </Button>
+          )}
+        </div>
       </div>
 
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
