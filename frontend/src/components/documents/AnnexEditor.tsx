@@ -20,6 +20,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2, FileText, Table as TableIcon, Image, File } from 'lucide-react';
 import { DiagramEditor } from './DiagramEditor';
 import { TextEditor } from './TextEditor';
@@ -116,8 +127,6 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
   };
 
   const handleDeleteAnnex = async (annexId: string) => {
-    if (!confirm('Are you sure you want to delete this annex?')) return;
-
     try {
       await onDeleteAnnex(annexId);
       toast({
@@ -190,7 +199,7 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
         return (
           <DiagramEditor
             initialShapes={annex.content?.shapes || []}
-            onChange={() => {}}
+            onChange={() => { }}
             readOnly={true}
           />
         );
@@ -349,13 +358,31 @@ export const AnnexEditor: React.FC<AnnexEditorProps> = ({
                       Edit
                     </Button>
                   )}
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteAnnex(annex.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the annex
+                          "{annex.title}".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteAnnex(annex.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               )}
             </div>

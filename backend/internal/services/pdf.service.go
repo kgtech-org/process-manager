@@ -135,6 +135,43 @@ func (s *PDFService) RenderDocumentHTML(ctx context.Context, document *models.Do
 	return s.renderDocumentHTML(document)
 }
 
+// GenerateMacroPDF generates a PDF for a macro and uploads it to MinIO
+func (s *PDFService) GenerateMacroPDF(ctx context.Context, macro *models.Macro, processes []models.Document) (string, error) {
+	fmt.Printf("📄 [PDF] Generating PDF for macro: %s (%s)\n", macro.Name, macro.Code)
+
+	// Generate HTML from template
+	html, err := s.renderMacroHTML(macro, processes)
+	if err != nil {
+		return "", fmt.Errorf("failed to render HTML: %w", err)
+	}
+	fmt.Printf("📄 [PDF] Generated HTML length: %d bytes\n", len(html))
+
+	// Convert HTML to PDF using chromedp
+	pdfBytes, err := s.htmlToPDF(ctx, html)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert HTML to PDF: %w", err)
+	}
+	fmt.Printf("📄 [PDF] Generated PDF size: %d bytes\n", len(pdfBytes))
+
+	// Upload PDF to MinIO
+	fileName := fmt.Sprintf("%s_%s.pdf", macro.Code, time.Now().Format("20060102_150405"))
+	objectPath := fmt.Sprintf("macros/%s/pdf/%s", macro.ID.Hex(), fileName)
+
+	pdfURL, err := s.minioService.UploadFile(ctx, objectPath, bytes.NewReader(pdfBytes), int64(len(pdfBytes)), "application/pdf")
+	if err != nil {
+		return "", fmt.Errorf("failed to upload PDF: %w", err)
+	}
+
+	fmt.Printf("✅ [PDF] Macro PDF generated and uploaded: %s\n", pdfURL)
+
+	return pdfURL, nil
+}
+
+// RenderMacroHTML renders the macro as HTML using template (public method)
+func (s *PDFService) RenderMacroHTML(ctx context.Context, macro *models.Macro, processes []models.Document) (string, error) {
+	return s.renderMacroHTML(macro, processes)
+}
+
 // getFloat64 safely extracts a float64 value from a map, handling different numeric types
 func getFloat64(m map[string]interface{}, key string) float64 {
 	if val, ok := m[key]; ok {
@@ -360,6 +397,64 @@ func (s *PDFService) renderDocumentHTML(document *models.Document) (string, erro
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, document); err != nil {
+		return "", fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	return buf.String(), nil
+}
+
+// renderMacroHTML renders the macro as HTML using template (private helper)
+func (s *PDFService) renderMacroHTML(macro *models.Macro, processes []models.Document) (string, error) {
+	data := struct {
+		Macro     *models.Macro
+		Processes []models.Document
+	}{
+		Macro:     macro,
+		Processes: processes,
+	}
+
+	tmpl, err := template.New("macro").Funcs(template.FuncMap{
+		"formatDate": func(t time.Time) string {
+			if t.IsZero() {
+				return ""
+			}
+			return t.Format("02/01/2006")
+		},
+		"formatDateTime": func(t time.Time) string {
+			if t.IsZero() {
+				return ""
+			}
+			return t.Format("02/01/2006 15:04")
+		},
+		"formatPtrDate": func(t *time.Time) string {
+			if t == nil || t.IsZero() {
+				return ""
+			}
+			return t.Format("02/01/2006")
+		},
+		"getContributorStatus": func(status models.SignatureStatus) string {
+			switch status {
+			case models.SignatureStatusPending:
+				return "En attente"
+			case models.SignatureStatusSigned:
+				return "Signé"
+			case models.SignatureStatusJoined:
+				return "Rejoint"
+			default:
+				return string(status)
+			}
+		},
+		"renderDiagramSVG": func(shapes interface{}) template.HTML {
+			return template.HTML(renderShapesToSVG(shapes))
+		},
+	}).Parse(macroHTMLTemplate)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
 
@@ -1220,6 +1315,223 @@ const documentHTMLTemplate = `
             }
         });
     </script>
+</body>
+</html>
+`
+
+// macroHTMLTemplate is the HTML template for the Macro PDF
+const macroHTMLTemplate = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Macro.Name}}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 25mm 15mm 20mm 15mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+            line-height: 1.3;
+            color: #000;
+            width: 210mm;
+            margin: 0 auto;
+            padding-bottom: 25mm;
+        }
+
+        /* Header styling */
+        .page-header {
+            margin-bottom: 15px;
+        }
+
+        .company-name {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #FF9500;
+            margin-bottom: 2px;
+        }
+
+        .company-tagline {
+            font-size: 8pt;
+            color: #000;
+            line-height: 1.2;
+        }
+
+        /* Footer styling */
+        .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 210mm;
+            height: 20mm;
+            font-size: 8pt;
+            color: #000;
+            border-top: 2px solid #FF9500;
+            padding-top: 8px;
+            background-color: #fff;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .footer-left { flex: 1; text-align: left; }
+        .footer-center { flex: 0 0 100px; text-align: center; font-weight: bold; }
+        .footer-right { flex: 1; text-align: right; }
+        .footer-tagline { font-style: italic; color: #FF9500; font-weight: bold; }
+
+        @media print {
+            .page-footer {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: -15mm !important;
+                right: -15mm !important;
+                width: calc(100% + 30mm) !important;
+            }
+        }
+
+        /* Content Styling */
+        h1 { font-size: 24pt; color: #FF9500; margin-bottom: 20px; text-transform: uppercase; }
+        h2 { font-size: 16pt; color: #333; margin: 30px 0 15px 0; border-bottom: 1px solid #FF9500; padding-bottom: 5px; }
+        h3 { font-size: 14pt; color: #666; margin: 20px 0 10px 0; }
+        
+        p { margin-bottom: 10px; text-align: justify; }
+
+        .macro-info {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+
+        .process-item {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+
+        .process-header {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-left: 5px solid #FF9500;
+            margin-bottom: 15px;
+        }
+
+        .process-title {
+            font-size: 14pt;
+            font-weight: bold;
+        }
+
+        .process-code {
+            font-size: 10pt;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+
+        .page-break { page-break-after: always; }
+    </style>
+</head>
+<body>
+    <!-- Process Title Page -->
+    <div style="text-align: center; padding-top: 50mm;">
+        <div style="font-size: 48pt; color: #FF9500; font-weight: bold; margin-bottom: 20px;">MACRO PROCESSUS</div>
+        <div style="font-size: 24pt; font-weight: bold; margin-bottom: 10px;">{{.Macro.Code}}</div>
+        <div style="font-size: 36pt; color: #333; margin-bottom: 40px;">{{.Macro.Name}}</div>
+        <div style="font-size: 12pt; color: #666;">Généré le: {{formatDateTime .Macro.UpdatedAt}}</div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Header for subsequent pages -->
+    <div class="page-header">
+        <div class="company-name">KG TECH</div>
+        <div class="company-tagline">Excellence opérationnelle & Innovation technologique</div>
+    </div>
+
+    <h1>Description du Macro-Processus</h1>
+    
+    <div class="macro-info">
+        <p><strong>Code:</strong> {{.Macro.Code}}</p>
+        <p><strong>Titre:</strong> {{.Macro.Name}}</p>
+        <p><strong>Description:</strong> {{.Macro.Description}}</p>
+    </div>
+
+    <h2>Liste des Processus ({{len .Processes}})</h2>
+    
+    {{range .Processes}}
+    <div class="process-item">
+        <div class="process-header">
+            <div class="process-title">{{.Title}}</div>
+            <div class="process-code">{{.ProcessCode}} (Ref: {{.Reference}}) - Version {{.Version}}</div>
+        </div>
+        
+        <p><strong>Status:</strong> {{.Status}}</p>
+        
+        {{if .ShortDescription}}
+        <p><strong>Description courte:</strong> {{.ShortDescription}}</p>
+        {{end}}
+        
+        {{if .Description}}
+        <p><strong>Description détaillée:</strong> {{.Description}}</p>
+        {{end}}
+
+        {{if .Tasks}}
+        <h3>Tâches ({{len .Tasks}})</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 10%;">#</th>
+                    <th style="width: 30%;">Titre</th>
+                    <th style="width: 40%;">Description</th>
+                    <th style="width: 20%;">Rôles</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Tasks}}
+                <tr>
+                    <td>{{.Order}}</td>
+                    <td>{{.Title}}</td>
+                    <td>{{.Description}}</td>
+                    <td>
+                        {{range .Roles}}
+                        <span style="display: inline-block; background-color: #eee; padding: 2px 5px; border-radius: 3px; font-size: 8pt; margin-right: 3px; margin-bottom: 3px;">{{.}}</span>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{end}}
+    </div>
+    {{end}}
+
+    <!-- Footer for all pages -->
+    <div class="page-footer">
+        <div class="footer-left">
+            <div>KG TECH S.A.R.L</div>
+            <div style="color: #666; font-size: 6pt;">RC: 12345 | IF: 67890 | ICE: 001122334455667</div>
+        </div>
+        <div class="footer-center">
+            MACRO: {{.Macro.Code}}
+        </div>
+        <div class="footer-right">
+            <div class="footer-tagline">Driving Business Excellence</div>
+            <div>www.kgtech.ma</div>
+        </div>
+    </div>
 </body>
 </html>
 `

@@ -55,6 +55,15 @@ export class MacroResource {
     if (filters?.limit) {
       queryParams.append('limit', filters.limit.toString());
     }
+    if (filters?.sortBy) {
+      queryParams.append('sortBy', filters.sortBy);
+    }
+    if (filters?.order) {
+      queryParams.append('order', filters.order);
+    }
+    if (filters?.isActive !== undefined) {
+      queryParams.append('isActive', filters.isActive.toString());
+    }
 
     const query = queryParams.toString();
     const response = await apiClient.get(`/macros${query ? `?${query}` : ''}`);
@@ -130,6 +139,21 @@ export class MacroResource {
         totalPages: 0,
       },
     };
+  }
+
+  /**
+   * Reorder processes in a macro
+   */
+  static async reorderProcesses(macroId: string, processIds: string[]): Promise<void> {
+    await apiClient.put(`/macros/${macroId}/reorder-processes`, { processIds });
+  }
+
+  /**
+   * Export macro as PDF
+   */
+  static async exportPDF(macroId: string): Promise<{ pdfUrl: string }> {
+    const response = await apiClient.get(`/macros/${macroId}/export-pdf`);
+    return response.data;
   }
 
   /**

@@ -9,7 +9,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import commonFr from '../../public/locales/fr/common.json';
 import authFr from '../../public/locales/fr/auth.json';
 import activityFr from '../../public/locales/fr/activity.json';
-import dashboardFr from '../../public/locales/fr/dashboard.json';
+
 import usersFr from '../../public/locales/fr/users.json';
 import departmentsFr from '../../public/locales/fr/departments.json';
 import jobPositionsFr from '../../public/locales/fr/jobPositions.json';
@@ -24,7 +24,7 @@ import macrosFr from '../../public/locales/fr/macros.json';
 import commonEn from '../../public/locales/en/common.json';
 import authEn from '../../public/locales/en/auth.json';
 import activityEn from '../../public/locales/en/activity.json';
-import dashboardEn from '../../public/locales/en/dashboard.json';
+
 import usersEn from '../../public/locales/en/users.json';
 import departmentsEn from '../../public/locales/en/departments.json';
 import jobPositionsEn from '../../public/locales/en/jobPositions.json';
@@ -41,7 +41,6 @@ const resources = {
     common: commonFr,
     auth: authFr,
     activity: activityFr,
-    dashboard: dashboardFr,
     users: usersFr,
     departments: departmentsFr,
     jobPositions: jobPositionsFr,
@@ -57,7 +56,6 @@ const resources = {
     common: commonEn,
     auth: authEn,
     activity: activityEn,
-    dashboard: dashboardEn,
     users: usersEn,
     departments: departmentsEn,
     jobPositions: jobPositionsEn,

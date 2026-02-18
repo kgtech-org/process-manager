@@ -206,6 +206,16 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 		version = "1.0"
 	}
 
+	// Determine order for the new process (if attached to a macro)
+	var order int
+	if macroID != nil {
+		count, err := s.macroService.GetProcessCountByMacroID(ctx, *macroID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get process count: %w", err)
+		}
+		order = int(count) + 1
+	}
+
 	document := &models.Document{
 		ID:               primitive.NewObjectID(),
 		MacroID:          macroID,
@@ -224,6 +234,8 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 		Metadata:         req.Metadata,
 		ProcessGroups:    req.ProcessGroups,
 		Annexes:          req.Annexes,
+		PdfUrl:           req.PdfUrl,
+		Order:            order,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}

@@ -64,7 +64,7 @@ export const PinSetupScreen: React.FC<PinSetupScreenProps> = ({ onSuccess }) => 
                 if (onSuccess) {
                     onSuccess();
                 } else {
-                    router.push('/dashboard');
+                    router.push('/macros');
                 }
             }, 1500);
 

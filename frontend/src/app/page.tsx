@@ -32,7 +32,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      router.push('/dashboard');
+      router.push('/macros');
     }
   }, [isAuthenticated, user, router]);
 

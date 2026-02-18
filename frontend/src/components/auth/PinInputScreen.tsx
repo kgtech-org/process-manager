@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PinInputScreenProps {
     email: string;
@@ -23,6 +24,7 @@ export const PinInputScreen: React.FC<PinInputScreenProps> = ({
     const [pin, setPin] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const { loginWithPin } = useAuth();
     const { t } = useTranslation('auth');
 
     const handlePinComplete = async (value: string) => {
@@ -34,7 +36,7 @@ export const PinInputScreen: React.FC<PinInputScreenProps> = ({
         try {
             setLoading(true);
             setError('');
-            const response = await authService.loginWithPin(email, pinValue);
+            const response = await loginWithPin(email, pinValue);
             onSuccess(response);
         } catch (err: any) {
             setError(err.message || t('login.invalidPin') || 'Invalid PIN');
