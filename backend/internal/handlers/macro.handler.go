@@ -292,3 +292,32 @@ func (h *MacroHandler) ReorderProcesses(c *gin.Context) {
 
 	helpers.SendSuccess(c, "Processes reordered successfully", nil)
 }
+
+// ExportPDF exports macro as PDF
+// GET /api/macros/:id/export-pdf
+func (h *MacroHandler) ExportPDF(c *gin.Context) {
+	macroID := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(macroID)
+	if err != nil {
+		helpers.SendBadRequest(c, "Invalid macro ID format")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 60*time.Second) // Longer timeout for PDF generation
+	defer cancel()
+
+	// Export PDF
+	pdfURL, err := h.macroService.ExportPDF(ctx, objID)
+	if err != nil {
+		if err.Error() == "macro not found" {
+			helpers.SendNotFound(c, "Macro not found")
+			return
+		}
+		helpers.SendInternalError(c, err)
+		return
+	}
+
+	helpers.SendSuccess(c, "PDF exported successfully", gin.H{
+		"pdfUrl": pdfURL,
+	})
+}

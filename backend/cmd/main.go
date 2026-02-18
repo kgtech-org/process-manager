@@ -99,7 +99,7 @@ func main() {
 	pdfService := services.NewPDFService(minioService, openaiService)
 
 	// Initialize macro service
-	macroService := services.NewMacroService(db)
+	macroService := services.NewMacroService(db, pdfService)
 
 	// Initialize document service (depends on macroService)
 	documentService := services.NewDocumentService(db.Database, userService, pdfService, macroService)
@@ -258,7 +258,7 @@ func seedData() {
 	}
 
 	// Seed macros
-	macroService := services.NewMacroService(db)
+	macroService := services.NewMacroService(db, nil)
 	seedFilePath := "resources/macros_seed.json"
 	if err := macroService.InitializeMacros(ctx, seedFilePath); err != nil {
 		log.Printf("Failed to seed macros: %v", err)

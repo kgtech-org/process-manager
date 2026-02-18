@@ -15,6 +15,7 @@ func SetupMacroRoutes(router *gin.RouterGroup, macroHandler *handlers.MacroHandl
 		macros.GET("/", macroHandler.GetMacros)                      // List all macros with pagination
 		macros.GET("/:id", macroHandler.GetMacro)                    // Get specific macro
 		macros.GET("/:id/processes", macroHandler.GetMacroProcesses) // Get processes in macro
+		macros.GET("/:id/export-pdf", macroHandler.ExportPDF)        // Export macro as PDF
 
 		// Manager-level operations - require manager or admin role
 		managerOps := macros.Group("").Use(authMiddleware.RequireManager())

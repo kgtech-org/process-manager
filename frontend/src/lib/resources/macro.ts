@@ -149,6 +149,14 @@ export class MacroResource {
   }
 
   /**
+   * Export macro as PDF
+   */
+  static async exportPDF(macroId: string): Promise<{ pdfUrl: string }> {
+    const response = await apiClient.get(`/macros/${macroId}/export-pdf`);
+    return response.data;
+  }
+
+  /**
    * Get paginated macros (convenience method)
    */
   static async getPaginated(page: number = 1, limit: number = 20): Promise<MacroListResponse> {

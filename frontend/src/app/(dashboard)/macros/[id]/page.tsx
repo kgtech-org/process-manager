@@ -163,6 +163,7 @@ export default function MacroDetailPage() {
   const { toast } = useToast();
   const isAdmin = user?.role === 'admin';
   const [isCreateProcessModalOpen, setIsCreateProcessModalOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -372,6 +373,39 @@ export default function MacroDetailPage() {
     { label: `${macro.code} - ${macro.name}` },
   ];
 
+
+
+
+  // Handle PDF download
+  const handleDownloadPDF = async () => {
+    if (!macro) return;
+    try {
+      setIsDownloading(true);
+      toast({
+        title: t('messages.generatingPDF', { defaultValue: 'Generating PDF...' }),
+        description: t('messages.pleaseWait', { defaultValue: 'Please wait while we generate your document.' }),
+      });
+
+      const { pdfUrl } = await MacroResource.exportPDF(macroId);
+
+      // Open PDF in new tab
+      window.open(pdfUrl, '_blank');
+
+      toast({
+        title: t('messages.pdfGenerated', { defaultValue: 'PDF generated successfully' }),
+      });
+    } catch (error: any) {
+      console.error('Failed to generate PDF:', error);
+      toast({
+        variant: 'destructive',
+        title: t('messages.pdfFailed', { defaultValue: 'Failed to generate PDF' }),
+        description: error.message || t('messages.error'),
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="p-8">
       {/* Breadcrumb */}
@@ -413,20 +447,25 @@ export default function MacroDetailPage() {
             )}
           </div>
           <div className="flex items-center space-x-3">
-            {isAdmin && (
-              <div className="flex items-center space-x-2 mr-2">
-                <span className="text-sm text-gray-500">{macro.isActive ? t('active') : t('inactive')}</span>
-                <Switch
-                  checked={macro.isActive}
-                  onCheckedChange={handleToggleMacroActive}
-                />
-              </div>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              {t('downloadPDF', { defaultValue: 'Download PDF' })}
+            </Button>
+
+            <Button variant="outline" size="sm" onClick={() => router.push(`/macros/${macroId}/edit`)}>
+              <Edit className="w-4 h-4 mr-2" />
+              {t('edit', { defaultValue: 'Edit' })}
+            </Button>
           </div>
-          <Button variant="outline" size="sm" onClick={() => router.push(`/macros/${macroId}/edit`)}>
-            <Edit className="w-4 h-4 mr-2" />
-            {t('edit', { defaultValue: 'Edit' })}
-          </Button>
         </div>
       </div>
 
@@ -540,6 +579,6 @@ export default function MacroDetailPage() {
           <ProcessForm onSubmit={handleCreateProcess} />
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 }
