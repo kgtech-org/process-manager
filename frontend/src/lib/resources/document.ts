@@ -155,6 +155,7 @@ export interface UpdateDocumentRequest {
   annexes?: Annex[];
   isActive?: boolean;
   tasks?: ApplicationTask[];
+  isAutosave?: boolean;
 }
 
 export interface DocumentFilter {
