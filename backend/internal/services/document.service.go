@@ -22,9 +22,10 @@ type DocumentService struct {
 	userService          *UserService
 	pdfService           *PDFService
 	macroService         *MacroService
+	documentationService *DocumentationService
 }
 
-func NewDocumentService(db *mongo.Database, userService *UserService, pdfService *PDFService, macroService *MacroService) *DocumentService {
+func NewDocumentService(db *mongo.Database, userService *UserService, pdfService *PDFService, macroService *MacroService, documentationService *DocumentationService) *DocumentService {
 	return &DocumentService{
 		collection:           db.Collection("documents"),
 		versionCollection:    db.Collection("document_versions"),
@@ -32,6 +33,7 @@ func NewDocumentService(db *mongo.Database, userService *UserService, pdfService
 		userService:          userService,
 		pdfService:           pdfService,
 		macroService:         macroService,
+		documentationService: documentationService,
 	}
 }
 
@@ -250,6 +252,11 @@ func (s *DocumentService) Create(ctx context.Context, req *models.CreateDocument
 	if err != nil {
 		// Log error but don't fail the creation
 		fmt.Printf("Failed to create initial version: %v\n", err)
+	}
+
+	// Trigger documentation update
+	if s.documentationService != nil {
+		s.documentationService.TriggerUpdate()
 	}
 
 	return document, nil
@@ -547,6 +554,11 @@ func (s *DocumentService) Update(ctx context.Context, id primitive.ObjectID, req
 		}
 	}
 
+	// Trigger documentation update
+	if s.documentationService != nil {
+		s.documentationService.TriggerUpdate()
+	}
+
 	return &updatedDocument, nil
 }
 
@@ -634,6 +646,11 @@ func (s *DocumentService) Publish(ctx context.Context, id primitive.ObjectID) (*
 		return nil, fmt.Errorf("failed to publish document: %w", err)
 	}
 
+	// Trigger documentation update
+	if s.documentationService != nil {
+		s.documentationService.TriggerUpdate()
+	}
+
 	return document, nil
 }
 
@@ -719,6 +736,11 @@ func (s *DocumentService) Delete(ctx context.Context, id primitive.ObjectID) err
 
 	if result.DeletedCount == 0 {
 		return errors.New("document not found")
+	}
+
+	// Trigger documentation update
+	if s.documentationService != nil {
+		s.documentationService.TriggerUpdate()
 	}
 
 	return nil

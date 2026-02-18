@@ -15,19 +15,21 @@ import (
 
 // MacroService handles macro-related database operations
 type MacroService struct {
-	db              *DatabaseService
-	macroCollection *mongo.Collection
-	docCollection   *mongo.Collection
-	pdfService      *PDFService
+	db                   *DatabaseService
+	macroCollection      *mongo.Collection
+	docCollection        *mongo.Collection
+	pdfService           *PDFService
+	documentationService *DocumentationService
 }
 
 // NewMacroService creates a new macro service instance
-func NewMacroService(db *DatabaseService, pdfService *PDFService) *MacroService {
+func NewMacroService(db *DatabaseService, pdfService *PDFService, documentationService *DocumentationService) *MacroService {
 	return &MacroService{
-		db:              db,
-		macroCollection: db.Collection("macros"),
-		docCollection:   db.Collection("documents"),
-		pdfService:      pdfService,
+		db:                   db,
+		macroCollection:      db.Collection("macros"),
+		docCollection:        db.Collection("documents"),
+		pdfService:           pdfService,
+		documentationService: documentationService,
 	}
 }
 
@@ -70,6 +72,12 @@ func (s *MacroService) CreateMacro(ctx context.Context, req *models.CreateMacroR
 	}
 
 	macro.ID = result.InsertedID.(primitive.ObjectID)
+
+	// Trigger documentation update
+	if s.documentationService != nil {
+		s.documentationService.TriggerUpdate()
+	}
+
 	return macro, nil
 }
 
@@ -223,6 +231,11 @@ func (s *MacroService) UpdateMacro(ctx context.Context, id primitive.ObjectID, r
 		return nil, fmt.Errorf("failed to update macro: %w", err)
 	}
 
+	// Trigger documentation update
+	if s.documentationService != nil {
+		s.documentationService.TriggerUpdate()
+	}
+
 	return &macro, nil
 }
 
@@ -245,6 +258,11 @@ func (s *MacroService) DeleteMacro(ctx context.Context, id primitive.ObjectID) e
 
 	if result.DeletedCount == 0 {
 		return fmt.Errorf("macro not found")
+	}
+
+	// Trigger documentation update
+	if s.documentationService != nil {
+		s.documentationService.TriggerUpdate()
 	}
 
 	return nil
@@ -397,6 +415,11 @@ func (s *MacroService) ReorderProcesses(ctx context.Context, macroID primitive.O
 	_, err = s.docCollection.BulkWrite(ctx, writes)
 	if err != nil {
 		return fmt.Errorf("failed to reorder processes: %w", err)
+	}
+
+	// Trigger documentation update
+	if s.documentationService != nil {
+		s.documentationService.TriggerUpdate()
 	}
 
 	return nil

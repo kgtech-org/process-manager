@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -98,11 +100,14 @@ func main() {
 	// Initialize PDF service
 	pdfService := services.NewPDFService(minioService, openaiService)
 
+	// Initialize Documentation service
+	documentationService := services.NewDocumentationService(db, minioService, openaiService)
+
 	// Initialize macro service
-	macroService := services.NewMacroService(db, pdfService)
+	macroService := services.NewMacroService(db, pdfService, documentationService)
 
 	// Initialize document service (depends on macroService)
-	documentService := services.NewDocumentService(db.Database, userService, pdfService, macroService)
+	documentService := services.NewDocumentService(db.Database, userService, pdfService, macroService, documentationService)
 
 	// Initialize chat service
 	var chatService *services.ChatService
@@ -148,8 +153,11 @@ func main() {
 
 	// CORS configuration
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
-	// corsConfig.AllowOrigins = []string{"http://localhost:3000", "https://localhost:3000"}
+	if envOrigins := os.Getenv("CORS_ORIGINS"); envOrigins != "" {
+		corsConfig.AllowOrigins = strings.Split(envOrigins, ",")
+	} else {
+		corsConfig.AllowOrigins = []string{"http://localhost:3000", "https://localhost:3000", "http://localhost", "https://localhost"}
+	}
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept-Language", "X-Language"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
@@ -218,6 +226,10 @@ func main() {
 		if chatHandler != nil {
 			routes.SetupChatRoutes(api, chatHandler, authMiddleware)
 		}
+
+		// Setup documentation routes
+		documentationHandler := handlers.NewDocumentationHandler(documentationService)
+		routes.SetupDocumentationRoutes(api, documentationHandler, authMiddleware)
 	}
 
 	// Get port from environment or default to 8080
@@ -234,6 +246,7 @@ func main() {
 }
 
 func seedData() {
+	log.Println("🌱 Starting data seeding...")
 	// Initialize database
 	db, err := services.InitDatabase()
 	if err != nil {
@@ -246,23 +259,26 @@ func seedData() {
 	// Seed departments
 	if err := seedDepartments(ctx, db); err != nil {
 		log.Printf("Failed to seed departments: %v", err)
-	} else {
-		log.Println("✅ Departments seeded successfully")
 	}
 
 	// Seed job positions
 	if err := seedJobPositions(ctx, db); err != nil {
 		log.Printf("Failed to seed job positions: %v", err)
-	} else {
-		log.Println("✅ Job positions seeded successfully")
 	}
 
 	// Seed macros
-	macroService := services.NewMacroService(db, nil)
+	macroService := services.NewMacroService(db, nil, nil)
 	seedFilePath := "resources/macros_seed.json"
 	if err := macroService.InitializeMacros(ctx, seedFilePath); err != nil {
 		log.Printf("Failed to seed macros: %v", err)
 	}
+
+	// Seed test user
+	if err := seedTestUser(ctx, services.InitUserService(db), services.NewPinService(db.Database)); err != nil {
+		log.Printf("Failed to seed test user: %v", err)
+	}
+
+	log.Println("🏁 Finished data seeding")
 }
 
 func seedDepartments(ctx context.Context, db *services.DatabaseService) error {
@@ -517,4 +533,57 @@ func seedJobPositions(ctx context.Context, db *services.DatabaseService) error {
 
 	_, err = collection.InsertMany(ctx, docs)
 	return err
+}
+
+func seedTestUser(ctx context.Context, userService *services.UserService, pinService *services.PinService) error {
+	email := "aroamadou1@gmail.com"
+
+	// Check if user exists
+	existingUser, err := userService.GetUserByEmail(ctx, email)
+	if err == nil && existingUser != nil {
+		log.Printf("Test user %s already exists", email)
+		return nil
+	}
+
+	// Create test user
+	user := &models.User{
+		Email:     email,
+		FirstName: "Amadou",
+		LastName:  "Aro",
+		Role:      models.RoleAdmin,
+		Status:    models.StatusActive,
+		Active:    true,
+		Verified:  true,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	// Validate before inserting (optional, but good practice)
+	if !user.ValidateEmail() {
+		return fmt.Errorf("invalid email for test user")
+	}
+
+	// Insert user
+	// CreateUserRequest matches expected input for userService.CreateUser
+	req := &models.CreateUserRequest{
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Role:      user.Role,
+	}
+
+	result, err := userService.CreateUser(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to create test user: %w", err)
+	}
+
+	user = result // Get the created user with ID
+
+	// Set PIN
+	if err := pinService.SetPin(ctx, user.ID, "123456"); err != nil {
+		return fmt.Errorf("failed to set PIN for test user: %w", err)
+	}
+
+	log.Printf("✅ Test user seeded: %s (PIN: 123456)", email)
+	return nil
 }

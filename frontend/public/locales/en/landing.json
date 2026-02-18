@@ -1,6 +1,7 @@
 {
   "header": {
     "title": "Process Manager",
+    "registry": "Public Registry",
     "signIn": "Sign In",
     "getStarted": "Get Started"
   },
