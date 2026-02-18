@@ -101,7 +101,7 @@ services:
       - MINIO_BUCKET_NAME=process-documents
       - MINIO_USE_SSL=false
       - JWT_SECRET=your-supersec
-      - CORS_ORIGINS=http://localhost
+      - CORS_ORIGINS=http://localhost,http://localhost:3000
       - SMTP_HOST=smtp.hostinger.com
       - SMTP_PORT=465
       - SMTP_USERNAME=admin@k-j.store

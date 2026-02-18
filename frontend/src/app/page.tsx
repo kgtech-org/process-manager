@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/lib/i18n';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import Image from 'next/image';
+import { DocumentationViewer } from '@/components/public/DocumentationViewer';
+import { documentationService, PublicDocumentation } from '@/services/documentation.service';
 import {
   CheckCircle2,
   FileText,
@@ -29,12 +31,33 @@ export default function HomePage() {
   const { isAuthenticated, user } = useAuth();
   const { t } = useTranslation('landing');
   const router = useRouter();
+  const [documentationData, setDocumentationData] = useState<PublicDocumentation | null>(null);
 
   useEffect(() => {
     if (isAuthenticated && user) {
       router.push('/macros');
     }
   }, [isAuthenticated, user, router]);
+
+  useEffect(() => {
+    const fetchDocumentation = async () => {
+      try {
+        const data = await documentationService.getPublicDocumentation();
+        setDocumentationData(data);
+      } catch (error) {
+        console.error('Failed to load public documentation:', error);
+      }
+    };
+
+    fetchDocumentation();
+  }, []);
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   if (isAuthenticated && user) {
     return null; // Prevent flashing content while redirecting
@@ -57,6 +80,11 @@ export default function HomePage() {
           </div>
           <div className="flex items-center space-x-2">
             <LanguageSwitcher />
+            {documentationData && (
+              <Button onClick={() => scrollToSection('documentation')} variant="ghost" size="sm">
+                {t('header.registry')}
+              </Button>
+            )}
             <Button onClick={() => router.push('/login')} variant="ghost" size="sm">
               {t('header.signIn')}
             </Button>
@@ -289,6 +317,7 @@ export default function HomePage() {
       {/* How It Works Section */}
       <section className="px-4 py-16 bg-white">
         <div className="max-w-7xl mx-auto">
+          {/* ... existing How It Works content ... */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
               {t('howItWorks.badge')}
@@ -352,6 +381,28 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Public Documentation Section */}
+      {documentationData && (
+        <section className="px-4 py-16 bg-gray-50 border-y border-gray-200" id="documentation">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium mb-4">
+                <BookOpen className="w-4 h-4 mr-2" />
+                Public Registry
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Public Documentation
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Access our complete registry of active macros, processes, and standard operating procedures.
+              </p>
+            </div>
+
+            <DocumentationViewer data={documentationData} />
+          </div>
+        </section>
+      )}
 
       {/* Support Section */}
       <section className="px-4 py-16 bg-gradient-to-br from-blue-50 to-indigo-50">

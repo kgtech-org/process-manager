@@ -17,11 +17,11 @@ import (
 
 // MinIOService handles object storage operations with MinIO
 type MinIOService struct {
-	client       *minio.Client
-	bucketName   string
-	endpoint     string
-	useSSL       bool
-	publicURL    string
+	client     *minio.Client
+	bucketName string
+	endpoint   string
+	useSSL     bool
+	publicURL  string
 }
 
 var minioService *MinIOService
@@ -115,9 +115,15 @@ func InitMinIOService() (*MinIOService, error) {
 				"Principal": "*",
 				"Action": "s3:GetObject",
 				"Resource": "arn:aws:s3:::%s/documents/*"
+			},
+			{
+				"Effect": "Allow",
+				"Principal": "*",
+				"Action": "s3:GetObject",
+				"Resource": "arn:aws:s3:::%s/public/*"
 			}
 		]
-	}`, bucketName, bucketName)
+	}`, bucketName, bucketName, bucketName)
 
 	err = client.SetBucketPolicy(ctx, bucketName, policy)
 	if err != nil {
@@ -150,7 +156,7 @@ func (s *MinIOService) UploadAvatar(ctx context.Context, userID string, reader i
 		// Default to jpg if no extension
 		fileExt = ".jpg"
 	}
-	
+
 	objectKey := fmt.Sprintf("avatars/%s%s", userID, fileExt)
 
 	// Upload options
@@ -210,7 +216,7 @@ func (s *MinIOService) GetAvatarURL(userID string, fileExt string) string {
 func (s *MinIOService) CheckAvatarExists(ctx context.Context, userID string) (bool, string, error) {
 	// Check for common image extensions
 	extensions := []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
-	
+
 	for _, ext := range extensions {
 		objectKey := fmt.Sprintf("avatars/%s%s", userID, ext)
 		_, err := s.client.StatObject(ctx, s.bucketName, objectKey, minio.StatObjectOptions{})
@@ -220,7 +226,7 @@ func (s *MinIOService) CheckAvatarExists(ctx context.Context, userID string) (bo
 			return true, avatarURL, nil
 		}
 	}
-	
+
 	return false, "", nil
 }
 
