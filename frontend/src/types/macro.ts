@@ -28,6 +28,7 @@ export interface Process {
   createdAt: string;
   updatedAt: string;
   pdfUrl?: string;
+  order?: number;
 }
 
 export interface CreateMacroRequest {
