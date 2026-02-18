@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	openai "github.com/sashabaranov/go-openai"
@@ -60,7 +61,7 @@ func (s *OpenAIService) ensureAssistant(ctx context.Context) error {
 
 	// Create a new assistant
 	assistant, err := s.client.CreateAssistant(ctx, openai.AssistantRequest{
-		Name:  strPtr("Process Manager Assistant"),
+		Name: strPtr("Process Manager Assistant"),
 		Instructions: strPtr(`Tu es un assistant expert en gestion de processus pour Togocom, une entreprise de télécommunications.
 
 Ton rôle est d'aider les utilisateurs à comprendre et à appliquer les procédures documentées dans le système de gestion des processus.
@@ -99,8 +100,8 @@ Contexte: Les documents que tu consultes sont des procédures de Togocom couvran
 	return nil
 }
 
-// UploadDocument uploads a PDF document to OpenAI and attaches it to the assistant's vector store
-func (s *OpenAIService) UploadDocument(ctx context.Context, filePath string, documentID string) error {
+// UploadDocument uploads a document to OpenAI and attaches it to the assistant's vector store
+func (s *OpenAIService) UploadDocument(ctx context.Context, filePath string, uploadFileName string, documentID string) error {
 	// Open the file
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -108,9 +109,9 @@ func (s *OpenAIService) UploadDocument(ctx context.Context, filePath string, doc
 	}
 	defer file.Close()
 
-	// Upload file to OpenAI
+	// Uploa file to OpenAI
 	uploadedFile, err := s.client.CreateFile(ctx, openai.FileRequest{
-		FileName: fmt.Sprintf("process_%s.pdf", documentID),
+		FileName: uploadFileName,
 		FilePath: filePath,
 		Purpose:  string(openai.PurposeAssistants),
 	})
@@ -119,7 +120,7 @@ func (s *OpenAIService) UploadDocument(ctx context.Context, filePath string, doc
 		return fmt.Errorf("failed to upload file to OpenAI: %w", err)
 	}
 
-	log.Printf("✅ Uploaded document to OpenAI: %s (File ID: %s)", documentID, uploadedFile.ID)
+	log.Printf("✅ Uploaded document to OpenAI: %s (File ID: %s)", uploadFileName, uploadedFile.ID)
 
 	// Get the assistant to access its vector store
 	assistant, err := s.client.RetrieveAssistant(ctx, s.assistantID)
@@ -131,8 +132,8 @@ func (s *OpenAIService) UploadDocument(ctx context.Context, filePath string, doc
 
 	// Check if assistant has a vector store
 	if assistant.ToolResources != nil &&
-	   assistant.ToolResources.FileSearch != nil &&
-	   len(assistant.ToolResources.FileSearch.VectorStoreIDs) > 0 {
+		assistant.ToolResources.FileSearch != nil &&
+		len(assistant.ToolResources.FileSearch.VectorStoreIDs) > 0 {
 		vectorStoreID = assistant.ToolResources.FileSearch.VectorStoreIDs[0]
 	} else {
 		// Create a new vector store
@@ -168,33 +169,41 @@ func (s *OpenAIService) UploadDocument(ctx context.Context, filePath string, doc
 		return fmt.Errorf("failed to add file to vector store: %w", err)
 	}
 
-	log.Printf("✅ Added document %s to vector store %s", documentID, vectorStoreID)
+	log.Printf("✅ Added document %s to vector store %s", uploadFileName, vectorStoreID)
 
 	return nil
 }
 
 // UploadDocumentFromReader uploads a document from an io.Reader
 func (s *OpenAIService) UploadDocumentFromReader(ctx context.Context, reader io.Reader, filename string, documentID string) error {
-	// Create temporary file
-	tempFile, err := os.CreateTemp("", "process_*.pdf")
+	// Create temporary file with meaningful prefix/suffix if possible
+	// We'll use "upload-*.ext" pattern if filename has extension
+	// But os.CreateTemp pattern "pattern*" puts random string at the end.
+	// So we use "upload-*"
+	ext := filepath.Ext(filename)
+	if ext == "" {
+		ext = ".tmp"
+	}
+	pattern := fmt.Sprintf("process_upload_*%s", ext)
+	tempFile, err := os.CreateTemp("", pattern)
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer os.Remove(tempFile.Name())
-	defer tempFile.Close()
 
 	// Copy content to temp file
 	if _, err := io.Copy(tempFile, reader); err != nil {
+		tempFile.Close()
 		return fmt.Errorf("failed to write to temp file: %w", err)
 	}
 
-	// Reset file pointer
-	if _, err := tempFile.Seek(0, 0); err != nil {
-		return fmt.Errorf("failed to seek temp file: %w", err)
+	// Close the file to flush changes to disk
+	if err := tempFile.Close(); err != nil {
+		return fmt.Errorf("failed to close temp file: %w", err)
 	}
 
-	// Upload using file path
-	return s.UploadDocument(ctx, tempFile.Name(), documentID)
+	// Upload using file path, passing the desired filename
+	return s.UploadDocument(ctx, tempFile.Name(), filename, documentID)
 }
 
 // SendMessage sends a message to the assistant and returns the response
@@ -275,8 +284,8 @@ func (s *OpenAIService) SendMessage(ctx context.Context, message string, threadI
 			}
 
 			if run.Status == openai.RunStatusFailed ||
-			   run.Status == openai.RunStatusCancelled ||
-			   run.Status == openai.RunStatusExpired {
+				run.Status == openai.RunStatusCancelled ||
+				run.Status == openai.RunStatusExpired {
 				return "", "", fmt.Errorf("run failed with status: %s", run.Status)
 			}
 		}
