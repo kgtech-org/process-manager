@@ -7,7 +7,8 @@ RUN apk add --no-cache \
     freetype \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    curl
 
 # Install Air for hot-reload (using air-verse path)
 RUN go install github.com/air-verse/air@v1.52.3

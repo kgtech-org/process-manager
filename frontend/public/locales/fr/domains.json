@@ -1,0 +1,47 @@
+{
+    "title": "Domaines",
+    "subtitle": "Gérer les domaines fonctionnels",
+    "fields": {
+        "name": "Nom",
+        "code": "Code",
+        "description": "Description",
+        "active": "Actif",
+        "createdAt": "Créé le",
+        "updatedAt": "Mis à jour le"
+    },
+    "placeholders": {
+        "name": "Entrez le nom du domaine",
+        "code": "Entrez le code du domaine",
+        "description": "Entrez la description du domaine",
+        "search": "Rechercher des domaines..."
+    },
+    "actions": {
+        "create": "Créer un domaine",
+        "edit": "Modifier le domaine",
+        "delete": "Supprimer le domaine",
+        "activate": "Activer",
+        "deactivate": "Désactiver",
+        "save": "Enregistrer",
+        "cancel": "Annuler"
+    },
+    "filters": {
+        "all": "Tous les domaines",
+        "active": "Actifs",
+        "inactive": "Inactifs"
+    },
+    "messages": {
+        "created": "Domaine créé avec succès",
+        "updated": "Domaine mis à jour avec succès",
+        "deleted": "Domaine supprimé avec succès",
+        "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce domaine ?",
+        "deleteWarning": "Cette action est irréversible. Tous les départements doivent être réaffectés au préalable.",
+        "noResults": "Aucun domaine trouvé",
+        "loading": "Chargement des domaines..."
+    },
+    "stats": {
+        "total": "Total des domaines",
+        "active": "Domaines actifs",
+        "inactive": "Domaines inactifs",
+        "departments": "Départements"
+    }
+}
