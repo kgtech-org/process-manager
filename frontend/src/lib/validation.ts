@@ -142,7 +142,7 @@ export const userSchema = z.object({
   jobPositionId: z.string().optional(),
   avatar: z.string().optional(),
   hasPin: z.boolean().optional(),
-  emailVerified: z.boolean(),
+  verified: z.boolean(),
   lastLogin: z.string().optional(),
   validatedAt: z.string().optional(),
   createdAt: z.string(),

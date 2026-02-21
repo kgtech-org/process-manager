@@ -18,6 +18,7 @@ import (
 	"github.com/kodesonik/process-manager/internal/models"
 	"github.com/kodesonik/process-manager/internal/routes"
 	"github.com/kodesonik/process-manager/internal/services"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -297,7 +298,7 @@ func seedData(clean bool) {
 	}
 
 	// Seed test user
-	if err := seedTestUser(ctx, services.InitUserService(db), services.NewPinService(db.Database)); err != nil {
+	if err := seedTestUser(ctx, services.InitUserService(db), services.NewPinService(db.Database), db); err != nil {
 		log.Printf("Failed to seed test user: %v", err)
 	}
 
@@ -861,7 +862,7 @@ func seedJobPositions(ctx context.Context, db *services.DatabaseService) error {
 	return nil
 }
 
-func seedTestUser(ctx context.Context, userService *services.UserService, pinService *services.PinService) error {
+func seedTestUser(ctx context.Context, userService *services.UserService, pinService *services.PinService, db *services.DatabaseService) error {
 	email := "aroamadou1@gmail.com"
 
 	// Check if user exists
@@ -889,13 +890,33 @@ func seedTestUser(ctx context.Context, userService *services.UserService, pinSer
 		return fmt.Errorf("invalid email for test user")
 	}
 
+	// Get "DSI" Department
+	deptCollection := db.Collection("departments")
+	var dsiDept models.Department
+	err = deptCollection.FindOne(ctx, bson.M{"code": "DSI"}).Decode(&dsiDept)
+	var deptIDHex string
+	if err == nil {
+		deptIDHex = dsiDept.ID.Hex()
+	}
+
+	// Get "DSI-DIR" Job Position
+	jobCollection := db.Collection("job_positions")
+	var dsiDirJob models.JobPosition
+	err = jobCollection.FindOne(ctx, bson.M{"code": "DSI-DIR"}).Decode(&dsiDirJob)
+	var jobIDHex string
+	if err == nil {
+		jobIDHex = dsiDirJob.ID.Hex()
+	}
+
 	// Insert user
 	// CreateUserRequest matches expected input for userService.CreateUser
 	req := &models.CreateUserRequest{
-		Email:     user.Email,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Role:      user.Role,
+		Email:         user.Email,
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+		Role:          user.Role,
+		DepartmentID:  deptIDHex,
+		JobPositionID: jobIDHex,
 	}
 
 	result, err := userService.CreateUser(ctx, req)

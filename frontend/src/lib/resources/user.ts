@@ -22,7 +22,7 @@ export interface User {
     code: string;
   };
   avatar?: string;
-  emailVerified: boolean;
+  verified: boolean;
   lastLogin?: string;
   validatedAt?: string;
   createdAt: string;

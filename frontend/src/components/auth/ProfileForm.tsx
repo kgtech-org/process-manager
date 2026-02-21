@@ -48,7 +48,10 @@ export const ProfileForm: React.FC = () => {
         ]);
         setDepartments(deptData);
         setJobPositions(positionData);
-        
+
+        console.log('ProfileForm Loaded Depts:', deptData);
+        console.log('ProfileForm Loaded Jobs:', positionData);
+
         if (user?.departmentId) {
           setSelectedDepartmentId(user.departmentId);
         }
@@ -87,10 +90,10 @@ export const ProfileForm: React.FC = () => {
     try {
       setError('');
       setSuccess('');
-      
+
       await updateProfile(data);
       setSuccess(t('profile.updateSuccess'));
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (error: any) {
@@ -154,7 +157,7 @@ export const ProfileForm: React.FC = () => {
               {error}
             </div>
           )}
-          
+
           {success && (
             <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800 border border-green-200">
               {success}
@@ -278,11 +281,10 @@ export const ProfileForm: React.FC = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-700">Role</label>
                     <div className="mt-1">
-                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                        user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${user.role === 'admin' ? 'bg-red-100 text-red-800' :
                         user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                          'bg-gray-100 text-gray-800'
+                        }`}>
                         {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                       </span>
                     </div>
@@ -291,11 +293,10 @@ export const ProfileForm: React.FC = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-700">Status</label>
                     <div className="mt-1">
-                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                        user.status === 'active' ? 'bg-green-100 text-green-800' :
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-800' :
                         user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                          'bg-gray-100 text-gray-800'
+                        }`}>
                         {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                       </span>
                     </div>
@@ -305,10 +306,9 @@ export const ProfileForm: React.FC = () => {
                 <div>
                   <label className="text-sm font-medium text-gray-700">Email Verified</label>
                   <div className="mt-1">
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      user.emailVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.emailVerified ? 'Verified' : 'Not Verified'}
+                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${user.verified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                      {user.verified ? 'Verified' : 'Not Verified'}
                     </span>
                   </div>
                 </div>
