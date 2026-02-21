@@ -6,12 +6,17 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/kodesonik/process-manager/internal/handlers"
 	"github.com/kodesonik/process-manager/internal/i18n"
+	"github.com/kodesonik/process-manager/internal/middleware"
 	"github.com/kodesonik/process-manager/internal/models"
+	"github.com/kodesonik/process-manager/internal/routes"
 	"github.com/kodesonik/process-manager/internal/services"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -51,7 +56,199 @@ func main() {
 	// Seed initial data if needed
 	seedData(*cleanFlag)
 
-	// ... rest of main
+	// Initialize Redis
+	redisService, err := services.NewRedisService()
+	if err != nil {
+		log.Fatalf("Failed to initialize Redis: %v", err)
+	}
+	defer func() {
+		if err := redisService.Close(); err != nil {
+			log.Printf("Error closing Redis: %v", err)
+		}
+	}()
+
+	// Initialize MinIO service
+	minioService, err := services.InitMinIOService()
+	if err != nil {
+		log.Fatalf("Failed to initialize MinIO: %v", err)
+	}
+
+	// Initialize services
+	jwtService := services.NewJWTService()
+	userService := services.InitUserService(db)
+	emailService := services.NewEmailService()
+	otpService := services.NewOTPService(redisService.Client)
+	pinService := services.NewPinService(db.Database)
+	activityLogService := services.InitActivityLogService(db)
+
+	// Initialize Firebase service
+	firebaseService, err := services.NewFirebaseService()
+	if err != nil {
+		log.Printf("⚠️  Warning: Failed to initialize Firebase service: %v", err)
+		log.Printf("⚠️  Push notification features will be disabled")
+		firebaseService = nil
+	}
+
+	// Initialize device and notification services
+	deviceService := services.NewDeviceService(db, firebaseService)
+	notificationService := services.NewNotificationService(db, firebaseService, deviceService, userService)
+
+	// Initialize OpenAI service
+	openaiService, err := services.NewOpenAIService()
+	if err != nil {
+		log.Printf("⚠️  Warning: Failed to initialize OpenAI service: %v", err)
+		log.Printf("⚠️  OpenAI chatbot features will be disabled")
+		openaiService = nil
+	}
+
+	// Initialize PDF service
+	pdfService := services.NewPDFService(minioService, openaiService)
+
+	// Initialize Documentation service
+	documentationService := services.NewDocumentationService(db, minioService, openaiService)
+
+	// Initialize macro service
+	macroService := services.NewMacroService(db, pdfService, documentationService)
+
+	// Initialize document service (depends on macroService)
+	documentService := services.NewDocumentService(db.Database, userService, pdfService, macroService, documentationService)
+
+	// Initialize chat service
+	var chatService *services.ChatService
+	if openaiService != nil {
+		chatService = services.NewChatService(db.Database, openaiService)
+	}
+
+	// Ensure default admin exists
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	if err := userService.EnsureDefaultAdmin(ctx); err != nil {
+		log.Printf("⚠️  Warning: Failed to ensure default admin exists: %v", err)
+	}
+	cancel()
+
+	// Initialize middleware
+	authMiddleware := middleware.NewAuthMiddleware(jwtService, userService)
+	activityLogMiddleware := middleware.NewActivityLogMiddleware(activityLogService)
+	documentMiddleware := middleware.NewDocumentMiddleware(db.Database)
+
+	// Initialize handlers
+	authHandler := handlers.NewAuthHandler(userService, jwtService, emailService, otpService, minioService, pinService)
+	userHandler := handlers.NewUserHandler(userService, emailService)
+	departmentHandler := handlers.NewDepartmentHandler(db)
+	domainHandler := handlers.NewDomainHandler(db)
+	jobPositionHandler := handlers.NewJobPositionHandler(db)
+	activityLogHandler := handlers.NewActivityLogHandler(activityLogService)
+	emailHandler := handlers.NewEmailHandler(emailService, userService)
+	notificationHandler := handlers.NewNotificationHandler(userService, notificationService, deviceService)
+	documentHandler := handlers.NewDocumentHandler(documentService, activityLogService, minioService, notificationService)
+	invitationHandler := handlers.NewInvitationHandler(db.Database, emailService, notificationService, activityLogService)
+	permissionHandler := handlers.NewPermissionHandler(db.Database)
+	signatureHandler := handlers.NewSignatureHandler(db.Database)
+	userSignatureHandler := handlers.NewUserSignatureHandler(db.Database)
+	macroHandler := handlers.NewMacroHandler(macroService)
+
+	// Initialize chat handler (only if OpenAI service is available)
+	var chatHandler *handlers.ChatHandler
+	if chatService != nil {
+		chatHandler = handlers.NewChatHandler(chatService)
+	}
+
+	// Initialize Gin router
+	r := gin.Default()
+
+	// CORS configuration
+	corsConfig := cors.DefaultConfig()
+	if envOrigins := os.Getenv("CORS_ORIGINS"); envOrigins != "" {
+		corsConfig.AllowOrigins = strings.Split(envOrigins, ",")
+	} else {
+		corsConfig.AllowOrigins = []string{"http://localhost:3000", "https://localhost:3000", "http://localhost", "https://localhost"}
+	}
+	corsConfig.AllowCredentials = true
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept-Language", "X-Language"}
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	r.Use(cors.New(corsConfig))
+
+	// i18n middleware
+	r.Use(i18n.Middleware())
+
+	// Global middleware for activity logging
+	r.Use(activityLogMiddleware.LogActivity())
+
+	// Health check endpoint
+	r.GET("/health", func(c *gin.Context) {
+		// Check database and Redis health
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+		defer cancel()
+
+		dbHealthy := true
+		if err := db.Health(ctx); err != nil {
+			dbHealthy = false
+		}
+
+		redisHealthy := true
+		if err := redisService.Health(ctx); err != nil {
+			redisHealthy = false
+		}
+
+		minioHealthy := true
+		if err := minioService.Health(ctx); err != nil {
+			minioHealthy = false
+		}
+
+		status := "healthy"
+		if !dbHealthy || !redisHealthy || !minioHealthy {
+			status = "degraded"
+		}
+
+		c.JSON(200, gin.H{
+			"status":    status,
+			"service":   "process-manager-backend",
+			"version":   "1.0.0",
+			"database":  dbHealthy,
+			"redis":     redisHealthy,
+			"minio":     minioHealthy,
+			"timestamp": time.Now().Unix(),
+		})
+	})
+
+	// API routes group
+	api := r.Group("/api")
+	{
+		// Setup organized routes
+		routes.SetupAuthRoutes(api, authHandler, authMiddleware)
+		routes.SetupUserRoutes(api, userHandler, authMiddleware)
+		routes.SetupDepartmentRoutes(api, departmentHandler, authMiddleware)
+		routes.SetupDomainRoutes(api, domainHandler, authMiddleware)
+		routes.SetupJobPositionRoutes(api, jobPositionHandler, authMiddleware)
+		routes.SetupActivityLogRoutes(api, activityLogHandler, authMiddleware)
+		routes.SetupEmailRoutes(api, emailHandler, authMiddleware)
+		routes.SetupNotificationRoutes(api, notificationHandler, authMiddleware)
+		routes.SetupDocumentRoutes(api, documentHandler, permissionHandler, signatureHandler, authMiddleware, documentMiddleware)
+		routes.RegisterInvitationRoutes(api, invitationHandler, authMiddleware)
+		routes.SetupUserSignatureRoutes(api, userSignatureHandler, authMiddleware)
+		routes.SetupMacroRoutes(api, macroHandler, authMiddleware)
+
+		// Setup chat routes (only if OpenAI service is available)
+		if chatHandler != nil {
+			routes.SetupChatRoutes(api, chatHandler, authMiddleware)
+		}
+
+		// Setup documentation routes
+		documentationHandler := handlers.NewDocumentationHandler(documentationService)
+		routes.SetupDocumentationRoutes(api, documentationHandler, authMiddleware)
+	}
+
+	// Get port from environment or default to 8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("🚀 Process Manager Backend starting on port %s", port)
+	log.Printf("📊 Health check available at: http://localhost:%s/health", port)
+	log.Printf("🔐 Authentication API available at: http://localhost:%s/api/auth", port)
+	log.Printf("📝 Activity logs API available at: http://localhost:%s/api/activity-logs", port)
+	log.Fatal(r.Run(":" + port))
 }
 
 func seedData(clean bool) {

@@ -95,6 +95,7 @@ func (s *MacroService) InitializeMacros(ctx context.Context, seedFilePath string
 			Name:             macroData.Name,
 			ShortDescription: macroData.ShortDescription,
 			Description:      macroData.Description,
+			IsActive:         macroData.IsActive, // Make sure macro is active
 			CreatedBy:        systemUserID,
 			CreatedAt:        time.Now(),
 			UpdatedAt:        time.Now(),
@@ -140,6 +141,12 @@ func (s *MacroService) InitializeMacros(ctx context.Context, seedFilePath string
 				tasks = append(tasks, task)
 			}
 
+			// Determine status based on IsActive
+			status := models.DocumentStatusDraft
+			if processData.IsActive {
+				status = models.DocumentStatusApproved
+			}
+
 			document := &models.Document{
 				MacroID:          &macroID,         // Link to macro
 				ProcessCode:      processData.Code, // M1_P1, M1_P2, etc.
@@ -149,7 +156,7 @@ func (s *MacroService) InitializeMacros(ctx context.Context, seedFilePath string
 				Description:      processData.Description,      // Detailed description
 				IsActive:         processData.IsActive,         // Active status
 				Version:          "1.0",
-				Status:           models.DocumentStatusDraft,
+				Status:           status,
 				CreatedBy:        systemUserID,
 				Tasks:            tasks,
 				Contributors: models.Contributors{
