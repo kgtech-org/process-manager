@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 import { MacroResource, Macro } from '@/lib/resources/macro';
@@ -40,6 +40,7 @@ import {
 import { TaskForm } from "@/components/macros/TaskForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AnnexEditor } from '@/components/documents/AnnexEditor';
+import { JobPosition, JobPositionResource } from '@/lib/resources/jobPosition';
 
 // Sortable Task Item Component
 interface SortableTaskItemProps {
@@ -47,9 +48,10 @@ interface SortableTaskItemProps {
   isAdmin: boolean;
   onToggleActive: (code: string, checked: boolean) => void;
   onEdit: (task: ApplicationTask) => void;
+  jobPositionMap: Record<string, string>;
 }
 
-function SortableTaskItem({ task, isAdmin, onToggleActive, onEdit }: SortableTaskItemProps) {
+function SortableTaskItem({ task, isAdmin, onToggleActive, onEdit, jobPositionMap }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -83,12 +85,21 @@ function SortableTaskItem({ task, isAdmin, onToggleActive, onEdit }: SortableTas
           </div>
         )}
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <Badge variant="secondary" className="font-mono">{task.code}</Badge>
             {isAdmin && (
               <Badge variant={task.isActive ? "default" : "destructive"} className="text-[10px] h-5">
                 {task.isActive ? "Active" : "Inactive"}
               </Badge>
+            )}
+            {task.intervenants && task.intervenants.length > 0 && (
+              <div className="flex gap-1 flex-wrap">
+                {task.intervenants.map(id => (
+                  <Badge key={id} variant="outline" className="text-[10px] h-5 border-blue-200 text-blue-700 bg-blue-50">
+                    {jobPositionMap[id] || 'Unknown'}
+                  </Badge>
+                ))}
+              </div>
             )}
           </div>
           <p className="text-sm text-gray-700 mt-1">{task.description}</p>
@@ -121,6 +132,7 @@ export default function ProcessDetailPage() {
 
   const [macro, setMacro] = useState<Macro | null>(null);
   const [process, setProcess] = useState<Document | null>(null);
+  const [jobPositions, setJobPositions] = useState<JobPosition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<ApplicationTask | null>(null);
@@ -155,6 +167,14 @@ export default function ProcessDetailPage() {
         } else {
           setError('Process not found');
         }
+
+        // Load job positions for resolving IDs
+        try {
+          const jpData = await JobPositionResource.getAll();
+          setJobPositions(jpData);
+        } catch (e) {
+          console.error("Failed to load job positions", e);
+        }
       } catch (err) {
         console.error('Failed to load process:', err);
         setError('Failed to load process details');
@@ -167,6 +187,14 @@ export default function ProcessDetailPage() {
       loadData();
     }
   }, [macroId, processId]);
+
+  const jobPositionMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    jobPositions.forEach(jp => {
+      map[jp.id] = jp.code;
+    });
+    return map;
+  }, [jobPositions]);
 
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
@@ -460,6 +488,7 @@ export default function ProcessDetailPage() {
                               isAdmin={isAdmin || false}
                               onToggleActive={handleToggleTaskActive}
                               onEdit={setEditingTask}
+                              jobPositionMap={jobPositionMap}
                             />
                           ))}
                         </div>
@@ -564,6 +593,26 @@ export default function ProcessDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Add sidebar card for Summary of Intervenants involved in this process */}
+          {Object.keys(jobPositionMap).length > 0 && process.tasks && (
+            <Card>
+              <CardHeader><CardTitle>Involved Roles</CardTitle></CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(new Set(process.tasks.flatMap(t => t.intervenants || []))).map(id => (
+                    <Badge key={id} variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
+                      {jobPositionMap[id] || 'Unknown'}
+                    </Badge>
+                  ))}
+                  {(!process.tasks.some(t => t.intervenants && t.intervenants.length > 0)) && (
+                    <span className="text-sm text-gray-500">No specific roles assigned.</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
         </div>
       </div>
 
@@ -588,7 +637,8 @@ export default function ProcessDetailPage() {
               code: `T${(process.tasks?.length || 0) + 1}`,
               description: '',
               order: (process.tasks?.length || 0) + 1,
-              isActive: true
+              isActive: true,
+              intervenants: []
             } as any}
             onSubmit={handleCreateTask}
           />

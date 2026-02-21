@@ -49,6 +49,9 @@ export class MacroResource {
     if (filters?.search) {
       queryParams.append('search', filters.search);
     }
+    if (filters?.domainId) {
+      queryParams.append('domainId', filters.domainId);
+    }
     if (filters?.page) {
       queryParams.append('page', filters.page.toString());
     }

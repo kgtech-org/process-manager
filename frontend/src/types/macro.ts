@@ -9,6 +9,7 @@ export interface Macro {
   name: string;
   shortDescription: string;
   description: string;
+  domainId?: string;
   createdBy: string;
   processCount?: number;
   isActive?: boolean;
@@ -36,17 +37,20 @@ export interface CreateMacroRequest {
   name: string;
   shortDescription: string;
   description: string;
+  domainId?: string;
 }
 
 export interface UpdateMacroRequest {
   name?: string;
   shortDescription?: string;
   description?: string;
+  domainId?: string;
   isActive?: boolean;
 }
 
 export interface MacroFilter {
   search?: string;
+  domainId?: string;
   page?: number;
   limit?: number;
   isActive?: boolean;

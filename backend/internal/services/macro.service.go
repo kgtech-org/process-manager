@@ -62,6 +62,15 @@ func (s *MacroService) CreateMacro(ctx context.Context, req *models.CreateMacroR
 		UpdatedAt:        time.Now(),
 	}
 
+	// Parse DomainID if provided
+	if req.DomainID != nil && *req.DomainID != "" {
+		domainObjID, err := primitive.ObjectIDFromHex(*req.DomainID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid domain ID format")
+		}
+		macro.DomainID = &domainObjID
+	}
+
 	// Insert macro into database
 	result, err := s.macroCollection.InsertOne(ctx, macro)
 	if err != nil {
@@ -125,6 +134,14 @@ func (s *MacroService) GetAllMacros(ctx context.Context, filter *models.MacroFil
 	// Active status filter
 	if filter.IsActive != nil {
 		query["is_active"] = *filter.IsActive
+	}
+
+	// Domain filter
+	if filter.DomainID != nil && *filter.DomainID != "" {
+		domainObjID, err := primitive.ObjectIDFromHex(*filter.DomainID)
+		if err == nil {
+			query["domain_id"] = domainObjID
+		}
 	}
 
 	// Count total documents
@@ -213,6 +230,17 @@ func (s *MacroService) UpdateMacro(ctx context.Context, id primitive.ObjectID, r
 	}
 	if req.IsActive != nil {
 		setFields["is_active"] = *req.IsActive
+	}
+	if req.DomainID != nil {
+		if *req.DomainID == "" {
+			setFields["domain_id"] = nil
+		} else {
+			domainObjID, err := primitive.ObjectIDFromHex(*req.DomainID)
+			if err != nil {
+				return nil, fmt.Errorf("invalid domain ID format")
+			}
+			setFields["domain_id"] = domainObjID
+		}
 	}
 
 	// Update macro

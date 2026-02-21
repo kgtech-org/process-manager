@@ -17,6 +17,7 @@ export interface ApplicationTask {
   description: string;
   isActive: boolean;
   order: number;
+  intervenants?: string[]; // Job position IDs responsible for this task
 }
 
 export type ContributorTeam = 'authors' | 'verifiers' | 'validators';
