@@ -75,6 +75,11 @@ func (h *MacroHandler) GetMacros(c *gin.Context) {
 		filter.SortOrder = order
 	}
 
+	// Parse domain filter
+	if domainID := c.Query("domainId"); domainID != "" {
+		filter.DomainID = &domainID
+	}
+
 	// Get macros
 	macros, total, err := h.macroService.GetAllMacros(ctx, filter)
 	if err != nil {

@@ -319,7 +319,7 @@ class AuthService {
    * Get all departments for registration
    */
   async getDepartments(): Promise<Department[]> {
-    const response = await apiClient.get<Department[]>('/departments');
+    const response = await apiClient.get<Department[]>('/departments/');
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to fetch departments');
     }
@@ -331,8 +331,8 @@ class AuthService {
    */
   async getJobPositions(departmentId?: string): Promise<JobPosition[]> {
     const url = departmentId
-      ? `/job-positions?departmentId=${departmentId}`
-      : '/job-positions';
+      ? `/job-positions/?departmentId=${departmentId}`
+      : '/job-positions/';
 
     const response = await apiClient.get<JobPosition[]>(url);
     if (!response.success || !response.data) {

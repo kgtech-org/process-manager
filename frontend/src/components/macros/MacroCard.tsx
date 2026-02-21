@@ -19,12 +19,13 @@ import { Calendar, FileText, MoreVertical, Edit, Trash2 } from 'lucide-react';
 
 interface MacroCardProps {
   macro: Macro;
+  domain?: { code: string; name: string };
   onDelete?: (id: string) => void;
   onToggleActive?: (id: string, isActive: boolean) => void;
   isAdmin?: boolean;
 }
 
-export function MacroCard({ macro, onDelete, onToggleActive, isAdmin }: MacroCardProps) {
+export function MacroCard({ macro, domain, onDelete, onToggleActive, isAdmin }: MacroCardProps) {
   const { t } = useTranslation('macros');
   const formattedDate = new Date(macro.createdAt).toLocaleDateString('en-US', {
     month: 'short',
@@ -51,6 +52,15 @@ export function MacroCard({ macro, onDelete, onToggleActive, isAdmin }: MacroCar
               >
                 {macro.code}
               </Badge>
+              {domain && (
+                <Badge
+                  variant="outline"
+                  className="bg-indigo-50/50 backdrop-blur-md px-2 py-0.5 text-xs font-mono font-medium text-indigo-600 border-indigo-100 shadow-sm"
+                  title={domain.name}
+                >
+                  {domain.code}
+                </Badge>
+              )}
               {isAdmin && (
                 <div className={`h-2 w-2 rounded-full ${statusColor}`} title={statusText} />
               )}

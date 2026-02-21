@@ -206,8 +206,10 @@ func (s *OpenAIService) UploadDocumentFromReader(ctx context.Context, reader io.
 	return s.UploadDocument(ctx, tempFile.Name(), filename, documentID)
 }
 
-// SendMessage sends a message to the assistant and returns the response
-func (s *OpenAIService) SendMessage(ctx context.Context, message string, threadID string) (string, string, error) {
+// SendMessage sends a message to the assistant and returns the response.
+// userContext is an optional string with the user's department and job position info,
+// injected as AdditionalInstructions so the assistant can tailor its responses.
+func (s *OpenAIService) SendMessage(ctx context.Context, message string, threadID string, userContext string) (string, string, error) {
 	var thread openai.Thread
 	var err error
 
@@ -234,10 +236,14 @@ func (s *OpenAIService) SendMessage(ctx context.Context, message string, threadI
 		return "", "", fmt.Errorf("failed to create message: %w", err)
 	}
 
-	// Run the assistant
-	run, err := s.client.CreateRun(ctx, threadID, openai.RunRequest{
+	// Run the assistant with optional user context for persona
+	runReq := openai.RunRequest{
 		AssistantID: s.assistantID,
-	})
+	}
+	if userContext != "" {
+		runReq.AdditionalInstructions = userContext
+	}
+	run, err := s.client.CreateRun(ctx, threadID, runReq)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to create run: %w", err)
 	}

@@ -41,14 +41,14 @@ func (s *UserService) CreateUser(ctx context.Context, req *models.CreateUserRequ
 
 	// Create new user
 	user := &models.User{
-		Email:      req.Email,
-		FirstName:  req.FirstName,
-		LastName:   req.LastName,
-		Role:       req.Role,
-		Phone:      req.Phone,
-		Status:     models.StatusActive, // Admin-created users are active by default
-		Active:     true,
-		Verified:   true,
+		Email:     req.Email,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Role:      req.Role,
+		Phone:     req.Phone,
+		Status:    models.StatusActive, // Admin-created users are active by default
+		Active:    true,
+		Verified:  true,
 	}
 
 	// Handle department ID
@@ -107,11 +107,11 @@ func (s *UserService) RegisterUser(ctx context.Context, req *models.RegisterUser
 
 	// Create new user with pending status
 	user := &models.User{
-		Email:      req.Email,
-		FirstName:  req.FirstName,
-		LastName:   req.LastName,
-		Role:       models.RoleUser, // Default role for registration
-		Phone:      req.Phone,
+		Email:     req.Email,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Role:      models.RoleUser, // Default role for registration
+		Phone:     req.Phone,
 	}
 
 	// Handle department ID
@@ -580,7 +580,6 @@ func (s *UserService) VerifyUser(ctx context.Context, userID primitive.ObjectID)
 	return nil
 }
 
-
 // ============================================
 // Default Admin Management
 // ============================================
@@ -641,7 +640,7 @@ func (s *UserService) EnsureDefaultAdmin(ctx context.Context) error {
 	}
 
 	defaultAdmin.ID = result.InsertedID.(primitive.ObjectID)
-	
+
 	fmt.Printf("✅ Default admin user created successfully:\n")
 	fmt.Printf("   📧 Email: %s\n", adminEmail)
 	fmt.Printf("   👤 Name: %s %s\n", adminFirstName, adminLastName)
@@ -659,7 +658,7 @@ func (s *UserService) CreateUserFromRegistration(ctx context.Context, email stri
 	if err != nil {
 		return nil, fmt.Errorf("invalid department ID: %w", err)
 	}
-	
+
 	jobPositionID, err := primitive.ObjectIDFromHex(req.JobPositionID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid job position ID: %w", err)

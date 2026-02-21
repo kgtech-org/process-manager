@@ -49,6 +49,9 @@ export class MacroResource {
     if (filters?.search) {
       queryParams.append('search', filters.search);
     }
+    if (filters?.domainId) {
+      queryParams.append('domainId', filters.domainId);
+    }
     if (filters?.page) {
       queryParams.append('page', filters.page.toString());
     }
@@ -66,7 +69,7 @@ export class MacroResource {
     }
 
     const query = queryParams.toString();
-    const response = await apiClient.get(`/macros${query ? `?${query}` : ''}`);
+    const response = await apiClient.get(`/macros/${query ? `?${query}` : ''}`);
 
     return {
       success: true,
@@ -93,7 +96,7 @@ export class MacroResource {
    * Create a new macro
    */
   static async create(data: CreateMacroRequest): Promise<Macro> {
-    const response = await apiClient.post('/macros', data);
+    const response = await apiClient.post('/macros/', data);
     return response.data;
   }
 

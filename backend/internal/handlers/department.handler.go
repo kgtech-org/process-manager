@@ -33,7 +33,7 @@ func (h *DepartmentHandler) GetDepartments(c *gin.Context) {
 
 	// Build filter based on query parameters
 	filter := bson.M{}
-	
+
 	// Filter by active status
 	if active := c.Query("active"); active != "" {
 		if active == "true" {
@@ -158,6 +158,16 @@ func (h *DepartmentHandler) CreateDepartment(c *gin.Context) {
 		department.ParentID = &parentObjID
 	}
 
+	// Handle domain
+	if req.DomainID != "" {
+		domainObjID, err := primitive.ObjectIDFromHex(req.DomainID)
+		if err != nil {
+			helpers.SendBadRequest(c, "Invalid domain_id format")
+			return
+		}
+		department.DomainID = &domainObjID
+	}
+
 	// Handle manager
 	if req.ManagerID != "" {
 		managerObjID, err := primitive.ObjectIDFromHex(req.ManagerID)
@@ -260,6 +270,18 @@ func (h *DepartmentHandler) UpdateDepartment(c *gin.Context) {
 				return
 			}
 			updateDoc["manager_id"] = managerObjID
+		}
+	}
+	if req.DomainID != "" {
+		if req.DomainID == "null" {
+			updateDoc["domain_id"] = nil
+		} else {
+			domainObjID, err := primitive.ObjectIDFromHex(req.DomainID)
+			if err != nil {
+				helpers.SendBadRequest(c, "Invalid domain_id format")
+				return
+			}
+			updateDoc["domain_id"] = domainObjID
 		}
 	}
 

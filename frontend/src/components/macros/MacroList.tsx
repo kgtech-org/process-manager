@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { MacroCard } from './MacroCard';
 import { MacroSearch } from './MacroSearch';
 import { MacroResource, type MacroFilter } from '@/lib/resources/macro';
+import { DomainResource, type Domain } from '@/lib/resources/domain';
 import type { Macro } from '@/types/macro';
-import { Loader2, Layers } from 'lucide-react';
+import { Loader2, Layers, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/lib/i18n';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +26,7 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
   const { toast } = useToast();
   const { t } = useTranslation('macros');
   const [macros, setMacros] = useState<Macro[]>([]);
+  const [domains, setDomains] = useState<Domain[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [filters, setFilters] = useState<MacroFilter>(initialFilters);
@@ -34,8 +36,6 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const limit = 12;
-
-
 
   // Refs to track latest values without causing observer recreation
   const hasMoreRef = useRef(hasMore);
@@ -47,6 +47,19 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
     loadingRef.current = loading;
     loadingMoreRef.current = loadingMore;
   }, [hasMore, loading, loadingMore]);
+
+  // Load domains on mount
+  useEffect(() => {
+    const loadDomains = async () => {
+      try {
+        const domainData = await DomainResource.getAll({ active: true });
+        setDomains(domainData);
+      } catch (error) {
+        console.error('Failed to load domains', error);
+      }
+    };
+    loadDomains();
+  }, []);
 
   // Infinite scroll observer - only recreate when target element changes
   useEffect(() => {
@@ -212,11 +225,28 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center gap-4">
-        <div className="flex-1">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex-1 w-full md:w-auto">
           <MacroSearch onSearch={handleSearch} initialFilters={filters} />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Domain Filter */}
+          <select
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            value={filters.domainId || ''}
+            onChange={(e) => {
+              const value = e.target.value;
+              handleSearch({ ...filters, domainId: value === 'all' ? undefined : value });
+            }}
+          >
+            <option value="all">{t('filter.allDomains', { defaultValue: 'All Domains' })}</option>
+            {domains.map(domain => (
+              <option key={domain.id} value={domain.id}>
+                {domain.code} - {domain.name}
+              </option>
+            ))}
+          </select>
+
           {isAdmin && (
             <select
               className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -269,7 +299,7 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
           <Layers className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">{t('noMacros')}</h3>
           <p className="text-muted-foreground">
-            {filters.search
+            {filters.search || filters.domainId
               ? t('noMacrosDescription')
               : t('noMacrosEmpty')}
           </p>
@@ -281,6 +311,7 @@ export function MacroList({ initialFilters = {} }: MacroListProps) {
               <MacroCard
                 key={macro.id}
                 macro={macro}
+                domain={domains.find(d => d.id === macro.domainId)}
                 onDelete={handleDelete}
                 onToggleActive={handleToggleActive}
                 isAdmin={isAdmin}

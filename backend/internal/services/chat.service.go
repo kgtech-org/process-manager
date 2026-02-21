@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 )
 
 type ChatService struct {
+	db                *mongo.Database
 	threadCollection  *mongo.Collection
 	messageCollection *mongo.Collection
 	openaiService     *OpenAIService
@@ -21,6 +23,7 @@ type ChatService struct {
 
 func NewChatService(db *mongo.Database, openaiService *OpenAIService) *ChatService {
 	return &ChatService{
+		db:                db,
 		threadCollection:  db.Collection("chat_threads"),
 		messageCollection: db.Collection("chat_messages"),
 		openaiService:     openaiService,
@@ -59,8 +62,11 @@ func (s *ChatService) SendMessage(ctx context.Context, userID primitive.ObjectID
 		CreatedAt: time.Now(),
 	}
 
+	// Build user context for persona-aware responses
+	userContext := s.buildUserContext(ctx, userID)
+
 	// Send message to OpenAI and get response
-	assistantResponse, newOpenAIThreadID, err := s.openaiService.SendMessage(ctx, req.Message, openaiThreadID)
+	assistantResponse, newOpenAIThreadID, err := s.openaiService.SendMessage(ctx, req.Message, openaiThreadID, userContext)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get response from assistant: %w", err)
 	}
@@ -138,6 +144,44 @@ func (s *ChatService) SendMessage(ctx context.Context, userID primitive.ObjectID
 		Message:  assistantResponse,
 		Role:     "assistant",
 	}, nil
+}
+
+// buildUserContext fetches the user's department and job position to build
+// a context string for the OpenAI assistant persona.
+func (s *ChatService) buildUserContext(ctx context.Context, userID primitive.ObjectID) string {
+	// Fetch user
+	var user models.User
+	err := s.db.Collection("users").FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
+	if err != nil {
+		log.Printf("⚠️  Could not fetch user for chat context: %v", err)
+		return ""
+	}
+
+	var parts []string
+
+	// Fetch department name if assigned
+	if user.DepartmentID != nil {
+		var dept models.Department
+		err := s.db.Collection("departments").FindOne(ctx, bson.M{"_id": *user.DepartmentID}).Decode(&dept)
+		if err == nil {
+			parts = append(parts, fmt.Sprintf("Département: %s", dept.Name))
+		}
+	}
+
+	// Fetch job position title if assigned
+	if user.JobPositionID != nil {
+		var pos models.JobPosition
+		err := s.db.Collection("job_positions").FindOne(ctx, bson.M{"_id": *user.JobPositionID}).Decode(&pos)
+		if err == nil {
+			parts = append(parts, fmt.Sprintf("Poste: %s", pos.Title))
+		}
+	}
+
+	if len(parts) == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("[Contexte utilisateur] %s. Adapte ton niveau de détail technique et ton vocabulaire au profil de cet utilisateur.", strings.Join(parts, ", "))
 }
 
 // GetThread retrieves a thread by ID and verifies ownership

@@ -120,10 +120,11 @@ type Annex struct {
 
 // Task represents a single task within a process
 type Task struct {
-	Code        string `json:"code" bson:"code"`               // M1_P1_T1, M1_P1_T2, etc.
-	Description string `json:"description" bson:"description"` // Task description
-	IsActive    bool   `json:"isActive" bson:"is_active"`      // Active status
-	Order       int    `json:"order" bson:"order"`             // Task order/sequence
+	Code         string               `json:"code" bson:"code"`                                     // M1_P1_T1, M1_P1_T2, etc.
+	Description  string               `json:"description" bson:"description"`                       // Task description
+	IsActive     bool                 `json:"isActive" bson:"is_active"`                            // Active status
+	Order        int                  `json:"order" bson:"order"`                                   // Task order/sequence
+	Intervenants []primitive.ObjectID `json:"intervenants,omitempty" bson:"intervenants,omitempty"` // Job position IDs responsible for this task
 }
 
 // ChangeHistoryEntry represents a single change in the document history

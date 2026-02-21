@@ -1,0 +1,47 @@
+{
+    "title": "Domains",
+    "subtitle": "Manage functional domains",
+    "fields": {
+        "name": "Name",
+        "code": "Code",
+        "description": "Description",
+        "active": "Active",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At"
+    },
+    "placeholders": {
+        "name": "Enter domain name",
+        "code": "Enter domain code",
+        "description": "Enter domain description",
+        "search": "Search domains..."
+    },
+    "actions": {
+        "create": "Create Domain",
+        "edit": "Edit Domain",
+        "delete": "Delete Domain",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "save": "Save",
+        "cancel": "Cancel"
+    },
+    "filters": {
+        "all": "All Domains",
+        "active": "Active",
+        "inactive": "Inactive"
+    },
+    "messages": {
+        "created": "Domain created successfully",
+        "updated": "Domain updated successfully",
+        "deleted": "Domain deleted successfully",
+        "deleteConfirm": "Are you sure you want to delete this domain?",
+        "deleteWarning": "This action cannot be undone. All departments must be reassigned first.",
+        "noResults": "No domains found",
+        "loading": "Loading domains..."
+    },
+    "stats": {
+        "total": "Total Domains",
+        "active": "Active Domains",
+        "inactive": "Inactive Domains",
+        "departments": "Departments"
+    }
+}
