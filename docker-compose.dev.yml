@@ -194,8 +194,8 @@ volumes:
     driver: local
   redis_data:
     driver: local
-  minio_data:
-    driver: local
+  # minio_data:
+  #   driver: local
 
 networks:
   devops_default:

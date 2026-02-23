@@ -150,3 +150,54 @@ export const userSchema = z.object({
 });
 
 export type User = z.infer<typeof userSchema>;
+
+// ============================
+// FEEDBACK SCHEMAS
+// ============================
+
+export const feedbackQuestionSchema = z.object({
+  id: z.string(),
+  text: z.string().min(2, 'Question text is required'),
+  type: z.enum(['text', 'longText', 'rating', 'singleChoice', 'multiChoice']),
+  required: z.boolean(),
+  options: z.array(z.string()).optional(),
+  order: z.number().int().min(1),
+});
+
+export type FeedbackQuestion = z.infer<typeof feedbackQuestionSchema>;
+
+export const feedbackTemplateSchema = z.object({
+  id: z.string(),
+  name: z.string().min(2, 'Template name is required'),
+  description: z.string().min(2, 'Description is required'),
+  questions: z.array(feedbackQuestionSchema).min(1, 'At least one question is required'),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type FeedbackTemplate = z.infer<typeof feedbackTemplateSchema>;
+
+export const feedbackResponseSchema = z.object({
+  questionId: z.string(),
+  questionText: z.string(),
+  responseType: z.string(),
+  answer: z.string(), // Even multiple choice can be a comma-separated string or stringified JSON
+});
+
+export type FeedbackResponse = z.infer<typeof feedbackResponseSchema>;
+
+export const processFeedbackSchema = z.object({
+  id: z.string(),
+  processId: z.string(),
+  macroId: z.string(),
+  userId: z.string(),
+  templateId: z.string(),
+  responses: z.array(feedbackResponseSchema),
+  status: z.enum(['submitted', 'reviewed', 'addressed']),
+  notes: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type ProcessFeedback = z.infer<typeof processFeedbackSchema>;

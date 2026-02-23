@@ -344,7 +344,7 @@ export default function UserDetailsPage({ params }: UserDetailsPageProps) {
                       <div>
                         <p className="text-sm font-medium text-gray-900">Email Verified</p>
                         <p className="text-sm text-gray-600">
-                          {user.emailVerified ? 'Yes' : 'No'}
+                          {user.verified ? 'Yes' : 'No'}
                         </p>
                       </div>
                     </div>

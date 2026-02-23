@@ -1,0 +1,54 @@
+{
+    "manager": {
+        "title": "Feedback Templates Management",
+        "description": "Manage the forms used to collect feedback on processes.",
+        "newTemplate": "New Template",
+        "active": "Active",
+        "inactive": "Inactive",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "questionsCount": "{{count}} questions",
+        "noTemplates": "No templates",
+        "noTemplatesDesc": "Start by creating a new feedback template.",
+        "deleteConfirm": "Are you sure you want to delete this template?",
+        "deleteSuccess": "Template deleted successfully",
+        "deleteError": "Failed to delete template",
+        "loadError": "Failed to load templates",
+        "toggleSuccess": "Template {{status}}"
+    },
+    "dialog": {
+        "newTitle": "New feedback template",
+        "editTitle": "Edit feedback template",
+        "nameLabel": "Template name",
+        "namePlaceholder": "Ex: Training evaluation",
+        "descLabel": "Description",
+        "descPlaceholder": "Template description",
+        "isActive": "Active template",
+        "questions": "Questions",
+        "addBtn": "Add",
+        "qText": "Question text",
+        "qType": "Type",
+        "types": {
+            "text": "Short text",
+            "longText": "Long text",
+            "rating": "Rating (Score)",
+            "singleChoice": "Single choice",
+            "multiChoice": "Multiple choice"
+        },
+        "qRequired": "Required question",
+        "optionsLabel": "Options (comma separated)",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saveSuccessDesc": "Template saved successfully",
+        "saveErrorDesc": "Error saving template"
+    },
+    "details": {
+        "title": "Template details"
+    },
+    "validation": {
+        "nameRequired": "Name is required",
+        "descRequired": "Description is required",
+        "questionsRequired": "At least one question is required",
+        "qTextRequired": "Question text is required"
+    }
+}

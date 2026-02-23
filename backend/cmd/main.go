@@ -111,6 +111,9 @@ func main() {
 	// Initialize macro service
 	macroService := services.NewMacroService(db, pdfService, documentationService)
 
+	// Initialize feedback service
+	feedbackService := services.NewFeedbackService(db)
+
 	// Initialize document service (depends on macroService)
 	documentService := services.NewDocumentService(db.Database, userService, pdfService, macroService, documentationService)
 
@@ -147,6 +150,7 @@ func main() {
 	signatureHandler := handlers.NewSignatureHandler(db.Database)
 	userSignatureHandler := handlers.NewUserSignatureHandler(db.Database)
 	macroHandler := handlers.NewMacroHandler(macroService)
+	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
 
 	// Initialize chat handler (only if OpenAI service is available)
 	var chatHandler *handlers.ChatHandler
@@ -228,6 +232,7 @@ func main() {
 		routes.RegisterInvitationRoutes(api, invitationHandler, authMiddleware)
 		routes.SetupUserSignatureRoutes(api, userSignatureHandler, authMiddleware)
 		routes.SetupMacroRoutes(api, macroHandler, authMiddleware)
+		routes.SetupFeedbackRoutes(api, feedbackHandler, authMiddleware)
 
 		// Setup chat routes (only if OpenAI service is available)
 		if chatHandler != nil {
@@ -288,6 +293,11 @@ func seedData(clean bool) {
 	// Seed job positions
 	if err := seedJobPositions(ctx, db); err != nil {
 		log.Printf("Failed to seed job positions: %v", err)
+	}
+
+	// Seed feedback templates
+	if err := seedFeedbackTemplates(ctx, db); err != nil {
+		log.Printf("Failed to seed feedback templates: %v", err)
 	}
 
 	// Seed macros
@@ -932,5 +942,48 @@ func seedTestUser(ctx context.Context, userService *services.UserService, pinSer
 	}
 
 	log.Printf("✅ Test user seeded: %s (PIN: 123456)", email)
+	return nil
+}
+
+func seedFeedbackTemplates(ctx context.Context, db *services.DatabaseService) error {
+	collection := db.Collection("feedback_templates")
+
+	// Check if the default template exists
+	count, err := collection.CountDocuments(ctx, bson.M{"name": "Default Process Evaluation"})
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return nil // Already seeded
+	}
+
+	questions := []models.FeedbackQuestion{
+		{ID: "q1", Text: "How clear is this process?", Type: models.QuestionTypeRating, Required: true, Order: 1},
+		{ID: "q2", Text: "How easy is it to follow this process?", Type: models.QuestionTypeRating, Required: true, Order: 2},
+		{ID: "q3", Text: "Does this process take an appropriate amount of time?", Type: models.QuestionTypeSingleChoice, Required: true, Options: []string{"Yes", "No", "Too Long", "Too Short"}, Order: 3},
+		{ID: "q4", Text: "Are there any missing steps in this process?", Type: models.QuestionTypeText, Required: false, Order: 4},
+		{ID: "q5", Text: "What improvements would you suggest?", Type: models.QuestionTypeLongText, Required: false, Order: 5},
+		{ID: "q6", Text: "How often do you use this process?", Type: models.QuestionTypeSingleChoice, Required: true, Options: []string{"Daily", "Weekly", "Monthly", "Rarely"}, Order: 6},
+		{ID: "q7", Text: "What challenges have you faced?", Type: models.QuestionTypeMultiChoice, Required: false, Options: []string{"Lack of tools", "Unclear instructions", "Dependency delays", "Other"}, Order: 7},
+		{ID: "q8", Text: "Overall, how satisfied are you with this process?", Type: models.QuestionTypeRating, Required: true, Order: 8},
+	}
+
+	template := models.FeedbackTemplate{
+		ID:          primitive.NewObjectID(),
+		Name:        "Default Process Evaluation",
+		Description: "Standard feedback form to evaluate process efficiency, clarity, and gather improvement suggestions.",
+		Questions:   questions,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	_, err = collection.InsertOne(ctx, template)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("✅ Seeded default feedback template")
 	return nil
 }
