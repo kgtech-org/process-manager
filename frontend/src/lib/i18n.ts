@@ -21,6 +21,7 @@ import signaturesFr from '../../public/locales/fr/signatures.json';
 import landingFr from '../../public/locales/fr/landing.json';
 import macrosFr from '../../public/locales/fr/macros.json';
 import domainsFr from '../../public/locales/fr/domains.json';
+import feedbackFr from '../../public/locales/fr/feedback.json';
 
 import commonEn from '../../public/locales/en/common.json';
 import authEn from '../../public/locales/en/auth.json';
@@ -37,6 +38,7 @@ import signaturesEn from '../../public/locales/en/signatures.json';
 import landingEn from '../../public/locales/en/landing.json';
 import macrosEn from '../../public/locales/en/macros.json';
 import domainsEn from '../../public/locales/en/domains.json';
+import feedbackEn from '../../public/locales/en/feedback.json';
 
 const resources = {
   fr: {
@@ -54,6 +56,7 @@ const resources = {
     landing: landingFr,
     macros: macrosFr,
     domains: domainsFr,
+    feedback: feedbackFr,
   },
   en: {
     common: commonEn,
@@ -70,6 +73,7 @@ const resources = {
     landing: landingEn,
     macros: macrosEn,
     domains: domainsEn,
+    feedback: feedbackEn,
   },
 };
 
@@ -81,7 +85,7 @@ i18n
     resources,
     fallbackLng: 'fr',
     defaultNS: 'common',
-    ns: ['common', 'auth', 'activity', 'dashboard', 'users', 'departments', 'domains', 'jobPositions', 'documents', 'notifications', 'collaboration', 'invitations', 'signatures', 'landing', 'macros'],
+    ns: ['common', 'auth', 'activity', 'dashboard', 'users', 'departments', 'domains', 'jobPositions', 'documents', 'notifications', 'collaboration', 'invitations', 'signatures', 'landing', 'macros', 'feedback'],
 
     interpolation: {
       escapeValue: false,
