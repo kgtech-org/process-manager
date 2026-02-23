@@ -270,7 +270,7 @@ func seedData(clean bool) {
 
 	if clean {
 		log.Println("🧹 Cleaning database as requested...")
-		collections := []string{"macros", "documents", "domains", "departments", "job_positions"}
+		collections := []string{"macros", "documents", "domains", "departments", "job_positions", "feedback_templates"}
 		for _, colName := range collections {
 			if err := db.Collection(colName).Drop(ctx); err != nil {
 				log.Printf("⚠️  Failed to drop collection %s: %v", colName, err)
@@ -949,7 +949,7 @@ func seedFeedbackTemplates(ctx context.Context, db *services.DatabaseService) er
 	collection := db.Collection("feedback_templates")
 
 	// Check if the default template exists
-	count, err := collection.CountDocuments(ctx, bson.M{"name": "Default Process Evaluation"})
+	count, err := collection.CountDocuments(ctx, bson.M{"name": "Évaluation Standard du Processus"})
 	if err != nil {
 		return err
 	}
@@ -959,20 +959,20 @@ func seedFeedbackTemplates(ctx context.Context, db *services.DatabaseService) er
 	}
 
 	questions := []models.FeedbackQuestion{
-		{ID: "q1", Text: "How clear is this process?", Type: models.QuestionTypeRating, Required: true, Order: 1},
-		{ID: "q2", Text: "How easy is it to follow this process?", Type: models.QuestionTypeRating, Required: true, Order: 2},
-		{ID: "q3", Text: "Does this process take an appropriate amount of time?", Type: models.QuestionTypeSingleChoice, Required: true, Options: []string{"Yes", "No", "Too Long", "Too Short"}, Order: 3},
-		{ID: "q4", Text: "Are there any missing steps in this process?", Type: models.QuestionTypeText, Required: false, Order: 4},
-		{ID: "q5", Text: "What improvements would you suggest?", Type: models.QuestionTypeLongText, Required: false, Order: 5},
-		{ID: "q6", Text: "How often do you use this process?", Type: models.QuestionTypeSingleChoice, Required: true, Options: []string{"Daily", "Weekly", "Monthly", "Rarely"}, Order: 6},
-		{ID: "q7", Text: "What challenges have you faced?", Type: models.QuestionTypeMultiChoice, Required: false, Options: []string{"Lack of tools", "Unclear instructions", "Dependency delays", "Other"}, Order: 7},
-		{ID: "q8", Text: "Overall, how satisfied are you with this process?", Type: models.QuestionTypeRating, Required: true, Order: 8},
+		{ID: "q1", Text: "Le processus est-il clair ?", Type: models.QuestionTypeRating, Required: true, Order: 1},
+		{ID: "q2", Text: "Le processus est-il facile à suivre ?", Type: models.QuestionTypeRating, Required: true, Order: 2},
+		{ID: "q3", Text: "L'exécution de ce processus prend-elle un temps approprié ?", Type: models.QuestionTypeSingleChoice, Required: true, Options: []string{"Oui", "Non", "Trop long", "Trop court"}, Order: 3},
+		{ID: "q4", Text: "Y a-t-il des étapes manquantes dans ce processus ?", Type: models.QuestionTypeText, Required: false, Order: 4},
+		{ID: "q5", Text: "Quelles améliorations suggéreriez-vous ?", Type: models.QuestionTypeLongText, Required: false, Order: 5},
+		{ID: "q6", Text: "À quelle fréquence utilisez-vous ce processus ?", Type: models.QuestionTypeSingleChoice, Required: true, Options: []string{"Quotidiennement", "Hebdomadairement", "Mensuellement", "Rarement"}, Order: 6},
+		{ID: "q7", Text: "Quels défis avez-vous rencontrés ?", Type: models.QuestionTypeMultiChoice, Required: false, Options: []string{"Manque d'outils", "Instructions peu claires", "Retards dus aux dépendances", "Autre"}, Order: 7},
+		{ID: "q8", Text: "Dans l'ensemble, êtes-vous satisfait(e) de ce processus ?", Type: models.QuestionTypeRating, Required: true, Order: 8},
 	}
 
 	template := models.FeedbackTemplate{
 		ID:          primitive.NewObjectID(),
-		Name:        "Default Process Evaluation",
-		Description: "Standard feedback form to evaluate process efficiency, clarity, and gather improvement suggestions.",
+		Name:        "Évaluation Standard du Processus",
+		Description: "Formulaire d'évaluation standard pour évaluer l'efficacité, la clarté du processus et recueillir des suggestions d'amélioration.",
 		Questions:   questions,
 		IsActive:    true,
 		CreatedAt:   time.Now(),
