@@ -3,7 +3,7 @@ import { apiClient } from '@/lib/api';
 export interface ChatThread {
   id: string;
   userId: string;
-  openaiThreadId: string;
+  openaiConversationId: string;
   title: string;
   lastMessage: string;
   messageCount: number;

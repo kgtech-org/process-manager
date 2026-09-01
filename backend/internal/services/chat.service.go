@@ -38,7 +38,7 @@ func (s *ChatService) SendMessage(ctx context.Context, userID primitive.ObjectID
 
 	var thread *models.ChatThread
 	var err error
-	var openaiThreadID string
+	var openaiConversationID string
 
 	// Get or create thread
 	if req.ThreadID != nil && *req.ThreadID != "" {
@@ -51,7 +51,7 @@ func (s *ChatService) SendMessage(ctx context.Context, userID primitive.ObjectID
 		if err != nil {
 			return nil, err
 		}
-		openaiThreadID = thread.OpenAIThreadID
+		openaiConversationID = thread.OpenAIConversationID
 	}
 
 	// Save user message to database
@@ -66,7 +66,7 @@ func (s *ChatService) SendMessage(ctx context.Context, userID primitive.ObjectID
 	userContext := s.buildUserContext(ctx, userID)
 
 	// Send message to OpenAI and get response
-	assistantResponse, newOpenAIThreadID, err := s.openaiService.SendMessage(ctx, req.Message, openaiThreadID, userContext)
+	assistantResponse, newOpenAIConversationID, err := s.openaiService.SendMessage(ctx, req.Message, openaiConversationID, userContext)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get response from assistant: %w", err)
 	}
@@ -80,14 +80,14 @@ func (s *ChatService) SendMessage(ctx context.Context, userID primitive.ObjectID
 		}
 
 		thread = &models.ChatThread{
-			ID:             primitive.NewObjectID(),
-			UserID:         userID,
-			OpenAIThreadID: newOpenAIThreadID,
-			Title:          title,
-			LastMessage:    assistantResponse,
-			MessageCount:   2, // user message + assistant response
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			ID:                   primitive.NewObjectID(),
+			UserID:               userID,
+			OpenAIConversationID: newOpenAIConversationID,
+			Title:                title,
+			LastMessage:          assistantResponse,
+			MessageCount:         2, // user message + assistant response
+			CreatedAt:            time.Now(),
+			UpdatedAt:            time.Now(),
 		}
 
 		_, err = s.threadCollection.InsertOne(ctx, thread)
@@ -259,11 +259,11 @@ func (s *ChatService) DeleteThread(ctx context.Context, threadID primitive.Objec
 	}
 
 	// Delete from OpenAI
-	if s.openaiService != nil && thread.OpenAIThreadID != "" {
-		err = s.openaiService.DeleteThread(ctx, thread.OpenAIThreadID)
+	if s.openaiService != nil && thread.OpenAIConversationID != "" {
+		err = s.openaiService.DeleteConversation(ctx, thread.OpenAIConversationID)
 		if err != nil {
 			// Log but don't fail
-			fmt.Printf("⚠️  Failed to delete OpenAI thread: %v\n", err)
+			fmt.Printf("⚠️  Failed to delete OpenAI conversation: %v\n", err)
 		}
 	}
 

@@ -8,21 +8,21 @@ import (
 
 // ChatThread represents a conversation thread with the AI assistant
 type ChatThread struct {
-	ID             primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	UserID         primitive.ObjectID `json:"userId" bson:"user_id"`
-	OpenAIThreadID string             `json:"openaiThreadId" bson:"openai_thread_id"`
-	Title          string             `json:"title" bson:"title"`                     // Auto-generated from first message
-	LastMessage    string             `json:"lastMessage" bson:"last_message"`         // Preview of last message
-	MessageCount   int                `json:"messageCount" bson:"message_count"`       // Total number of messages
-	CreatedAt      time.Time          `json:"createdAt" bson:"created_at"`
-	UpdatedAt      time.Time          `json:"updatedAt" bson:"updated_at"`
+	ID                   primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	UserID               primitive.ObjectID `json:"userId" bson:"user_id"`
+	OpenAIConversationID string             `json:"openaiConversationId" bson:"openai_conversation_id"`
+	Title                string             `json:"title" bson:"title"`                // Auto-generated from first message
+	LastMessage          string             `json:"lastMessage" bson:"last_message"`   // Preview of last message
+	MessageCount         int                `json:"messageCount" bson:"message_count"` // Total number of messages
+	CreatedAt            time.Time          `json:"createdAt" bson:"created_at"`
+	UpdatedAt            time.Time          `json:"updatedAt" bson:"updated_at"`
 }
 
 // ChatMessage represents a single message in a conversation
 type ChatMessage struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	ThreadID  primitive.ObjectID `json:"threadId" bson:"thread_id"`
-	Role      string             `json:"role" bson:"role"`           // "user" or "assistant"
+	Role      string             `json:"role" bson:"role"` // "user" or "assistant"
 	Content   string             `json:"content" bson:"content"`
 	CreatedAt time.Time          `json:"createdAt" bson:"created_at"`
 }
@@ -56,15 +56,15 @@ type UserInfo struct {
 
 // ChatThreadWithUser represents a thread with user information (admin view)
 type ChatThreadWithUser struct {
-	ID             primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	UserID         primitive.ObjectID `json:"userId" bson:"user_id"`
-	OpenAIThreadID string             `json:"openaiThreadId" bson:"openai_thread_id"`
-	Title          string             `json:"title" bson:"title"`
-	LastMessage    string             `json:"lastMessage" bson:"last_message"`
-	MessageCount   int                `json:"messageCount" bson:"message_count"`
-	CreatedAt      time.Time          `json:"createdAt" bson:"created_at"`
-	UpdatedAt      time.Time          `json:"updatedAt" bson:"updated_at"`
-	User           UserInfo           `json:"user" bson:"user"`
+	ID                   primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	UserID               primitive.ObjectID `json:"userId" bson:"user_id"`
+	OpenAIConversationID string             `json:"openaiConversationId" bson:"openai_conversation_id"`
+	Title                string             `json:"title" bson:"title"`
+	LastMessage          string             `json:"lastMessage" bson:"last_message"`
+	MessageCount         int                `json:"messageCount" bson:"message_count"`
+	CreatedAt            time.Time          `json:"createdAt" bson:"created_at"`
+	UpdatedAt            time.Time          `json:"updatedAt" bson:"updated_at"`
+	User                 UserInfo           `json:"user" bson:"user"`
 }
 
 // ChatThreadWithUserAndMessages represents a thread with user info and messages (admin view)

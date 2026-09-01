@@ -10,7 +10,7 @@ export interface UserInfo {
 export interface ChatThreadWithUser {
   id: string;
   userId: string;
-  openaiThreadId: string;
+  openaiConversationId: string;
   title: string;
   lastMessage: string;
   messageCount: number;
