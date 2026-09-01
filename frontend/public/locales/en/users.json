@@ -10,7 +10,11 @@
   "professionalInfo": "Professional Information",
   "accountInfo": "Account Information",
   "permissions": "Permissions",
-  "roles": "Roles",
+  "roles": {
+    "admin": "Administrator",
+    "manager": "Manager",
+    "user": "User"
+  },
   "fields": {
     "name": "Name",
     "email": "Email",
@@ -24,7 +28,9 @@
     "lastLogin": "Last Login",
     "emailVerified": "Email Verified",
     "createdAt": "Created At",
-    "updatedAt": "Updated At"
+    "updatedAt": "Updated At",
+    "firstName": "First name",
+    "lastName": "Last name"
   },
   "placeholders": {
     "searchUsers": "Search users...",
@@ -34,7 +40,9 @@
     "selectStatus": "Select status",
     "enterName": "Enter name",
     "enterEmail": "Enter email",
-    "enterPhone": "Enter phone"
+    "enterPhone": "Enter phone",
+    "enterFirstName": "Enter first name",
+    "enterLastName": "Enter last name"
   },
   "status": {
     "pending": "Pending",
@@ -42,11 +50,6 @@
     "inactive": "Inactive",
     "approved": "Approved",
     "rejected": "Rejected"
-  },
-  "roles": {
-    "admin": "Administrator",
-    "manager": "Manager",
-    "user": "User"
   },
   "actions": {
     "approve": "Approve",
@@ -60,7 +63,8 @@
     "editProfile": "Edit Profile",
     "uploadAvatar": "Upload Avatar",
     "deleteAvatar": "Delete Avatar",
-    "viewDetails": "View Details"
+    "viewDetails": "View Details",
+    "edit": "Edit"
   },
   "filters": {
     "title": "Filters",
@@ -69,7 +73,8 @@
     "allStatuses": "All Statuses",
     "allDepartments": "All Departments",
     "status": {
-      "all": "All Statuses"
+      "all": "All Statuses",
+      "placeholder": "Filter by status"
     }
   },
   "messages": {
@@ -86,7 +91,8 @@
     "confirmApprove": "Are you sure you want to approve this user?",
     "confirmReject": "Are you sure you want to reject this user?",
     "noUsers": "No users found",
-    "noUsersDescription": "There are no users matching the selected criteria."
+    "noUsersDescription": "There are no users matching the selected criteria.",
+    "updateFailed": "Failed to update user"
   },
   "stats": {
     "totalUsers": "Total Users",
@@ -98,12 +104,25 @@
     "placeholder": "Search users..."
   },
   "list": {
-    "title": "User List"
+    "title": "User List",
+    "empty": "No users found"
   },
   "pagination": {
-    "perPage": "{{count}} per page"
+    "perPage": "{{count}} per page",
+    "perPageLabel": "Results per page",
+    "showing": "Showing {{from}} to {{to}} of {{total}}"
   },
   "details": {
-    "joined": "Joined"
+    "joined": "Joined",
+    "lastLogin": "Last login"
+  },
+  "navigation": {
+    "backToUsers": "Back to users"
+  },
+  "edit": {
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "statusLockedHint": "Use Approve or Reject for a pending account."
   }
 }

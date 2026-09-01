@@ -10,7 +10,11 @@
   "professionalInfo": "Informations professionnelles",
   "accountInfo": "Informations du compte",
   "permissions": "Permissions",
-  "roles": "Rôles",
+  "roles": {
+    "admin": "Administrateur",
+    "manager": "Manager",
+    "user": "Utilisateur"
+  },
   "fields": {
     "name": "Nom",
     "email": "Email",
@@ -24,7 +28,9 @@
     "lastLogin": "Dernière connexion",
     "emailVerified": "Email vérifié",
     "createdAt": "Créé le",
-    "updatedAt": "Mis à jour le"
+    "updatedAt": "Mis à jour le",
+    "firstName": "Prénom",
+    "lastName": "Nom"
   },
   "placeholders": {
     "searchUsers": "Rechercher des utilisateurs...",
@@ -34,7 +40,9 @@
     "selectStatus": "Sélectionner un statut",
     "enterName": "Entrer le nom",
     "enterEmail": "Entrer l'email",
-    "enterPhone": "Entrer le téléphone"
+    "enterPhone": "Entrer le téléphone",
+    "enterFirstName": "Entrer le prénom",
+    "enterLastName": "Entrer le nom"
   },
   "status": {
     "pending": "En attente",
@@ -42,11 +50,6 @@
     "inactive": "Inactif",
     "approved": "Approuvé",
     "rejected": "Rejeté"
-  },
-  "roles": {
-    "admin": "Administrateur",
-    "manager": "Manager",
-    "user": "Utilisateur"
   },
   "actions": {
     "approve": "Approuver",
@@ -60,7 +63,8 @@
     "editProfile": "Modifier le profil",
     "uploadAvatar": "Télécharger un avatar",
     "deleteAvatar": "Supprimer l'avatar",
-    "viewDetails": "Voir les détails"
+    "viewDetails": "Voir les détails",
+    "edit": "Modifier"
   },
   "filters": {
     "title": "Filtres",
@@ -69,7 +73,8 @@
     "allStatuses": "Tous les statuts",
     "allDepartments": "Tous les départements",
     "status": {
-      "all": "Tous les statuts"
+      "all": "Tous les statuts",
+      "placeholder": "Filtrer par statut"
     }
   },
   "messages": {
@@ -86,7 +91,8 @@
     "confirmApprove": "Êtes-vous sûr de vouloir approuver cet utilisateur ?",
     "confirmReject": "Êtes-vous sûr de vouloir rejeter cet utilisateur ?",
     "noUsers": "Aucun utilisateur trouvé",
-    "noUsersDescription": "Il n'y a aucun utilisateur correspondant aux critères sélectionnés."
+    "noUsersDescription": "Il n'y a aucun utilisateur correspondant aux critères sélectionnés.",
+    "updateFailed": "Échec de la mise à jour de l'utilisateur"
   },
   "stats": {
     "totalUsers": "Total des utilisateurs",
@@ -98,12 +104,25 @@
     "placeholder": "Rechercher des utilisateurs..."
   },
   "list": {
-    "title": "Liste des Utilisateurs"
+    "title": "Liste des Utilisateurs",
+    "empty": "Aucun utilisateur trouvé"
   },
   "pagination": {
-    "perPage": "{{count}} par page"
+    "perPage": "{{count}} par page",
+    "perPageLabel": "Résultats par page",
+    "showing": "Affichage de {{from}} à {{to}} sur {{total}}"
   },
   "details": {
-    "joined": "Rejoint"
+    "joined": "Rejoint",
+    "lastLogin": "Dernière connexion"
+  },
+  "navigation": {
+    "backToUsers": "Retour aux utilisateurs"
+  },
+  "edit": {
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "cancel": "Annuler",
+    "statusLockedHint": "Utilisez Approuver ou Rejeter pour un compte en attente."
   }
 }

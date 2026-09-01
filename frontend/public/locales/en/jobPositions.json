@@ -32,7 +32,12 @@
     "senior": "Senior",
     "lead": "Lead",
     "principal": "Principal",
-    "director": "Director"
+    "director": "Director",
+    "entry": "Entry",
+    "entryFull": "Entry (0-2 years)",
+    "midFull": "Mid (2-5 years)",
+    "seniorFull": "Senior (5-10 years)",
+    "leadFull": "Lead (10+ years)"
   },
   "status": {
     "active": "Active",
@@ -46,7 +51,9 @@
     "exportDescription": "Export Description",
     "create": "Create",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "createPosition": "Create position"
   },
   "filters": {
     "title": "Filters",
@@ -56,7 +63,11 @@
     "allLevels": "All Levels",
     "allDepartments": "All Departments",
     "withEmployees": "With Employees",
-    "withoutEmployees": "Without Employees"
+    "withoutEmployees": "Without Employees",
+    "department": {
+      "all": "All departments",
+      "placeholder": "Filter by department"
+    }
   },
   "messages": {
     "positionCreated": "Job position created successfully",
@@ -91,9 +102,29 @@
     "placeholder": "Search job positions..."
   },
   "list": {
-    "title": "Job Position List"
+    "title": "Job Position List",
+    "empty": "No positions found"
   },
   "details": {
-    "created": "Created"
+    "created": "Created",
+    "noDepartment": "No department",
+    "moreSkills": "+{{count}} more"
+  },
+  "create": {
+    "title": "Create a position",
+    "subtitle": "Add a new position to the catalogue"
+  },
+  "form": {
+    "title": "Title",
+    "titlePlaceholder": "e.g. Network engineer",
+    "code": "Code",
+    "codePlaceholder": "e.g. NET-ENG",
+    "description": "Description",
+    "descriptionPlaceholder": "Duties and responsibilities of the position...",
+    "department": "Department",
+    "selectDepartment": "Select a department",
+    "level": "Level",
+    "skills": "Required skills",
+    "skillsPlaceholder": "Separate skills with a comma"
   }
 }

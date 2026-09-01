@@ -32,7 +32,12 @@
     "senior": "Senior",
     "lead": "Lead",
     "principal": "Principal",
-    "director": "Directeur"
+    "director": "Directeur",
+    "entry": "Débutant",
+    "entryFull": "Débutant (0-2 ans)",
+    "midFull": "Intermédiaire (2-5 ans)",
+    "seniorFull": "Senior (5-10 ans)",
+    "leadFull": "Lead (10 ans et plus)"
   },
   "status": {
     "active": "Actif",
@@ -46,7 +51,9 @@
     "exportDescription": "Exporter la description",
     "create": "Créer",
     "edit": "Modifier",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "createPosition": "Créer le poste"
   },
   "filters": {
     "title": "Filtres",
@@ -56,7 +63,11 @@
     "allLevels": "Tous les niveaux",
     "allDepartments": "Tous les départements",
     "withEmployees": "Avec employés",
-    "withoutEmployees": "Sans employés"
+    "withoutEmployees": "Sans employés",
+    "department": {
+      "all": "Tous les départements",
+      "placeholder": "Filtrer par département"
+    }
   },
   "messages": {
     "positionCreated": "Poste créé avec succès",
@@ -91,9 +102,29 @@
     "placeholder": "Rechercher des postes..."
   },
   "list": {
-    "title": "Liste des Postes"
+    "title": "Liste des Postes",
+    "empty": "Aucun poste trouvé"
   },
   "details": {
-    "created": "Créé"
+    "created": "Créé",
+    "noDepartment": "Aucun département",
+    "moreSkills": "+{{count}} autres"
+  },
+  "create": {
+    "title": "Créer un poste",
+    "subtitle": "Ajouter un nouveau poste au référentiel"
+  },
+  "form": {
+    "title": "Intitulé",
+    "titlePlaceholder": "ex: Ingénieur réseau",
+    "code": "Code",
+    "codePlaceholder": "ex: ING-RES",
+    "description": "Description",
+    "descriptionPlaceholder": "Missions et responsabilités du poste...",
+    "department": "Département",
+    "selectDepartment": "Sélectionner un département",
+    "level": "Niveau",
+    "skills": "Compétences requises",
+    "skillsPlaceholder": "Séparez les compétences par une virgule"
   }
 }

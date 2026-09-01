@@ -54,7 +54,7 @@ export function ProcessForm({ initialData, onSubmit, isLoading }: ProcessFormPro
                 {initialData && (
                     <div className="space-y-2">
                         <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            {t('processCode', { defaultValue: 'Process Code' })}
+                            {t('processForm.processCode', { defaultValue: 'Process Code' })}
                         </label>
                         <Input value={initialData.processCode} disabled className="bg-gray-100" />
                     </div>
@@ -66,12 +66,12 @@ export function ProcessForm({ initialData, onSubmit, isLoading }: ProcessFormPro
                         name="processCode"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>{t('processCode', { defaultValue: 'Process Code' })}</FormLabel>
+                                <FormLabel>{t('processForm.processCode', { defaultValue: 'Process Code' })}</FormLabel>
                                 <FormControl>
                                     <Input placeholder="M1_P1" {...field} />
                                 </FormControl>
                                 <FormDescription>
-                                    {t('processCodeHelp', { defaultValue: 'Optional. Auto-generated if empty.' })}
+                                    {t('processForm.processCodeHelp', { defaultValue: 'Optional. Auto-generated if empty.' })}
                                 </FormDescription>
                                 <FormMessage />
                             </FormItem>
@@ -82,9 +82,9 @@ export function ProcessForm({ initialData, onSubmit, isLoading }: ProcessFormPro
                         name="title"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>{t('processTitle', { defaultValue: 'Process Title' })}</FormLabel>
+                                <FormLabel>{t('processForm.processTitle', { defaultValue: 'Process Title' })}</FormLabel>
                                 <FormControl>
-                                    <Input placeholder={t('titlePlaceholder', { defaultValue: 'Enter process title' })} {...field} />
+                                    <Input placeholder={t('processForm.titlePlaceholder', { defaultValue: 'Enter process title' })} {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -96,9 +96,9 @@ export function ProcessForm({ initialData, onSubmit, isLoading }: ProcessFormPro
                         name="shortDescription"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>{t('shortDescription', { defaultValue: 'Short Description' })}</FormLabel>
+                                <FormLabel>{t('processForm.shortDescription', { defaultValue: 'Short Description' })}</FormLabel>
                                 <FormControl>
-                                    <Input placeholder={t('shortDescriptionPlaceholder', { defaultValue: 'Brief summary' })} {...field} />
+                                    <Input placeholder={t('processForm.shortDescriptionPlaceholder', { defaultValue: 'Brief summary' })} {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -111,10 +111,10 @@ export function ProcessForm({ initialData, onSubmit, isLoading }: ProcessFormPro
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>{t('description', { defaultValue: 'Detailed Description' })}</FormLabel>
+                            <FormLabel>{t('processForm.description', { defaultValue: 'Detailed Description' })}</FormLabel>
                             <FormControl>
                                 <Textarea
-                                    placeholder={t('descriptionPlaceholder', { defaultValue: 'Detailed description of the process operations...' })}
+                                    placeholder={t('processForm.descriptionPlaceholder', { defaultValue: 'Detailed description of the process operations...' })}
                                     className="min-h-[120px]"
                                     {...field}
                                 />
@@ -134,7 +134,7 @@ export function ProcessForm({ initialData, onSubmit, isLoading }: ProcessFormPro
                                     {t('active', { defaultValue: 'Active Status' })}
                                 </FormLabel>
                                 <FormDescription>
-                                    {t('activeDescription', { defaultValue: 'Inactive processes are hidden from standard users' })}
+                                    {t('processForm.activeDescription', { defaultValue: 'Inactive processes are hidden from standard users' })}
                                 </FormDescription>
                             </div>
                             <FormControl>

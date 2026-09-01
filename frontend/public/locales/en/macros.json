@@ -31,7 +31,13 @@
     "createFailed": "Failed to create macro",
     "updateSuccess": "Macro updated successfully",
     "updateFailed": "Failed to update macro",
-    "error": "An error occurred"
+    "error": "An error occurred",
+    "errorLoading": "Failed to load",
+    "generatingPDF": "Generating PDF...",
+    "pleaseWait": "Please wait",
+    "pdfGenerated": "PDF generated successfully",
+    "pdfFailed": "Failed to generate PDF",
+    "orderUpdated": "Order updated"
   },
   "form": {
     "createTitle": "Create New Macro",
@@ -58,15 +64,16 @@
       "nameRequired": "Name is required",
       "shortDescriptionRequired": "Short description is required",
       "descriptionRequired": "Description is required"
-    }
+    },
+    "shortDescriptionHelp": "A brief summary (1-2 sentences)"
   },
   "detail": {
     "backToMacros": "Back to Macros",
     "created": "Created",
     "processes": "Processes",
     "description": "Description",
-    "noProcesesss": "No processes yet",
-    "noProcessesDescription": "Create your first process for this macro to get started"
+    "noProcessesDescription": "Create your first process for this macro to get started",
+    "noProcesses": "No processes yet"
   },
   "errorLoadingMacro": "Failed to load macro",
   "error": "Error",
@@ -81,5 +88,54 @@
   "status": "Status",
   "createdAt": "Created",
   "noProcesses": "No processes found for this macro",
-  "addFirstProcess": "Add First Process"
+  "addFirstProcess": "Add First Process",
+  "back": "Back",
+  "backToMacros": "Back to macros",
+  "editMacro": "Edit macro",
+  "editProcess": "Edit process",
+  "editTask": "Edit task",
+  "addNewProcess": "Add a new process",
+  "addNewTask": "Add a new task",
+  "addTask": "Add task",
+  "noDescription": "No description",
+  "downloadPDF": "Download PDF",
+  "exportPdf": "Export as PDF",
+  "save": "Save",
+  "saving": "Saving...",
+  "cancel": "Cancel",
+  "activeDescription": "Inactive items are hidden from standard users",
+  "order": "Order",
+  "filter": {
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "allDomains": "All domains"
+  },
+  "sort": {
+    "newest": "Newest first",
+    "oldest": "Oldest first",
+    "updated": "Recently updated",
+    "nameAsc": "Name (A → Z)",
+    "nameDesc": "Name (Z → A)"
+  },
+  "processForm": {
+    "processCode": "Process code",
+    "processCodeHelp": "Optional. Auto-generated if left empty.",
+    "processTitle": "Process title",
+    "titlePlaceholder": "e.g. Network incident handling",
+    "shortDescription": "Short description",
+    "shortDescriptionPlaceholder": "Brief summary of the process...",
+    "description": "Detailed description",
+    "descriptionPlaceholder": "Detailed description of the process operations...",
+    "activeDescription": "Inactive processes are hidden from standard users"
+  },
+  "taskForm": {
+    "code": "Code",
+    "codeHelp": "Unique identifier for the task",
+    "description": "Description",
+    "descriptionPlaceholder": "Detailed task description",
+    "descriptionHelp": "Describe the actions required for this task",
+    "order": "Order",
+    "activeDescription": "Enable or disable this task"
+  }
 }
