@@ -9,6 +9,8 @@ interface PinInputProps {
     disabled?: boolean;
     className?: string;
     error?: boolean;
+    /** Masque les chiffres saisis. Distingue visuellement un PIN secret d'un code OTP. */
+    mask?: boolean;
 }
 
 export const PinInput: React.FC<PinInputProps> = ({
@@ -19,6 +21,7 @@ export const PinInput: React.FC<PinInputProps> = ({
     disabled = false,
     className,
     error = false,
+    mask = false,
 }) => {
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -100,7 +103,7 @@ export const PinInput: React.FC<PinInputProps> = ({
                         // Assign ref without returning it
                         inputRefs.current[index] = el;
                     }}
-                    type="text"
+                    type={mask ? 'password' : 'text'}
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}

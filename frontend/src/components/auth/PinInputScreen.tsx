@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { PinInput } from './PinInput';
 import { Button } from '@/components/ui/button';
+import { Mail } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
@@ -39,7 +40,7 @@ export const PinInputScreen: React.FC<PinInputScreenProps> = ({
             const response = await loginWithPin(email, pinValue);
             onSuccess(response);
         } catch (err: any) {
-            setError(err.message || t('login.invalidPin') || 'Invalid PIN');
+            setError(err.message || t('login.invalidPin'));
             setPin(''); // Clear PIN on error
         } finally {
             setLoading(false);
@@ -48,12 +49,11 @@ export const PinInputScreen: React.FC<PinInputScreenProps> = ({
 
     return (
         <div className="space-y-6">
-            <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold">{t('login.enterPin') || 'Enter PIN'}</h3>
-                <p className="text-sm text-gray-500">
-                    {t('login.enterPinDesc', { email }) || `Enter your 6-digit PIN for ${email}`}
-                </p>
-            </div>
+            {/* Le titre et le sous-titre vivent dans l'en-tête de carte du LoginForm,
+                qui distingue l'écran PIN de l'écran OTP. */}
+            <p className="text-center text-sm text-gray-500">
+                {t('login.pinHelp')}
+            </p>
 
             {error && (
                 <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 border border-red-200 text-center">
@@ -69,6 +69,7 @@ export const PinInputScreen: React.FC<PinInputScreenProps> = ({
                     onComplete={handlePinComplete}
                     disabled={loading}
                     error={!!error}
+                    mask
                 />
             </div>
 
@@ -80,7 +81,7 @@ export const PinInputScreen: React.FC<PinInputScreenProps> = ({
                     onClick={onForgotPin}
                     disabled={loading}
                 >
-                    {t('login.forgotPin') || 'Forgot PIN?'}
+                    {t('login.forgotPin')}
                 </Button>
 
                 <Button
@@ -90,7 +91,8 @@ export const PinInputScreen: React.FC<PinInputScreenProps> = ({
                     onClick={onBack}
                     disabled={loading}
                 >
-                    {t('login.useOtp') || 'Use OTP instead'}
+                    <Mail className="mr-2 h-4 w-4" />
+                    {t('login.requestOtp')}
                 </Button>
             </div>
         </div>

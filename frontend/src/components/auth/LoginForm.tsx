@@ -14,6 +14,7 @@ import { PinSetupScreen } from './PinSetupScreen';
 import { useLogin } from '@/hooks/useLogin';
 import { loginRequestSchema, loginVerifySchema, LoginRequestData, LoginVerifyData } from '@/lib/validation';
 import { useTranslation } from '@/lib/i18n';
+import { Lock, Mail } from 'lucide-react';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -75,16 +76,39 @@ export const LoginForm: React.FC = () => {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        {(step === 1 || (step === 2 && !showPinInput)) && (
+        {step !== 3 && (
           <CardHeader className="text-center">
+            {/* Chaque mode a son icône et sa couleur : le PIN est un secret choisi
+                par l'utilisateur, l'OTP un code à usage unique reçu par e-mail.
+                Sans cette distinction les deux écrans à 6 chiffres se confondent. */}
+            {step === 2 && (
+              <div className="flex justify-center">
+                <div
+                  className={
+                    showPinInput
+                      ? 'flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600'
+                      : 'flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600'
+                  }
+                >
+                  {showPinInput ? <Lock className="h-6 w-6" /> : <Mail className="h-6 w-6" />}
+                </div>
+              </div>
+            )}
+
             <CardTitle className="text-2xl font-bold">
-              {step === 1 ? t('login.title') : t('login.otp')}
+              {step === 1
+                ? t('login.title')
+                : showPinInput
+                  ? t('login.pinTitle')
+                  : t('login.otpTitle')}
             </CardTitle>
+
             <CardDescription>
               {step === 1
                 ? t('login.subtitle')
-                : t('login.otpSent', { email })
-              }
+                : showPinInput
+                  ? t('login.pinSubtitle')
+                  : t('login.otpSubtitle', { email })}
             </CardDescription>
           </CardHeader>
         )}
@@ -143,6 +167,10 @@ export const LoginForm: React.FC = () => {
           {step === 2 && !showPinInput && (
             <Form {...step2Form}>
               <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
+                <p className="text-center text-sm text-gray-500">
+                  {t('login.otpHelp')}
+                </p>
+
                 <FormField
                   control={step2Form.control}
                   name="otp"
@@ -190,7 +218,10 @@ export const LoginForm: React.FC = () => {
                     onClick={switchToPin}
                     disabled={isLoading}
                   >
-                    {t('login.usePin') || 'Use PIN'}
+                    <>
+                      <Lock className="mr-2 h-4 w-4" />
+                      {t('login.usePin')}
+                    </>
                   </Button>
                 )}
               </form>
