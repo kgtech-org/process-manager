@@ -8,7 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdminGuard } from '@/components/auth/AdminGuard';
-import { UserResource, type User, type PaginationData } from '@/lib/resources';
+import {
+  UserResource,
+  DepartmentResource,
+  JobPositionResource,
+  type User,
+  type PaginationData,
+} from '@/lib/resources';
+import type { Department, JobPosition } from '@/lib/validation';
+import { EditUserDialog } from '@/components/users/EditUserDialog';
 import { useTranslation } from '@/lib/i18n';
 import {
   Pagination,
@@ -34,6 +42,9 @@ export default function AdminUsersPage() {
     total: 0,
     totalPages: 1
   });
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [jobPositions, setJobPositions] = useState<JobPosition[]>([]);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -58,6 +69,33 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, [pagination.page, pagination.limit, filter]);
 
+  // Référentiels du formulaire d'édition : ils ne dépendent pas de la pagination.
+  useEffect(() => {
+    const fetchReferenceData = async () => {
+      try {
+        const [departmentList, positionList] = await Promise.all([
+          DepartmentResource.getAll(),
+          JobPositionResource.getAll(),
+        ]);
+        setDepartments(departmentList);
+        // L'API laisse requiredSkills absent quand aucune compétence n'est définie,
+        // alors que le schéma du sélecteur l'attend toujours présent.
+        setJobPositions(positionList.map(position => ({
+          ...position,
+          requiredSkills: position.requiredSkills ?? [],
+        })));
+      } catch (error) {
+        console.error('Failed to fetch reference data:', error);
+      }
+    };
+
+    fetchReferenceData();
+  }, []);
+
+  const handleUserUpdated = (updated: User) => {
+    setUsers(current => current.map(user => (user.id === updated.id ? updated : user)));
+  };
+
   const filteredUsers = users.filter(user => {
     const fullName = `${user.firstName} ${user.lastName}`;
     const matchesSearch = fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,11 +119,11 @@ export default function AdminUsersPage() {
   const getRoleBadge = (role: User['role']) => {
     switch (role) {
       case 'admin':
-        return <Badge variant="destructive">{t('role.admin')}</Badge>;
+        return <Badge variant="destructive">{t('roles.admin')}</Badge>;
       case 'manager':
-        return <Badge className="bg-blue-100 text-blue-800">{t('role.manager')}</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800">{t('roles.manager')}</Badge>;
       case 'user':
-        return <Badge variant="outline">{t('role.user')}</Badge>;
+        return <Badge variant="outline">{t('roles.user')}</Badge>;
       default:
         return <Badge variant="outline">{role}</Badge>;
     }
@@ -356,6 +394,13 @@ export default function AdminUsersPage() {
                           </Button>
                         </>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditingUser(user)}
+                      >
+                        {t('actions.edit')}
+                      </Button>
                       <Button size="sm" variant="outline" asChild>
                         <Link href={`/admin/users/${user.id}`}>
                           {t('actions.viewDetails')}
@@ -402,6 +447,17 @@ export default function AdminUsersPage() {
             </div>
           </div>
         )}
+
+        <EditUserDialog
+          user={editingUser}
+          departments={departments}
+          jobPositions={jobPositions}
+          open={editingUser !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditingUser(null);
+          }}
+          onUpdated={handleUserUpdated}
+        />
       </div>
     </AdminGuard>
   );
