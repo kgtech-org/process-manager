@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -68,9 +69,9 @@ func GetPaginationParams(c *gin.Context) (page, limit int) {
 // SendSuccessWithPagination sends a success response with pagination info
 func SendSuccessWithPagination(c *gin.Context, message string, data interface{}, pagination PaginationInfo) {
 	response := gin.H{
-		"success": true,
-		"message": message,
-		"data":    data,
+		"success":    true,
+		"message":    message,
+		"data":       data,
 		"pagination": pagination,
 	}
 	c.JSON(http.StatusOK, response)
@@ -176,8 +177,9 @@ func SendTooManyRequests(c *gin.Context, message string) {
 
 // SendInternalError sends an internal server error response
 func SendInternalError(c *gin.Context, err error) {
-	// Log the actual error for debugging
-	// Log error for debugging
+	// Without this the server stays silent on every 500 and the cause is only
+	// visible to whoever reads the client's response body.
+	log.Printf("❌ %s %s: %v", c.Request.Method, c.Request.URL.Path, err)
 
 	c.JSON(http.StatusInternalServerError, models.NewErrorResponse(
 		"An internal error occurred",
@@ -198,7 +200,6 @@ func SendValidationError(c *gin.Context, message string, err error) {
 // ============================================
 // Conditional Response Handlers
 // ============================================
-
 
 // SendOTPResponseWithToken sends OTP response with temporary token
 func SendOTPResponseWithToken(c *gin.Context, tempToken string, otp string, isDevelopment bool) {

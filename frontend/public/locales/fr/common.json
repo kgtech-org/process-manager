@@ -73,5 +73,8 @@
     "forbidden": "Accès interdit",
     "badRequest": "Requête invalide",
     "tryAgain": "Réessayer"
+  },
+  "chat": {
+    "notAnswered": "Sans réponse — message conservé"
   }
 }

@@ -3,6 +3,7 @@ package services_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,9 +23,14 @@ type capturedRequest struct {
 
 // fakeOpenAI stands in for api.openai.com so the Responses/Conversations wiring can be
 // asserted without network access or API credits. Handlers are keyed by request path.
+//
+// responseStatus and responseBody override what /responses answers, so upstream
+// failures (quota, rate limiting, server errors) can be replayed.
 type fakeOpenAI struct {
-	server   *httptest.Server
-	requests []capturedRequest
+	server         *httptest.Server
+	requests       []capturedRequest
+	responseStatus int
+	responseBody   string
 }
 
 func newFakeOpenAI(t *testing.T) *fakeOpenAI {
@@ -46,6 +52,11 @@ func newFakeOpenAI(t *testing.T) *fakeOpenAI {
 		case r.Method == http.MethodDelete && strings.Contains(r.URL.Path, "/conversations/"):
 			_, _ = w.Write([]byte(`{"id":"conv_test123","object":"conversation.deleted","deleted":true}`))
 		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/responses"):
+			if f.responseStatus != 0 {
+				w.WriteHeader(f.responseStatus)
+				_, _ = w.Write([]byte(f.responseBody))
+				return
+			}
 			_, _ = w.Write([]byte(`{
 				"id":"resp_test123",
 				"object":"response",
@@ -245,4 +256,47 @@ func TestDeleteConversationIgnoresEmptyAndLegacyIDs(t *testing.T) {
 	require.NoError(t, service.DeleteConversation(context.Background(), "thread_legacyABC"))
 
 	assert.Empty(t, fake.requests, "nothing to delete server-side, so no call should be made")
+}
+
+// Un solde épuisé ou une limite de débit vient d'OpenAI, pas d'un défaut du serveur :
+// l'erreur doit être reconnaissable pour que l'appelant réponde autre chose qu'un 500.
+func TestSendMessageMarksQuotaErrorAsUnavailable(t *testing.T) {
+	fake := newFakeOpenAI(t)
+	fake.responseStatus = http.StatusTooManyRequests
+	fake.responseBody = `{"error":{"message":"You have no credits remaining.","type":"insufficient_quota","code":"credit_balance_exhausted"}}`
+	service := newTestService(t, fake)
+
+	_, _, err := service.SendMessage(context.Background(), "Bonjour", "conv_existing789", "")
+
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, services.ErrAssistantUnavailable),
+		"a 429 must be reported as ErrAssistantUnavailable, got: %v", err)
+	assert.Contains(t, err.Error(), "no credits remaining", "the upstream detail must survive for the logs")
+}
+
+func TestSendMessageKeepsServerErrorsDistinct(t *testing.T) {
+	fake := newFakeOpenAI(t)
+	fake.responseStatus = http.StatusInternalServerError
+	fake.responseBody = `{"error":{"message":"boom","type":"server_error"}}`
+	service := newTestService(t, fake)
+
+	_, _, err := service.SendMessage(context.Background(), "Bonjour", "conv_existing789", "")
+
+	require.Error(t, err)
+	assert.False(t, errors.Is(err, services.ErrAssistantUnavailable),
+		"an upstream 500 is not a quota problem and must stay an internal error")
+}
+
+// Sur échec, l'identifiant de conversation déjà ouvert doit remonter, faute de quoi
+// chaque tentative en abandonne une nouvelle, vide, chez OpenAI.
+func TestSendMessageReturnsConversationIDOnFailure(t *testing.T) {
+	fake := newFakeOpenAI(t)
+	fake.responseStatus = http.StatusTooManyRequests
+	fake.responseBody = `{"error":{"message":"no credits","type":"insufficient_quota"}}`
+	service := newTestService(t, fake)
+
+	_, conversationID, err := service.SendMessage(context.Background(), "Bonjour", "", "")
+
+	require.Error(t, err)
+	assert.Equal(t, "conv_test123", conversationID)
 }

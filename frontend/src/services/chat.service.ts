@@ -17,6 +17,9 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  /** Vrai quand la réponse de l'assistant n'est pas arrivée. Le message reste
+   *  affiché et rejouable plutôt que d'être effacé. */
+  failed?: boolean;
 }
 
 export interface SendMessageRequest {

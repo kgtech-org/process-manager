@@ -56,6 +56,23 @@ Instructions:
 Contexte: Les documents que tu consultes sont des procédures de Togocom couvrant la gestion des incidents, la surveillance réseau, la restauration de service, et autres processus opérationnels.`
 )
 
+// ErrAssistantUnavailable marks a failure that comes from upstream rather than from a
+// defect on our side: exhausted credits, quota, or rate limiting. Callers use it to
+// answer "service unavailable" instead of a bare internal error.
+var ErrAssistantUnavailable = errors.New("assistant temporarily unavailable")
+
+// classifyUpstreamError tags the responses the caller must not present as our own fault.
+func classifyUpstreamError(err error) error {
+	var apiErr *openai.APIError
+	if errors.As(err, &apiErr) {
+		switch apiErr.HTTPStatusCode {
+		case http.StatusTooManyRequests, http.StatusPaymentRequired, http.StatusServiceUnavailable:
+			return fmt.Errorf("%w: %v", ErrAssistantUnavailable, err)
+		}
+	}
+	return err
+}
+
 // OpenAIService handles OpenAI Responses API operations.
 //
 // It replaces the Assistants API (sunset on 2026-08-26): the assistant's persona is sent
@@ -326,7 +343,9 @@ func (s *OpenAIService) SendMessage(ctx context.Context, message string, convers
 
 	response, err := s.client.CreateResponse(ctx, request)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create response: %w", err)
+		// The conversation travels back even on failure: it already exists upstream,
+		// so a retry reuses it instead of abandoning an empty one behind.
+		return "", conversationID, fmt.Errorf("failed to create response: %w", classifyUpstreamError(err))
 	}
 
 	reply := strings.TrimSpace(response.GetOutputText())
