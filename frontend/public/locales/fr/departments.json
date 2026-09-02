@@ -37,7 +37,9 @@
     "viewHierarchy": "Voir la hiérarchie",
     "create": "Créer",
     "edit": "Modifier",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "createDepartment": "Créer le département"
   },
   "filters": {
     "title": "Filtres",
@@ -76,9 +78,23 @@
     "placeholder": "Rechercher des départements..."
   },
   "list": {
-    "title": "Liste des Départements"
+    "title": "Liste des Départements",
+    "empty": "Aucun département trouvé"
   },
   "details": {
-    "created": "Créé"
+    "created": "Créé",
+    "parent": "Département parent"
+  },
+  "create": {
+    "title": "Créer un département",
+    "subtitle": "Ajouter un nouveau département à l'organisation"
+  },
+  "form": {
+    "name": "Nom",
+    "namePlaceholder": "ex: Réseau & Infrastructures",
+    "code": "Code",
+    "codePlaceholder": "ex: RES",
+    "description": "Description",
+    "descriptionPlaceholder": "Rôle et périmètre du département..."
   }
 }

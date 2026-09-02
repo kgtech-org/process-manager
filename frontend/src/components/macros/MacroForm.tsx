@@ -57,7 +57,7 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                 {initialData && (
                     <div className="space-y-2">
                         <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            {t('code', { defaultValue: 'Code' })}
+                            {t('form.code', { defaultValue: 'Code' })}
                         </label>
                         <Input value={initialData.code} disabled className="bg-gray-100" />
                     </div>
@@ -69,7 +69,7 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                         name="code"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>{t('code', { defaultValue: 'Code' })}</FormLabel>
+                                <FormLabel>{t('form.code', { defaultValue: 'Code' })}</FormLabel>
                                 <FormControl>
                                     <Input placeholder="M1" {...field} />
                                 </FormControl>
@@ -82,9 +82,9 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                         name="name"
                         render={({ field }) => (
                             <FormItem className="md:col-span-2">
-                                <FormLabel>{t('name', { defaultValue: 'Name' })}</FormLabel>
+                                <FormLabel>{t('form.name', { defaultValue: 'Name' })}</FormLabel>
                                 <FormControl>
-                                    <Input placeholder={t('namePlaceholder', { defaultValue: 'Enter macro name' })} {...field} />
+                                    <Input placeholder={t('form.namePlaceholder', { defaultValue: 'Enter macro name' })} {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -97,12 +97,12 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                     name="shortDescription"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>{t('shortDescription', { defaultValue: 'Short Description' })}</FormLabel>
+                            <FormLabel>{t('form.shortDescription', { defaultValue: 'Short Description' })}</FormLabel>
                             <FormControl>
-                                <Input placeholder={t('shortDescriptionPlaceholder', { defaultValue: 'Brief summary' })} {...field} />
+                                <Input placeholder={t('form.shortDescriptionPlaceholder', { defaultValue: 'Brief summary' })} {...field} />
                             </FormControl>
                             <FormDescription>
-                                {t('shortDescriptionHelp', { defaultValue: 'A brief summary (1-2 sentences)' })}
+                                {t('form.shortDescriptionHelp', { defaultValue: 'A brief summary (1-2 sentences)' })}
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -114,10 +114,10 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>{t('description', { defaultValue: 'Detailed Description' })}</FormLabel>
+                            <FormLabel>{t('form.description', { defaultValue: 'Detailed Description' })}</FormLabel>
                             <FormControl>
                                 <Textarea
-                                    placeholder={t('descriptionPlaceholder', { defaultValue: 'Detailed description of the macro domain...' })}
+                                    placeholder={t('form.descriptionPlaceholder', { defaultValue: 'Detailed description of the macro domain...' })}
                                     className="min-h-[120px]"
                                     {...field}
                                 />
@@ -152,7 +152,7 @@ export function MacroForm({ initialData, onSubmit, isLoading }: MacroFormProps) 
 
                 <div className="flex justify-end space-x-4 pt-4">
                     <Button type="button" variant="outline" onClick={() => form.reset()}>
-                        {t('cancel', { defaultValue: 'Reset' })}
+                        {t('form.cancel', { defaultValue: 'Reset' })}
                     </Button>
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? (

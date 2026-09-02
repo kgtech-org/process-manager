@@ -8,6 +8,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 // Import translations
 import commonFr from '../../public/locales/fr/common.json';
 import authFr from '../../public/locales/fr/auth.json';
+import dashboardFr from '../../public/locales/fr/dashboard.json';
 import activityFr from '../../public/locales/fr/activity.json';
 
 import usersFr from '../../public/locales/fr/users.json';
@@ -25,6 +26,7 @@ import feedbackFr from '../../public/locales/fr/feedback.json';
 
 import commonEn from '../../public/locales/en/common.json';
 import authEn from '../../public/locales/en/auth.json';
+import dashboardEn from '../../public/locales/en/dashboard.json';
 import activityEn from '../../public/locales/en/activity.json';
 
 import usersEn from '../../public/locales/en/users.json';
@@ -44,6 +46,7 @@ const resources = {
   fr: {
     common: commonFr,
     auth: authFr,
+    dashboard: dashboardFr,
     activity: activityFr,
     users: usersFr,
     departments: departmentsFr,
@@ -61,6 +64,7 @@ const resources = {
   en: {
     common: commonEn,
     auth: authEn,
+    dashboard: dashboardEn,
     activity: activityEn,
     users: usersEn,
     departments: departmentsEn,

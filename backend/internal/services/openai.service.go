@@ -1,68 +1,39 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	openai "github.com/sashabaranov/go-openai"
 )
 
-// OpenAIService handles OpenAI Assistant API operations
-type OpenAIService struct {
-	client      *openai.Client
-	assistantID string
-}
+const (
+	// defaultOpenAIBaseURL is the API root used unless OPENAI_BASE_URL overrides it.
+	defaultOpenAIBaseURL = "https://api.openai.com/v1"
 
-// NewOpenAIService creates a new OpenAI service
-func NewOpenAIService() (*OpenAIService, error) {
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	if apiKey == "" {
-		return nil, errors.New("OPENAI_API_KEY environment variable is not set")
-	}
+	// defaultOpenAIModel is used unless OPENAI_MODEL overrides it.
+	defaultOpenAIModel = "gpt-5.4-mini"
 
-	client := openai.NewClient(apiKey)
+	// conversationIDPrefix marks a usable Conversations API identifier. Threads created
+	// by the retired Assistants API were prefixed "thread_" and are no longer resolvable.
+	conversationIDPrefix = "conv_"
 
-	service := &OpenAIService{
-		client: client,
-	}
+	// responseTimeout bounds a single call to the Responses API.
+	responseTimeout = 90 * time.Second
 
-	// Initialize or get existing assistant
-	if err := service.ensureAssistant(context.Background()); err != nil {
-		return nil, fmt.Errorf("failed to initialize assistant: %w", err)
-	}
-
-	return service, nil
-}
-
-// ensureAssistant creates or retrieves the Process Manager assistant
-func (s *OpenAIService) ensureAssistant(ctx context.Context) error {
-	// Try to get assistant ID from environment
-	assistantID := os.Getenv("OPENAI_ASSISTANT_ID")
-
-	if assistantID != "" {
-		// Verify the assistant exists
-		_, err := s.client.RetrieveAssistant(ctx, assistantID)
-		if err == nil {
-			s.assistantID = assistantID
-			log.Printf("✅ Using existing OpenAI Assistant: %s", assistantID)
-			return nil
-		}
-		log.Printf("⚠️  Assistant %s not found, creating new one", assistantID)
-	}
-
-	// Helper function to create string pointer
-	strPtr := func(s string) *string { return &s }
-
-	// Create a new assistant
-	assistant, err := s.client.CreateAssistant(ctx, openai.AssistantRequest{
-		Name: strPtr("Process Manager Assistant"),
-		Instructions: strPtr(`Tu es un assistant expert en gestion de processus pour Togocom, une entreprise de télécommunications.
+	// assistantInstructions is the persona sent on every response. It used to live on the
+	// Assistant object, which the Responses API does not have.
+	assistantInstructions = `Tu es un assistant expert en gestion de processus pour Togocom, une entreprise de télécommunications.
 
 Ton rôle est d'aider les utilisateurs à comprendre et à appliquer les procédures documentées dans le système de gestion des processus.
 
@@ -82,25 +53,183 @@ Instructions:
 5. Structure tes réponses de manière claire avec des listes ou étapes numérotées
 6. Sois concis mais complet dans tes explications
 
-Contexte: Les documents que tu consultes sont des procédures de Togocom couvrant la gestion des incidents, la surveillance réseau, la restauration de service, et autres processus opérationnels.`),
-		Model: "gpt-4-turbo-preview",
-		Tools: []openai.AssistantTool{
-			{Type: openai.AssistantToolTypeFileSearch},
-		},
-	})
+Contexte: Les documents que tu consultes sont des procédures de Togocom couvrant la gestion des incidents, la surveillance réseau, la restauration de service, et autres processus opérationnels.`
+)
 
-	if err != nil {
-		return fmt.Errorf("failed to create assistant: %w", err)
+// ErrAssistantUnavailable marks a failure that comes from upstream rather than from a
+// defect on our side: exhausted credits, quota, or rate limiting. Callers use it to
+// answer "service unavailable" instead of a bare internal error.
+var ErrAssistantUnavailable = errors.New("assistant temporarily unavailable")
+
+// classifyUpstreamError tags the responses the caller must not present as our own fault.
+func classifyUpstreamError(err error) error {
+	var apiErr *openai.APIError
+	if errors.As(err, &apiErr) {
+		switch apiErr.HTTPStatusCode {
+		case http.StatusTooManyRequests, http.StatusPaymentRequired, http.StatusServiceUnavailable:
+			return fmt.Errorf("%w: %v", ErrAssistantUnavailable, err)
+		}
+	}
+	return err
+}
+
+// OpenAIService handles OpenAI Responses API operations.
+//
+// It replaces the Assistants API (sunset on 2026-08-26): the assistant's persona is sent
+// as per-call instructions, threads become Conversations, and runs become Responses.
+// Documents keep living in a vector store queried through the hosted file_search tool.
+type OpenAIService struct {
+	client        *openai.Client
+	httpClient    *http.Client
+	apiKey        string
+	baseURL       string
+	model         string
+	vectorStoreID string
+}
+
+// NewOpenAIService creates a new OpenAI service.
+func NewOpenAIService() (*OpenAIService, error) {
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	if apiKey == "" {
+		return nil, errors.New("OPENAI_API_KEY environment variable is not set")
 	}
 
-	s.assistantID = assistant.ID
-	log.Printf("✅ Created new OpenAI Assistant: %s", assistant.ID)
-	log.Printf("⚠️  Save this ID in your environment: OPENAI_ASSISTANT_ID=%s", assistant.ID)
+	baseURL := os.Getenv("OPENAI_BASE_URL")
+	if baseURL == "" {
+		baseURL = defaultOpenAIBaseURL
+	}
+	baseURL = strings.TrimSuffix(baseURL, "/")
+
+	model := os.Getenv("OPENAI_MODEL")
+	if model == "" {
+		model = defaultOpenAIModel
+	}
+
+	config := openai.DefaultConfig(apiKey)
+	config.BaseURL = baseURL
+
+	service := &OpenAIService{
+		client:        openai.NewClientWithConfig(config),
+		httpClient:    &http.Client{Timeout: 30 * time.Second},
+		apiKey:        apiKey,
+		baseURL:       baseURL,
+		model:         model,
+		vectorStoreID: os.Getenv("OPENAI_VECTOR_STORE_ID"),
+	}
+
+	if service.vectorStoreID != "" {
+		log.Printf("✅ OpenAI service ready (model: %s, vector store: %s)", model, service.vectorStoreID)
+	} else {
+		log.Printf("✅ OpenAI service ready (model: %s, no vector store yet)", model)
+	}
+
+	return service, nil
+}
+
+// doJSON performs a raw JSON call against the OpenAI API. The Conversations endpoints have
+// no binding in go-openai v1.42.0, so they are issued by hand.
+func (s *OpenAIService) doJSON(ctx context.Context, method, path string, payload any, out any) error {
+	var body io.Reader
+	if payload != nil {
+		encoded, err := json.Marshal(payload)
+		if err != nil {
+			return fmt.Errorf("failed to encode request: %w", err)
+		}
+		body = bytes.NewReader(encoded)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, s.baseURL+path, body)
+	if err != nil {
+		return fmt.Errorf("failed to build request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+s.apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("openai returned %d: %s", resp.StatusCode, strings.TrimSpace(string(raw)))
+	}
+
+	if out == nil {
+		return nil
+	}
+
+	if err := json.Unmarshal(raw, out); err != nil {
+		return fmt.Errorf("failed to decode response: %w", err)
+	}
 
 	return nil
 }
 
-// UploadDocument uploads a document to OpenAI and attaches it to the assistant's vector store
+// createConversation opens a new server-side conversation, the Responses API replacement
+// for an Assistants thread.
+func (s *OpenAIService) createConversation(ctx context.Context) (string, error) {
+	var result struct {
+		ID string `json:"id"`
+	}
+
+	if err := s.doJSON(ctx, http.MethodPost, "/conversations", map[string]any{}, &result); err != nil {
+		return "", fmt.Errorf("failed to create conversation: %w", err)
+	}
+
+	if result.ID == "" {
+		return "", errors.New("conversation created without an id")
+	}
+
+	return result.ID, nil
+}
+
+// DeleteConversation removes a conversation and its stored items. Identifiers that predate
+// the Responses API no longer resolve, so they are skipped rather than reported as errors.
+func (s *OpenAIService) DeleteConversation(ctx context.Context, conversationID string) error {
+	if !isConversationID(conversationID) {
+		return nil
+	}
+
+	if err := s.doJSON(ctx, http.MethodDelete, "/conversations/"+conversationID, nil, nil); err != nil {
+		return fmt.Errorf("failed to delete conversation: %w", err)
+	}
+
+	return nil
+}
+
+// isConversationID reports whether an identifier can be used with the Conversations API.
+func isConversationID(id string) bool {
+	return strings.HasPrefix(id, conversationIDPrefix)
+}
+
+// ensureVectorStore returns the vector store backing file_search, creating it on first use.
+func (s *OpenAIService) ensureVectorStore(ctx context.Context) (string, error) {
+	if s.vectorStoreID != "" {
+		return s.vectorStoreID, nil
+	}
+
+	vectorStore, err := s.client.CreateVectorStore(ctx, openai.VectorStoreRequest{
+		Name: "Process Documents",
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create vector store: %w", err)
+	}
+
+	s.vectorStoreID = vectorStore.ID
+	log.Printf("✅ Created new vector store: %s", vectorStore.ID)
+	log.Printf("⚠️  Save this ID in your environment: OPENAI_VECTOR_STORE_ID=%s", vectorStore.ID)
+
+	return vectorStore.ID, nil
+}
+
+// UploadDocument uploads a document to OpenAI and adds it to the vector store used by
+// the file_search tool.
 func (s *OpenAIService) UploadDocument(ctx context.Context, filePath string, uploadFileName string, documentID string) error {
 	// Open the file
 	file, err := os.Open(filePath)
@@ -109,7 +238,7 @@ func (s *OpenAIService) UploadDocument(ctx context.Context, filePath string, upl
 	}
 	defer file.Close()
 
-	// Uploa file to OpenAI
+	// Upload file to OpenAI
 	uploadedFile, err := s.client.CreateFile(ctx, openai.FileRequest{
 		FileName: uploadFileName,
 		FilePath: filePath,
@@ -122,42 +251,9 @@ func (s *OpenAIService) UploadDocument(ctx context.Context, filePath string, upl
 
 	log.Printf("✅ Uploaded document to OpenAI: %s (File ID: %s)", uploadFileName, uploadedFile.ID)
 
-	// Get the assistant to access its vector store
-	assistant, err := s.client.RetrieveAssistant(ctx, s.assistantID)
+	vectorStoreID, err := s.ensureVectorStore(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve assistant: %w", err)
-	}
-
-	var vectorStoreID string
-
-	// Check if assistant has a vector store
-	if assistant.ToolResources != nil &&
-		assistant.ToolResources.FileSearch != nil &&
-		len(assistant.ToolResources.FileSearch.VectorStoreIDs) > 0 {
-		vectorStoreID = assistant.ToolResources.FileSearch.VectorStoreIDs[0]
-	} else {
-		// Create a new vector store
-		vectorStore, err := s.client.CreateVectorStore(ctx, openai.VectorStoreRequest{
-			Name: "Process Documents",
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create vector store: %w", err)
-		}
-		vectorStoreID = vectorStore.ID
-
-		// Update assistant with the new vector store
-		_, err = s.client.ModifyAssistant(ctx, s.assistantID, openai.AssistantRequest{
-			ToolResources: &openai.AssistantToolResource{
-				FileSearch: &openai.AssistantToolFileSearch{
-					VectorStoreIDs: []string{vectorStoreID},
-				},
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("failed to update assistant with vector store: %w", err)
-		}
-
-		log.Printf("✅ Created new vector store: %s", vectorStoreID)
+		return err
 	}
 
 	// Add file to vector store
@@ -206,122 +302,56 @@ func (s *OpenAIService) UploadDocumentFromReader(ctx context.Context, reader io.
 	return s.UploadDocument(ctx, tempFile.Name(), filename, documentID)
 }
 
-// SendMessage sends a message to the assistant and returns the response.
-// userContext is an optional string with the user's department and job position info,
-// injected as AdditionalInstructions so the assistant can tailor its responses.
-func (s *OpenAIService) SendMessage(ctx context.Context, message string, threadID string, userContext string) (string, string, error) {
-	var thread openai.Thread
-	var err error
+// SendMessage sends a message to the model and returns its reply along with the
+// conversation it belongs to.
+//
+// conversationID may be empty (a conversation is then opened) or hold a stale Assistants
+// thread ID, which is discarded the same way. userContext is an optional string with the
+// user's department and job position, appended to the persona so replies can be tailored.
+func (s *OpenAIService) SendMessage(ctx context.Context, message string, conversationID string, userContext string) (string, string, error) {
+	ctx, cancel := context.WithTimeout(ctx, responseTimeout)
+	defer cancel()
 
-	// Create or use existing thread
-	if threadID == "" {
-		thread, err = s.client.CreateThread(ctx, openai.ThreadRequest{})
+	if !isConversationID(conversationID) {
+		newID, err := s.createConversation(ctx)
 		if err != nil {
-			return "", "", fmt.Errorf("failed to create thread: %w", err)
+			return "", "", err
 		}
-		threadID = thread.ID
-	} else {
-		thread, err = s.client.RetrieveThread(ctx, threadID)
-		if err != nil {
-			return "", "", fmt.Errorf("failed to retrieve thread: %w", err)
-		}
+		conversationID = newID
 	}
 
-	// Add message to thread
-	_, err = s.client.CreateMessage(ctx, threadID, openai.MessageRequest{
-		Role:    openai.ChatMessageRoleUser,
-		Content: message,
-	})
-	if err != nil {
-		return "", "", fmt.Errorf("failed to create message: %w", err)
-	}
-
-	// Run the assistant with optional user context for persona
-	runReq := openai.RunRequest{
-		AssistantID: s.assistantID,
-	}
+	instructions := assistantInstructions
 	if userContext != "" {
-		runReq.AdditionalInstructions = userContext
+		instructions = instructions + "\n\n" + userContext
 	}
-	run, err := s.client.CreateRun(ctx, threadID, runReq)
+
+	request := openai.CreateResponseRequest{
+		Model:        s.model,
+		Conversation: conversationID,
+		Instructions: instructions,
+		Input:        message,
+	}
+
+	if s.vectorStoreID != "" {
+		request.Tools = []openai.ResponseTool{{
+			Type: "file_search",
+			Parameters: map[string]any{
+				"vector_store_ids": []string{s.vectorStoreID},
+			},
+		}}
+	}
+
+	response, err := s.client.CreateResponse(ctx, request)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create run: %w", err)
+		// The conversation travels back even on failure: it already exists upstream,
+		// so a retry reuses it instead of abandoning an empty one behind.
+		return "", conversationID, fmt.Errorf("failed to create response: %w", classifyUpstreamError(err))
 	}
 
-	// Wait for completion with timeout
-	timeout := time.After(30 * time.Second)
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return "", "", ctx.Err()
-		case <-timeout:
-			return "", "", errors.New("timeout waiting for assistant response")
-		case <-ticker.C:
-			run, err = s.client.RetrieveRun(ctx, threadID, run.ID)
-			if err != nil {
-				return "", "", fmt.Errorf("failed to retrieve run: %w", err)
-			}
-
-			if run.Status == openai.RunStatusCompleted {
-				// Helper functions for pointers
-				strPtr := func(s string) *string { return &s }
-				intPtr := func(i int) *int { return &i }
-
-				// Get the assistant's response (limit=1, order=desc to get latest message)
-				messages, err := s.client.ListMessage(ctx, threadID, intPtr(1), strPtr("desc"), nil, nil, nil)
-				if err != nil {
-					return "", "", fmt.Errorf("failed to list messages: %w", err)
-				}
-
-				if len(messages.Messages) > 0 {
-					lastMessage := messages.Messages[0]
-					if len(lastMessage.Content) > 0 {
-						content := lastMessage.Content[0]
-						if content.Type == "text" && content.Text != nil {
-							return content.Text.Value, threadID, nil
-						}
-					}
-				}
-
-				return "", threadID, errors.New("no response from assistant")
-			}
-
-			if run.Status == openai.RunStatusFailed ||
-				run.Status == openai.RunStatusCancelled ||
-				run.Status == openai.RunStatusExpired {
-				return "", "", fmt.Errorf("run failed with status: %s", run.Status)
-			}
-		}
-	}
-}
-
-// GetThreadMessages retrieves all messages from a thread
-func (s *OpenAIService) GetThreadMessages(ctx context.Context, threadID string) ([]openai.Message, error) {
-	if threadID == "" {
-		return []openai.Message{}, nil
+	reply := strings.TrimSpace(response.GetOutputText())
+	if reply == "" {
+		return "", conversationID, errors.New("no response from assistant")
 	}
 
-	messagesList, err := s.client.ListMessage(ctx, threadID, nil, nil, nil, nil, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list messages: %w", err)
-	}
-
-	return messagesList.Messages, nil
-}
-
-// DeleteThread deletes a conversation thread
-func (s *OpenAIService) DeleteThread(ctx context.Context, threadID string) error {
-	if threadID == "" {
-		return nil
-	}
-
-	_, err := s.client.DeleteThread(ctx, threadID)
-	if err != nil {
-		return fmt.Errorf("failed to delete thread: %w", err)
-	}
-
-	return nil
+	return reply, conversationID, nil
 }

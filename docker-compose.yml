@@ -117,7 +117,8 @@ services:
       - MAILER_API_URL=http://mailer:8085/send
       - MAILER_API_KEY=dkl1333022nd
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
+      - OPENAI_VECTOR_STORE_ID=${OPENAI_VECTOR_STORE_ID}
+      - OPENAI_MODEL=${OPENAI_MODEL}
     depends_on:
       mongodb:
         condition: service_healthy

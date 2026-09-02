@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Trash2, PlusCircle, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, Trash2, PlusCircle, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,6 +10,7 @@ import { chatService, ChatThread, ChatMessage } from '@/services/chat.service';
 import { useToast } from '@/hooks/use-toast';
 import { useChatContext } from '@/contexts/chat.context';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 
 export function ChatWidget() {
   const { isOpen, toggleChat, closeChat } = useChatContext();
@@ -23,6 +24,7 @@ export function ChatWidget() {
   const hasLoadedThreads = useRef(false);
   const isLoadingThreads = useRef(false);
   const { toast } = useToast();
+  const { t } = useTranslation('common');
 
   // Safe check for threads
   const threadList = Array.isArray(threads) ? threads : [];
@@ -119,8 +121,12 @@ export function ChatWidget() {
 
       setMessages((prev) => [...prev.filter((m) => m.id !== tempMessage.id), tempMessage, assistantMessage]);
     } catch (error: any) {
-      // Remove temp message on error
-      setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));
+      // La question est conservée à l'écran et marquée en échec : le serveur l'a
+      // enregistrée, et l'effacer obligerait à la retaper.
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempMessage.id ? { ...m, failed: true } : m))
+      );
+      setInputMessage(userMessage);
 
       console.error('Chat error:', error);
       console.error('Error response:', error.response);
@@ -302,10 +308,19 @@ export function ChatWidget() {
                         'rounded-lg px-4 py-2 max-w-[80%]',
                         message.role === 'user'
                           ? 'bg-orange-500 text-white'
-                          : 'bg-gray-100 text-gray-900'
+                          : 'bg-gray-100 text-gray-900',
+                        // Un message resté sans réponse s'affiche en retrait plutôt
+                        // que de disparaître, pour montrer qu'il est bien parti.
+                        message.failed && 'border border-red-300 bg-orange-300'
                       )}
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      {message.failed && (
+                        <p className="mt-1 flex items-center gap-1 text-xs text-red-900">
+                          <AlertCircle className="h-3 w-3" />
+                          {t('chat.notAnswered')}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}

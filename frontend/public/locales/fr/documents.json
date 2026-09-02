@@ -42,7 +42,9 @@
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce document ?",
     "createSuccess": "Document créé avec succès",
     "createFailed": "Échec de la création du document",
-    "error": "Une erreur s'est produite"
+    "error": "Une erreur s'est produite",
+    "draftSaved": "Brouillon enregistré",
+    "saveFailed": "Échec de l'enregistrement"
   },
   "form": {
     "createTitle": "Créer un Nouveau Document",
@@ -62,6 +64,29 @@
       "titleRequired": "Le titre est requis",
       "versionRequired": "La version est requise",
       "versionFormat": "La version doit être au format X.Y (ex: 1.0)"
+    },
+    "previous": "Précédent",
+    "next": "Suivant",
+    "saveDraft": "Enregistrer le brouillon",
+    "submit": "Soumettre",
+    "titleHint": "Un intitulé clair et unique pour ce document",
+    "steps": {
+      "basicInfo": {
+        "title": "Informations de base",
+        "description": "Fournissez les détails essentiels pour votre document"
+      },
+      "metadata": {
+        "title": "Métadonnées",
+        "description": "Renseignez les informations de classement et de validation"
+      },
+      "processGroups": {
+        "title": "Groupes de processus",
+        "description": "Organisez les processus et leurs étapes"
+      },
+      "annexes": {
+        "title": "Annexes",
+        "description": "Ajoutez les pièces jointes et documents de référence"
+      }
     }
   },
   "detail": {
@@ -111,9 +136,13 @@
     "expand": "Développer",
     "group": "Groupe",
     "step": "Étape",
-    "of": "de"
+    "of": "de",
+    "groupOrder": "Ordre du groupe",
+    "stepOrder": "Ordre de l'étape"
   },
   "signatures": {
     "noContributors": "Aucun contributeur assigné pour cette équipe"
-  }
+  },
+  "loadingMore": "Chargement...",
+  "allLoaded": "Tous les documents sont chargés"
 }

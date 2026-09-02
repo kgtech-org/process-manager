@@ -31,7 +31,13 @@
     "createFailed": "Échec de la création du macro",
     "updateSuccess": "Macro mis à jour avec succès",
     "updateFailed": "Échec de la mise à jour du macro",
-    "error": "Une erreur s'est produite"
+    "error": "Une erreur s'est produite",
+    "errorLoading": "Échec du chargement",
+    "generatingPDF": "Génération du PDF...",
+    "pleaseWait": "Veuillez patienter",
+    "pdfGenerated": "PDF généré avec succès",
+    "pdfFailed": "Échec de la génération du PDF",
+    "orderUpdated": "Ordre mis à jour"
   },
   "form": {
     "createTitle": "Créer un Nouveau Macro",
@@ -58,7 +64,8 @@
       "nameRequired": "Le nom est requis",
       "shortDescriptionRequired": "La description courte est requise",
       "descriptionRequired": "La description est requise"
-    }
+    },
+    "shortDescriptionHelp": "Un résumé bref (1 à 2 phrases)"
   },
   "detail": {
     "backToMacros": "Retour aux Macros",
@@ -81,5 +88,54 @@
   "status": "Statut",
   "createdAt": "Créé",
   "noProcesses": "Aucun processus trouvé pour ce macro",
-  "addFirstProcess": "Ajouter le Premier Processus"
+  "addFirstProcess": "Ajouter le Premier Processus",
+  "back": "Retour",
+  "backToMacros": "Retour aux macros",
+  "editMacro": "Modifier le macro",
+  "editProcess": "Modifier le processus",
+  "editTask": "Modifier la tâche",
+  "addNewProcess": "Ajouter un nouveau processus",
+  "addNewTask": "Ajouter une nouvelle tâche",
+  "addTask": "Ajouter une tâche",
+  "noDescription": "Aucune description",
+  "downloadPDF": "Télécharger le PDF",
+  "exportPdf": "Exporter en PDF",
+  "save": "Enregistrer",
+  "saving": "Enregistrement...",
+  "cancel": "Annuler",
+  "activeDescription": "Les éléments inactifs sont masqués aux utilisateurs standard",
+  "order": "Ordre",
+  "filter": {
+    "all": "Tous",
+    "active": "Actifs",
+    "inactive": "Inactifs",
+    "allDomains": "Tous les domaines"
+  },
+  "sort": {
+    "newest": "Plus récents",
+    "oldest": "Plus anciens",
+    "updated": "Récemment modifiés",
+    "nameAsc": "Nom (A → Z)",
+    "nameDesc": "Nom (Z → A)"
+  },
+  "processForm": {
+    "processCode": "Code du processus",
+    "processCodeHelp": "Facultatif. Généré automatiquement si laissé vide.",
+    "processTitle": "Titre du processus",
+    "titlePlaceholder": "ex: Traitement des incidents réseau",
+    "shortDescription": "Description courte",
+    "shortDescriptionPlaceholder": "Aperçu bref du processus...",
+    "description": "Description détaillée",
+    "descriptionPlaceholder": "Description détaillée des opérations du processus...",
+    "activeDescription": "Les processus inactifs sont masqués aux utilisateurs standard"
+  },
+  "taskForm": {
+    "code": "Code",
+    "codeHelp": "Identifiant unique de la tâche",
+    "description": "Description",
+    "descriptionPlaceholder": "Description détaillée de la tâche",
+    "descriptionHelp": "Décrivez les actions requises pour cette tâche",
+    "order": "Ordre",
+    "activeDescription": "Activer ou désactiver cette tâche"
+  }
 }

@@ -35,6 +35,8 @@
     "pendingInvitations": "Invitations en Attente",
     "pendingInvitationsDesc": "Invitations en attente de votre réponse",
     "myActivity": "Mon Activité",
-    "myActivityDesc": "Actions récentes cette semaine"
+    "myActivityDesc": "Actions récentes cette semaine",
+    "title": "Statistiques",
+    "subtitle": "Vue d'ensemble de l'activité de la plateforme"
   }
 }

@@ -1,54 +1,55 @@
 {
-    "manager": {
-        "title": "Gestion des Modèles d'Évaluation",
-        "description": "Gérez les formulaires utilisés pour recueillir les retours sur les processus.",
-        "newTemplate": "Nouveau Modèle",
-        "active": "Actif",
-        "inactive": "Inactif",
-        "activate": "Activer",
-        "deactivate": "Désactiver",
-        "questionsCount": "{{count}} questions",
-        "noTemplates": "Aucun modèle",
-        "noTemplatesDesc": "Commencez par créer un nouveau modèle d'évaluation.",
-        "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce modèle ?",
-        "deleteSuccess": "Modèle supprimé avec succès",
-        "deleteError": "Impossible de supprimer le modèle",
-        "loadError": "Impossible de charger les modèles",
-        "toggleSuccess": "Modèle {{status}}"
+  "manager": {
+    "title": "Gestion des Modèles d'Évaluation",
+    "description": "Gérez les formulaires utilisés pour recueillir les retours sur les processus.",
+    "newTemplate": "Nouveau Modèle",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "questionsCount": "{{count}} questions",
+    "noTemplates": "Aucun modèle",
+    "noTemplatesDesc": "Commencez par créer un nouveau modèle d'évaluation.",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce modèle ?",
+    "deleteSuccess": "Modèle supprimé avec succès",
+    "deleteError": "Impossible de supprimer le modèle",
+    "loadError": "Impossible de charger les modèles",
+    "toggleSuccess": "Modèle {{status}}",
+    "saveErrorDesc": "Le modèle n'a pas pu être enregistré. Réessayez."
+  },
+  "dialog": {
+    "newTitle": "Nouveau modèle d'évaluation",
+    "editTitle": "Modifier modèle d'évaluation",
+    "nameLabel": "Nom du modèle",
+    "namePlaceholder": "Ex: Évaluation de formation",
+    "descLabel": "Description",
+    "descPlaceholder": "Description du modèle",
+    "isActive": "Modèle actif",
+    "questions": "Questions",
+    "addBtn": "Ajouter",
+    "qText": "Texte de la question",
+    "qType": "Type",
+    "types": {
+      "text": "Texte court",
+      "longText": "Texte long",
+      "rating": "Évaluation (Note)",
+      "singleChoice": "Choix unique",
+      "multiChoice": "Choix multiple"
     },
-    "dialog": {
-        "newTitle": "Nouveau modèle d'évaluation",
-        "editTitle": "Modifier modèle d'évaluation",
-        "nameLabel": "Nom du modèle",
-        "namePlaceholder": "Ex: Évaluation de formation",
-        "descLabel": "Description",
-        "descPlaceholder": "Description du modèle",
-        "isActive": "Modèle actif",
-        "questions": "Questions",
-        "addBtn": "Ajouter",
-        "qText": "Texte de la question",
-        "qType": "Type",
-        "types": {
-            "text": "Texte court",
-            "longText": "Texte long",
-            "rating": "Évaluation (Note)",
-            "singleChoice": "Choix unique",
-            "multiChoice": "Choix multiple"
-        },
-        "qRequired": "Question requise",
-        "optionsLabel": "Options (séparées par des virgules)",
-        "cancel": "Annuler",
-        "save": "Enregistrer",
-        "saveSuccessDesc": "Modèle enregistré avec succès",
-        "saveErrorDesc": "Erreur lors de l'enregistrement du modèle"
-    },
-    "details": {
-        "title": "Détails du modèle"
-    },
-    "validation": {
-        "nameRequired": "Le nom est requis",
-        "descRequired": "La description est requise",
-        "questionsRequired": "Au moins une question est requise",
-        "qTextRequired": "Le texte de la question est requis"
-    }
+    "qRequired": "Question requise",
+    "optionsLabel": "Options (séparées par des virgules)",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "saveSuccessDesc": "Modèle enregistré avec succès",
+    "saveErrorDesc": "Erreur lors de l'enregistrement du modèle"
+  },
+  "details": {
+    "title": "Détails du modèle"
+  },
+  "validation": {
+    "nameRequired": "Le nom est requis",
+    "descRequired": "La description est requise",
+    "questionsRequired": "Au moins une question est requise",
+    "qTextRequired": "Le texte de la question est requis"
+  }
 }

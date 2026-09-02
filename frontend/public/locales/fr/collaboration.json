@@ -27,7 +27,8 @@
     "types": {
       "collaborator": "Collaborateur",
       "reviewer": "Réviseur"
-    }
+    },
+    "noTeamsAvailable": "Aucune équipe disponible"
   },
   "permissions": {
     "title": "Permissions",

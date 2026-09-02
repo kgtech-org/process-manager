@@ -3,7 +3,7 @@ import { apiClient } from '@/lib/api';
 export interface ChatThread {
   id: string;
   userId: string;
-  openaiThreadId: string;
+  openaiConversationId: string;
   title: string;
   lastMessage: string;
   messageCount: number;
@@ -17,6 +17,9 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  /** Vrai quand la réponse de l'assistant n'est pas arrivée. Le message reste
+   *  affiché et rejouable plutôt que d'être effacé. */
+  failed?: boolean;
 }
 
 export interface SendMessageRequest {

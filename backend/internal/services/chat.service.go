@@ -30,102 +30,65 @@ func NewChatService(db *mongo.Database, openaiService *OpenAIService) *ChatServi
 	}
 }
 
-// SendMessage sends a message and gets a response from the assistant
+// SendMessage stores the user's question, asks the assistant, then stores its reply.
+//
+// The question is written before the upstream call on purpose: an assistant failure —
+// exhausted credits, a timeout — must never cost the user what they typed. A failed
+// exchange leaves a thread holding the question alone, ready to be retried.
 func (s *ChatService) SendMessage(ctx context.Context, userID primitive.ObjectID, req *models.CreateChatMessageRequest) (*models.ChatMessageResponse, error) {
 	if s.openaiService == nil {
 		return nil, fmt.Errorf("OpenAI service is not available")
 	}
 
-	var thread *models.ChatThread
-	var err error
-	var openaiThreadID string
-
-	// Get or create thread
-	if req.ThreadID != nil && *req.ThreadID != "" {
-		threadObjID, err := primitive.ObjectIDFromHex(*req.ThreadID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid thread ID: %w", err)
-		}
-
-		thread, err = s.GetThread(ctx, threadObjID, userID)
-		if err != nil {
-			return nil, err
-		}
-		openaiThreadID = thread.OpenAIThreadID
+	thread, err := s.resolveThread(ctx, userID, req)
+	if err != nil {
+		return nil, err
 	}
 
-	// Save user message to database
 	userMessage := &models.ChatMessage{
 		ID:        primitive.NewObjectID(),
+		ThreadID:  thread.ID,
 		Role:      "user",
 		Content:   req.Message,
 		CreatedAt: time.Now(),
 	}
-
-	// Build user context for persona-aware responses
-	userContext := s.buildUserContext(ctx, userID)
-
-	// Send message to OpenAI and get response
-	assistantResponse, newOpenAIThreadID, err := s.openaiService.SendMessage(ctx, req.Message, openaiThreadID, userContext)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get response from assistant: %w", err)
-	}
-
-	// If this is a new thread, create it in database
-	if thread == nil {
-		// Generate title from first message (first 50 chars)
-		title := req.Message
-		if len(title) > 50 {
-			title = title[:50] + "..."
-		}
-
-		thread = &models.ChatThread{
-			ID:             primitive.NewObjectID(),
-			UserID:         userID,
-			OpenAIThreadID: newOpenAIThreadID,
-			Title:          title,
-			LastMessage:    assistantResponse,
-			MessageCount:   2, // user message + assistant response
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
-		}
-
-		_, err = s.threadCollection.InsertOne(ctx, thread)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create thread: %w", err)
-		}
-
-		// Set thread ID for messages
-		userMessage.ThreadID = thread.ID
-	} else {
-		// Update existing thread
-		userMessage.ThreadID = thread.ID
-
-		_, err = s.threadCollection.UpdateOne(
-			ctx,
-			bson.M{"_id": thread.ID},
-			bson.M{
-				"$set": bson.M{
-					"last_message": assistantResponse,
-					"updated_at":   time.Now(),
-				},
-				"$inc": bson.M{
-					"message_count": 2, // user message + assistant response
-				},
-			},
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update thread: %w", err)
-		}
-	}
-
-	// Save user message
-	_, err = s.messageCollection.InsertOne(ctx, userMessage)
-	if err != nil {
+	if _, err := s.messageCollection.InsertOne(ctx, userMessage); err != nil {
 		return nil, fmt.Errorf("failed to save user message: %w", err)
 	}
 
-	// Save assistant message
+	if _, err := s.threadCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": thread.ID},
+		bson.M{
+			"$set": bson.M{"last_message": req.Message, "updated_at": time.Now()},
+			"$inc": bson.M{"message_count": 1},
+		},
+	); err != nil {
+		return nil, fmt.Errorf("failed to update thread: %w", err)
+	}
+
+	userContext := s.buildUserContext(ctx, userID)
+
+	assistantResponse, conversationID, sendErr := s.openaiService.SendMessage(
+		ctx, req.Message, thread.OpenAIConversationID, userContext,
+	)
+
+	// The conversation may have been opened upstream even when the reply failed;
+	// recording it keeps a retry on the same conversation.
+	if conversationID != "" && conversationID != thread.OpenAIConversationID {
+		if _, err := s.threadCollection.UpdateOne(
+			ctx,
+			bson.M{"_id": thread.ID},
+			bson.M{"$set": bson.M{"openai_conversation_id": conversationID}},
+		); err != nil {
+			log.Printf("⚠️  Failed to record conversation id for thread %s: %v", thread.ID.Hex(), err)
+		}
+	}
+
+	if sendErr != nil {
+		return nil, fmt.Errorf("failed to get response from assistant: %w", sendErr)
+	}
+
 	assistantMessage := &models.ChatMessage{
 		ID:        primitive.NewObjectID(),
 		ThreadID:  thread.ID,
@@ -133,10 +96,19 @@ func (s *ChatService) SendMessage(ctx context.Context, userID primitive.ObjectID
 		Content:   assistantResponse,
 		CreatedAt: time.Now(),
 	}
-
-	_, err = s.messageCollection.InsertOne(ctx, assistantMessage)
-	if err != nil {
+	if _, err := s.messageCollection.InsertOne(ctx, assistantMessage); err != nil {
 		return nil, fmt.Errorf("failed to save assistant message: %w", err)
+	}
+
+	if _, err := s.threadCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": thread.ID},
+		bson.M{
+			"$set": bson.M{"last_message": assistantResponse, "updated_at": time.Now()},
+			"$inc": bson.M{"message_count": 1},
+		},
+	); err != nil {
+		return nil, fmt.Errorf("failed to update thread: %w", err)
 	}
 
 	return &models.ChatMessageResponse{
@@ -144,6 +116,40 @@ func (s *ChatService) SendMessage(ctx context.Context, userID primitive.ObjectID
 		Message:  assistantResponse,
 		Role:     "assistant",
 	}, nil
+}
+
+// resolveThread returns the thread the message belongs to, creating it when the request
+// carries no thread id.
+func (s *ChatService) resolveThread(ctx context.Context, userID primitive.ObjectID, req *models.CreateChatMessageRequest) (*models.ChatThread, error) {
+	if req.ThreadID != nil && *req.ThreadID != "" {
+		threadObjID, err := primitive.ObjectIDFromHex(*req.ThreadID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid thread ID: %w", err)
+		}
+		return s.GetThread(ctx, threadObjID, userID)
+	}
+
+	// Title taken from the opening question, which is all we have before any reply.
+	title := req.Message
+	if len(title) > 50 {
+		title = title[:50] + "..."
+	}
+
+	thread := &models.ChatThread{
+		ID:           primitive.NewObjectID(),
+		UserID:       userID,
+		Title:        title,
+		LastMessage:  req.Message,
+		MessageCount: 0,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	if _, err := s.threadCollection.InsertOne(ctx, thread); err != nil {
+		return nil, fmt.Errorf("failed to create thread: %w", err)
+	}
+
+	return thread, nil
 }
 
 // buildUserContext fetches the user's department and job position to build
@@ -259,11 +265,11 @@ func (s *ChatService) DeleteThread(ctx context.Context, threadID primitive.Objec
 	}
 
 	// Delete from OpenAI
-	if s.openaiService != nil && thread.OpenAIThreadID != "" {
-		err = s.openaiService.DeleteThread(ctx, thread.OpenAIThreadID)
+	if s.openaiService != nil && thread.OpenAIConversationID != "" {
+		err = s.openaiService.DeleteConversation(ctx, thread.OpenAIConversationID)
 		if err != nil {
 			// Log but don't fail
-			fmt.Printf("⚠️  Failed to delete OpenAI thread: %v\n", err)
+			fmt.Printf("⚠️  Failed to delete OpenAI conversation: %v\n", err)
 		}
 	}
 

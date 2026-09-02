@@ -42,7 +42,9 @@
     "deleteConfirm": "Are you sure you want to delete this document?",
     "createSuccess": "Document created successfully",
     "createFailed": "Failed to create document",
-    "error": "An error occurred"
+    "error": "An error occurred",
+    "draftSaved": "Draft saved",
+    "saveFailed": "Failed to save"
   },
   "form": {
     "createTitle": "Create New Document",
@@ -62,6 +64,29 @@
       "titleRequired": "Title is required",
       "versionRequired": "Version is required",
       "versionFormat": "Version must be in format X.Y (e.g., 1.0)"
+    },
+    "previous": "Previous",
+    "next": "Next",
+    "saveDraft": "Save draft",
+    "submit": "Submit",
+    "titleHint": "A clear, unique title for this document",
+    "steps": {
+      "basicInfo": {
+        "title": "Basic information",
+        "description": "Provide the essential details for your document"
+      },
+      "metadata": {
+        "title": "Metadata",
+        "description": "Fill in classification and validation information"
+      },
+      "processGroups": {
+        "title": "Process groups",
+        "description": "Organise processes and their steps"
+      },
+      "annexes": {
+        "title": "Annexes",
+        "description": "Add attachments and reference documents"
+      }
     }
   },
   "detail": {
@@ -117,5 +142,7 @@
   },
   "signatures": {
     "noContributors": "No contributors assigned to this team"
-  }
+  },
+  "loadingMore": "Loading...",
+  "allLoaded": "All documents loaded"
 }

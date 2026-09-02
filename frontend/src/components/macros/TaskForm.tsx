@@ -92,7 +92,7 @@ export function TaskForm({ initialData, onSubmit, isLoading }: TaskFormProps) {
                     name="code"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>{t('code', { defaultValue: 'Code' })}</FormLabel>
+                            <FormLabel>{t('taskForm.code', { defaultValue: 'Code' })}</FormLabel>
                             <FormControl>
                                 <div className="flex gap-2">
                                     <Input placeholder="M1_P1_T1" {...field} />
@@ -111,7 +111,7 @@ export function TaskForm({ initialData, onSubmit, isLoading }: TaskFormProps) {
                                 </div>
                             </FormControl>
                             <FormDescription>
-                                {t('codeHelp', { defaultValue: 'Unique identifier for the task' })}
+                                {t('taskForm.codeHelp', { defaultValue: 'Unique identifier for the task' })}
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -123,16 +123,16 @@ export function TaskForm({ initialData, onSubmit, isLoading }: TaskFormProps) {
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>{t('description', { defaultValue: 'Description' })}</FormLabel>
+                            <FormLabel>{t('taskForm.description', { defaultValue: 'Description' })}</FormLabel>
                             <FormControl>
                                 <Textarea
-                                    placeholder={t('descriptionPlaceholder', { defaultValue: 'Detailed task description' })}
+                                    placeholder={t('taskForm.descriptionPlaceholder', { defaultValue: 'Detailed task description' })}
                                     className="min-h-[150px]"
                                     {...field}
                                 />
                             </FormControl>
                             <FormDescription>
-                                {t('descriptionHelp', { defaultValue: 'Describe the actions required for this task' })}
+                                {t('taskForm.descriptionHelp', { defaultValue: 'Describe the actions required for this task' })}
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -232,7 +232,7 @@ export function TaskForm({ initialData, onSubmit, isLoading }: TaskFormProps) {
                     name="order"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>{t('order', { defaultValue: 'Order' })}</FormLabel>
+                            <FormLabel>{t('taskForm.order', { defaultValue: 'Order' })}</FormLabel>
                             <FormControl>
                                 <Input type="number" {...field} />
                             </FormControl>
@@ -251,7 +251,7 @@ export function TaskForm({ initialData, onSubmit, isLoading }: TaskFormProps) {
                                     {t('active', { defaultValue: 'Active' })}
                                 </FormLabel>
                                 <FormDescription>
-                                    {t('activeDescription', { defaultValue: 'Enable or disable this task' })}
+                                    {t('taskForm.activeDescription', { defaultValue: 'Enable or disable this task' })}
                                 </FormDescription>
                             </div>
                             <FormControl>

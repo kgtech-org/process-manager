@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -46,7 +48,10 @@ func (h *ChatHandler) SendMessage(c *gin.Context) {
 	ctx := c.Request.Context()
 	response, err := h.chatService.SendMessage(ctx, userID, &req)
 	if err != nil {
-		if err.Error() == "OpenAI service is not available" {
+		// Exhausted credits, quota or rate limiting come from upstream, not from a
+		// defect here: answering 500 hides an actionable cause behind "internal error".
+		if errors.Is(err, services.ErrAssistantUnavailable) || err.Error() == "OpenAI service is not available" {
+			log.Printf("⚠️  Chat unavailable: %v", err)
 			helpers.SendErrorWithCode(c, http.StatusServiceUnavailable, "AI assistant is currently unavailable. Please try again later.")
 			return
 		}
